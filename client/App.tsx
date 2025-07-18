@@ -11,6 +11,10 @@ import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReviewerDashboard from "./pages/ReviewerDashboard";
 import DonorDashboard from "./pages/DonorDashboard";
+import Profile from "./pages/Profile";
+import Progress from "./pages/Progress";
+import Scholarships from "./pages/Scholarships";
+import Support from "./pages/Support";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -25,42 +29,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Splash />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
-          <Route
-            path="/scholarships"
-            element={
-              <PlaceholderPage
-                title="Scholarship Listings"
-                description="Browse available scholarships with filters and detailed information."
-              />
-            }
-          />
-          <Route
-            path="/support"
-            element={
-              <PlaceholderPage
-                title="Support Center"
-                description="Get help with your applications and connect with our support team."
-              />
-            }
-          />
-          <Route
-            path="/progress"
-            element={
-              <PlaceholderPage
-                title="Application Progress"
-                description="Track the status of your scholarship applications."
-              />
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PlaceholderPage
-                title="User Profile"
-                description="Manage your personal information and application settings."
-              />
-            }
-          />
+          <Route path="/scholarships" element={<Scholarships />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/reviewer" element={<ReviewerDashboard />} />
           <Route path="/donor" element={<DonorDashboard />} />
