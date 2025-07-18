@@ -172,14 +172,11 @@ const Homepage = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-ydf-deep-blue to-ydf-teal-green rounded-xl opacity-20 group-hover:opacity-30 transition-opacity duration-300"></div>
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
-                  alt="Youth Dreamers Foundation Logo"
-                  className="h-12 w-auto relative z-10 drop-shadow-sm hover:drop-shadow-md transition-all duration-300 transform hover:scale-105"
-                />
-              </div>
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
+                alt="Youth Dreamers Foundation Logo"
+                className="h-10 w-auto"
+              />
             </div>
 
             {/* Desktop Navigation */}
