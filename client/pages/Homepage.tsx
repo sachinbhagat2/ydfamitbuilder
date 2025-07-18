@@ -172,14 +172,11 @@ const Homepage = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-ydf-deep-blue rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">YDF</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">
-                  Youth Dreamers Foundation
-                </h1>
-              </div>
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
+                alt="Youth Dreamers Foundation Logo"
+                className="h-10 w-auto"
+              />
             </div>
 
             {/* Desktop Navigation */}
