@@ -35,7 +35,7 @@ const Homepage = () => {
       icon: Users,
     },
     {
-      number: "₹5.2 Cr",
+      number: "���5.2 Cr",
       label: "Scholarships Distributed",
       icon: DollarSign,
     },
@@ -171,14 +171,12 @@ const Homepage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
-                  alt="Youth Dreamers Foundation Logo"
-                  className="h-8 w-auto"
-                />
-              </div>
+            <div className="flex items-center">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
+                alt="Youth Dreamers Foundation Logo"
+                className="h-12 w-auto"
+              />
             </div>
 
             {/* Desktop Navigation */}
