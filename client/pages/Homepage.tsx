@@ -522,13 +522,12 @@ const Homepage = () => {
             {/* Organization Info */}
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
-                <div className="w-12 h-12 bg-ydf-golden-yellow rounded-full flex items-center justify-center">
-                  <span className="text-ydf-deep-blue font-bold">YDF</span>
-                </div>
+                <img
+                  src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
+                  alt="Youth Dreamers Foundation Logo"
+                  className="h-12 w-auto"
+                />
                 <div>
-                  <h3 className="text-xl font-bold">
-                    Youth Dreamers Foundation
-                  </h3>
                   <p className="text-gray-400">Empowering Dreams Since 2010</p>
                 </div>
               </div>
