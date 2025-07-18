@@ -27,6 +27,12 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+        ydf: {
+          "deep-blue": "#0057A3",
+          "teal-green": "#00A79D",
+          "golden-yellow": "#FDCB00",
+          "light-gray": "#E3E6EA",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
