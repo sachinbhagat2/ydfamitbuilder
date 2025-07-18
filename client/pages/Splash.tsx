@@ -40,7 +40,7 @@ const Splash = () => {
           className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-2xl p-4"
         >
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2F6b7c3e66e2274a34b49fddbd7bed285e?format=webp&width=800"
+            src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2F209099442e6c42e883b3d324b2f06354?format=webp&width=800"
             alt="Youth Dreamers Foundation Logo"
             className="w-full h-full object-contain"
           />
