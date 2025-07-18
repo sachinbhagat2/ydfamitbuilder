@@ -8,6 +8,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Splash from "./pages/Splash";
 import StudentDashboard from "./pages/StudentDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import ReviewerDashboard from "./pages/ReviewerDashboard";
+import DonorDashboard from "./pages/DonorDashboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -58,33 +61,9 @@ const App = () => (
               />
             }
           />
-          <Route
-            path="/admin"
-            element={
-              <PlaceholderPage
-                title="Admin Dashboard"
-                description="Administrative tools for managing scholarships and applications."
-              />
-            }
-          />
-          <Route
-            path="/reviewer"
-            element={
-              <PlaceholderPage
-                title="Reviewer Dashboard"
-                description="Review and evaluate scholarship applications."
-              />
-            }
-          />
-          <Route
-            path="/donor"
-            element={
-              <PlaceholderPage
-                title="Donor Dashboard"
-                description="Manage your contributions and funded scholarships."
-              />
-            }
-          />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/reviewer" element={<ReviewerDashboard />} />
+          <Route path="/donor" element={<DonorDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
