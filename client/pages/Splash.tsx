@@ -37,11 +37,13 @@ const Splash = () => {
           initial={{ rotate: -180 }}
           animate={{ rotate: 0 }}
           transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-          className="w-32 h-32 bg-ydf-golden-yellow rounded-full flex items-center justify-center shadow-2xl"
+          className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-2xl p-4"
         >
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center">
-            <div className="text-ydf-deep-blue text-4xl font-bold">YDF</div>
-          </div>
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2Fdb4484c9214f41a495d3bdbc7d9eb250?format=webp&width=800"
+            alt="Youth Dreamers Foundation Logo"
+            className="w-full h-full object-contain"
+          />
         </motion.div>
 
         {/* Organization name */}
