@@ -9,7 +9,7 @@ const Splash = () => {
   useEffect(() => {
     setIsLoaded(true);
     const timer = setTimeout(() => {
-      navigate("/student-dashboard");
+      navigate("/");
     }, 3000);
 
     return () => clearTimeout(timer);
