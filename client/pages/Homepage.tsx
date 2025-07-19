@@ -278,14 +278,14 @@ const Homepage = () => {
                   to="/scholarships"
                   className="bg-ydf-golden-yellow text-ydf-deep-blue px-8 py-4 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-opacity-90 transition-colors"
                 >
-                  <span>Explore Scholarships</span>
+                  <span>{t("hero.exploreScholarships")}</span>
                   <ArrowRight className="h-5 w-5" />
                 </Link>
                 <Link
                   to="/donor"
                   className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-ydf-deep-blue transition-colors text-center"
                 >
-                  Become a Donor
+                  {t("hero.becomeADonor")}
                 </Link>
               </div>
             </motion.div>
