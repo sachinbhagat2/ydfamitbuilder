@@ -61,8 +61,12 @@ function cleanDistDirectory(dir) {
 
     if (stat.isDirectory()) {
       cleanDistDirectory(filePath);
-    } else if (file.endsWith(".html") || file.endsWith(".js")) {
-      cleanHtmlFile(filePath);
+    } else if (
+      file.endsWith(".html") ||
+      file.endsWith(".js") ||
+      file.endsWith(".css")
+    ) {
+      cleanFile(filePath);
     }
   });
 }
