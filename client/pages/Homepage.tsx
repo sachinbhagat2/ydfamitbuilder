@@ -233,6 +233,9 @@ const Homepage = () => {
                     {item.name}
                   </a>
                 ))}
+                <div className="px-3 py-2">
+                  <LanguageSwitcher />
+                </div>
                 <Link
                   to="/scholarships"
                   className="block mx-3 bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg text-center font-semibold"
