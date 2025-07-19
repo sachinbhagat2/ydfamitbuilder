@@ -11,19 +11,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: "dist/spa",
-    // Remove console logs and debugger statements in production
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-      mangle: {
-        // Remove function and variable names that contain 'builder'
-        reserved: [],
-      },
-    },
-    // Remove source maps in production
+    minify: true,
     sourcemap: false,
   },
   plugins: [
