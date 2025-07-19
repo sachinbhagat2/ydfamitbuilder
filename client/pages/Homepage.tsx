@@ -264,13 +264,14 @@ const Homepage = () => {
               transition={{ duration: 0.8 }}
             >
               <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
-                Empowering Dreams Through
-                <span className="text-ydf-golden-yellow"> Education</span>
+                {t("hero.title")}
+                <span className="text-ydf-golden-yellow">
+                  {" "}
+                  {t("hero.titleHighlight")}
+                </span>
               </h1>
               <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-                Join thousands of students who have transformed their lives
-                through our scholarship programs. We believe every dream
-                deserves a chance to flourish.
+                {t("hero.subtitle")}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
