@@ -1,0 +1,152 @@
+{
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "submit": "Submit",
+    "apply": "Apply",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "contactUs": "Contact Us",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "programs": "Programs",
+    "scholarships": "Scholarships",
+    "impact": "Impact",
+    "contact": "Contact",
+    "login": "Login",
+    "profile": "Profile",
+    "dashboard": "Dashboard",
+    "support": "Support",
+    "progress": "Progress"
+  },
+  "hero": {
+    "title": "Empowering Dreams Through",
+    "titleHighlight": "Education",
+    "subtitle": "Join thousands of students who have transformed their lives through our scholarship programs. We believe every dream deserves a chance to flourish.",
+    "exploreScholarships": "Explore Scholarships",
+    "becomeADonor": "Become a Donor",
+    "dreamsRealized": "Dreams Realized"
+  },
+  "stats": {
+    "studentsSupported": "Students Supported",
+    "scholarshipsDistributed": "Scholarships Distributed",
+    "partnerInstitutions": "Partner Institutions",
+    "successRate": "Success Rate"
+  },
+  "userTypes": {
+    "student": {
+      "title": "Apply for Scholarships",
+      "description": "Browse and apply for scholarships that match your profile",
+      "features": [
+        "Easy application process",
+        "Track application status",
+        "Access to mentorship",
+        "Career guidance"
+      ]
+    },
+    "donor": {
+      "title": "Fund Education",
+      "description": "Support deserving students and make a lasting impact",
+      "features": [
+        "Create custom scholarships",
+        "Track student progress",
+        "Impact reporting",
+        "Tax benefits"
+      ]
+    },
+    "reviewer": {
+      "title": "Evaluate Applications",
+      "description": "Help identify and support the most deserving candidates",
+      "features": [
+        "Application review tools",
+        "Scoring system",
+        "Collaboration features",
+        "Detailed reporting"
+      ]
+    },
+    "admin": {
+      "title": "Manage Programs",
+      "description": "Oversee scholarship programs and organizational operations",
+      "features": [
+        "Program management",
+        "Analytics dashboard",
+        "User management",
+        "Financial tracking"
+      ]
+    }
+  },
+  "features": {
+    "title": "Why Choose Youth Dreamers Foundation?",
+    "subtitle": "We're committed to providing not just financial support, but a comprehensive ecosystem for educational success.",
+    "meritBased": {
+      "title": "Merit-Based Selection",
+      "description": "Fair and transparent selection process based on academic excellence and financial need."
+    },
+    "secure": {
+      "title": "Secure & Reliable",
+      "description": "Your data is protected with industry-standard security measures and encryption."
+    },
+    "panIndia": {
+      "title": "Pan-India Coverage",
+      "description": "Supporting students across all states and territories of India with equal opportunities."
+    },
+    "holistic": {
+      "title": "Holistic Support",
+      "description": "Beyond funding - mentorship, career guidance, and skill development programs."
+    }
+  },
+  "testimonials": {
+    "title": "Success Stories",
+    "subtitle": "Read how our scholarship recipients have transformed their lives and communities."
+  },
+  "cta": {
+    "title": "Ready to Transform Lives Through Education?",
+    "subtitle": "Join our community of dreamers, achievers, and changemakers. Whether you're seeking support or looking to make an impact, your journey starts here.",
+    "applyForScholarships": "Apply for Scholarships",
+    "becomeASupporter": "Become a Supporter"
+  },
+  "footer": {
+    "tagline": "Empowering Dreams Since 2010",
+    "description": "We are committed to breaking down financial barriers to education and creating opportunities for deserving students across India. Our comprehensive support system ensures that talent gets the recognition and resources it deserves.",
+    "quickLinks": "Quick Links",
+    "trackApplication": "Track Application",
+    "supportCenter": "Support Center",
+    "becomeADonor": "Become a Donor",
+    "contactUs": "Contact Us",
+    "copyright": "© 2024 Youth Dreamers Foundation. All rights reserved.",
+    "empoweringTagline": "Empowering Dreams Through Education"
+  },
+  "dashboard": {
+    "goodMorning": "Good Morning",
+    "readyToExplore": "Ready to explore new opportunities?",
+    "activeApplications": "Active Applications",
+    "totalApplied": "Total Applied",
+    "quickActions": "Quick Actions",
+    "browseScholarships": "Browse Scholarships",
+    "chatSupport": "Chat Support",
+    "trackProgress": "Track Progress",
+    "yourScholarships": "Your Scholarships",
+    "viewAll": "View All",
+    "latestAnnouncements": "Latest Announcements"
+  },
+  "language": {
+    "selectLanguage": "Select Language",
+    "english": "English",
+    "hindi": "हिंदी",
+    "bengali": "বাংলা",
+    "tamil": "தமிழ்",
+    "telugu": "తెలుగు",
+    "languageChanged": "Language changed successfully"
+  }
+}
