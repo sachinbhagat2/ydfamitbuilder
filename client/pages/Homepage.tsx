@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 const Homepage = () => {
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const stats = [
