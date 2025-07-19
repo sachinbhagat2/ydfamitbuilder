@@ -193,11 +193,12 @@ const Homepage = () => {
                   {item.name}
                 </a>
               ))}
+              <LanguageSwitcher />
               <Link
                 to="/scholarships"
                 className="bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors font-semibold"
               >
-                Get Started
+                {t("common.getStarted")}
               </Link>
             </div>
 
