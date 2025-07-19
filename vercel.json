@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build:client",
+  "buildCommand": "npm run build:production",
   "outputDirectory": "dist/spa",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
