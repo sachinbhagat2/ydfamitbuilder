@@ -1,21 +1,12 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:client",
   "outputDirectory": "dist/spa",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "dist/server/node-build.mjs": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  ]
 }
