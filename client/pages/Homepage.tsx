@@ -161,10 +161,10 @@ const Homepage = () => {
   ];
 
   const navigation = [
-    { name: "About", href: "#about" },
-    { name: "Programs", href: "#programs" },
-    { name: "Impact", href: "#impact" },
-    { name: "Contact", href: "#contact" },
+    { name: t("navigation.about"), href: "#about" },
+    { name: t("navigation.programs"), href: "#programs" },
+    { name: t("navigation.impact"), href: "#impact" },
+    { name: t("navigation.contact"), href: "#contact" },
   ];
 
   return (
