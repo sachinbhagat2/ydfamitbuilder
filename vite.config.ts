@@ -14,26 +14,7 @@ export default defineConfig(({ mode }) => ({
     minify: true,
     sourcemap: false,
   },
-  plugins: [
-    react({
-      // Remove React DevTools and debugging attributes in production
-      ...(mode === "production" && {
-        jsxImportSource: undefined,
-        babel: {
-          plugins: [
-            // Remove data attributes in production
-            [
-              "babel-plugin-react-remove-properties",
-              {
-                properties: ["data-testid", "data-loc", "$name"],
-              },
-            ],
-          ],
-        },
-      }),
-    }),
-    expressPlugin(),
-  ],
+  plugins: [react(), expressPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./client"),
