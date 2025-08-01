@@ -194,6 +194,10 @@ export default function Auth() {
           </p>
         </div>
 
+        <div className="mb-4">
+          <DatabaseStatus />
+        </div>
+
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center space-x-2">
