@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import OnboardingTour from "../components/OnboardingTour";
 import {
   Users,
   FileText,
@@ -24,6 +25,24 @@ import {
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('ydf_onboarding_admin');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('ydf_onboarding_admin', 'true');
+    setShowOnboarding(false);
+  };
+
+  const handleOnboardingSkip = () => {
+    localStorage.setItem('ydf_onboarding_admin', 'skipped');
+    setShowOnboarding(false);
+  };
 
   const stats = [
     {
