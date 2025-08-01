@@ -18,6 +18,25 @@ import {
 
 const StudentDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    // Check if user is new (hasn't seen onboarding)
+    const hasSeenOnboarding = localStorage.getItem('ydf_onboarding_student');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('ydf_onboarding_student', 'true');
+    setShowOnboarding(false);
+  };
+
+  const handleOnboardingSkip = () => {
+    localStorage.setItem('ydf_onboarding_student', 'skipped');
+    setShowOnboarding(false);
+  };
 
   const scholarships = [
     {
