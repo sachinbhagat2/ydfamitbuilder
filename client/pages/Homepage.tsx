@@ -201,20 +201,42 @@ const Homepage = () => {
               <div className="flex items-center space-x-3">
                 <LanguageSwitcher />
                 <ThemeToggle />
-                <Link
-                  to="/auth"
-                  className="flex items-center space-x-1 text-white hover:text-ydf-golden-yellow transition-colors font-medium"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Sign In</span>
-                </Link>
-                <Link
-                  to="/auth"
-                  className="bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors font-semibold flex items-center space-x-1"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span>Sign Up</span>
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link
+                      to={`/${user?.userType}-dashboard`}
+                      className="text-white hover:text-ydf-golden-yellow transition-colors font-medium"
+                    >
+                      Dashboard
+                    </Link>
+                    <span className="text-ydf-golden-yellow text-sm">
+                      {user?.firstName} {user?.lastName}
+                    </span>
+                    <button
+                      onClick={() => logout()}
+                      className="text-white hover:text-ydf-golden-yellow transition-colors font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/auth"
+                      className="flex items-center space-x-1 text-white hover:text-ydf-golden-yellow transition-colors font-medium"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      <span>Sign In</span>
+                    </Link>
+                    <Link
+                      to="/auth"
+                      className="bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors font-semibold flex items-center space-x-1"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span>Sign Up</span>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
 
