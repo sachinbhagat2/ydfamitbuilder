@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Separator } from '../components/ui/separator';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import apiService from '../services/api';
+import DatabaseStatus from '../components/DatabaseStatus';
 
 type AuthMode = 'login' | 'signup' | 'forgot-password';
 
