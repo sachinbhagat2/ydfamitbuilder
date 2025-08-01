@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { ThemeToggle } from "../components/ThemeToggle";
 import {
   ArrowRight,
   Users,
@@ -25,6 +26,8 @@ import {
   ChevronRight,
   Menu,
   X,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 
 const Homepage = () => {
