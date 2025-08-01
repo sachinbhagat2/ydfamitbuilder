@@ -31,8 +31,8 @@ app.use('/api/scholarships', scholarshipRoutes);
 // Database connection test
 app.get('/api/db-test', async (req, res) => {
   try {
-    // Simple query to test database connection
-    const result = await db.execute('SELECT NOW() as current_time');
+    // Simple query to test database connection - using sql template
+    const result = await sql`SELECT NOW() as current_time`;
     res.json({
       success: true,
       message: 'Database connection successful',
