@@ -71,43 +71,87 @@ export default function Auth() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
       if (mode === 'forgot-password') {
+        // TODO: Implement forgot password API
         setSuccess('Password reset link has been sent to your email');
         setTimeout(() => setMode('login'), 3000);
-      } else {
-        // Simulate successful auth
-        localStorage.setItem('ydf_user', JSON.stringify({
+      } else if (mode === 'signup') {
+        // Register new user
+        const userData = {
           email: formData.email,
-          userType: formData.userType,
-          name: `${formData.firstName} ${formData.lastName}`
-        }));
-        
-        // Navigate based on user type
-        switch (formData.userType) {
-          case 'admin':
-            navigate('/admin-dashboard');
-            break;
-          case 'reviewer':
-            navigate('/reviewer-dashboard');
-            break;
-          case 'donor':
-            navigate('/donor-dashboard');
-            break;
-          default:
-            navigate('/student-dashboard');
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          userType: formData.userType as 'student' | 'admin' | 'reviewer' | 'donor',
+          profileData: {}
+        };
+
+        const response = await apiService.register(userData);
+
+        if (response.success && response.data) {
+          setSuccess('Account created successfully! Redirecting...');
+
+          // Navigate based on user type
+          setTimeout(() => {
+            switch (formData.userType) {
+              case 'admin':
+                navigate('/admin-dashboard');
+                break;
+              case 'reviewer':
+                navigate('/reviewer-dashboard');
+                break;
+              case 'donor':
+                navigate('/donor-dashboard');
+                break;
+              default:
+                navigate('/student-dashboard');
+            }
+          }, 1500);
+        } else {
+          setError(response.error || 'Registration failed');
+        }
+      } else {
+        // Login existing user
+        const loginData = {
+          email: formData.email,
+          password: formData.password
+        };
+
+        const response = await apiService.login(loginData);
+
+        if (response.success && response.data) {
+          setSuccess('Login successful! Redirecting...');
+
+          // Navigate based on user type
+          setTimeout(() => {
+            switch (response.data!.user.userType) {
+              case 'admin':
+                navigate('/admin-dashboard');
+                break;
+              case 'reviewer':
+                navigate('/reviewer-dashboard');
+                break;
+              case 'donor':
+                navigate('/donor-dashboard');
+                break;
+              default:
+                navigate('/student-dashboard');
+            }
+          }, 1500);
+        } else {
+          setError(response.error || 'Login failed');
         }
       }
     } catch (error) {
-      setError('Something went wrong. Please try again.');
+      console.error('Auth error:', error);
+      setError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
