@@ -33,6 +33,7 @@ import {
 
 const Homepage = () => {
   const { t } = useTranslation();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const stats = [
