@@ -55,8 +55,9 @@ export const DatabaseStatus = () => {
             To enable real authentication, you need to:
           </p>
           <ol className="text-sm space-y-1 ml-4 list-decimal">
-            <li>Get your Neon database URL from <a href="https://neon.tech" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">neon.tech</a></li>
+            <li>Set up PostgreSQL database (locally or cloud)</li>
             <li>Create <code className="bg-orange-100 px-1 rounded">.env</code> file with DATABASE_URL</li>
+            <li>Run <code className="bg-orange-100 px-1 rounded">npm run db:migrate</code> to setup tables</li>
             <li>Run <code className="bg-orange-100 px-1 rounded">npm run dev:server</code> in a new terminal</li>
           </ol>
           <div className="flex items-center space-x-2 mt-2">
