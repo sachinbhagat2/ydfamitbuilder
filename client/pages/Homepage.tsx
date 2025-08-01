@@ -247,16 +247,27 @@ const Homepage = () => {
                     {item.name}
                   </a>
                 ))}
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 flex items-center space-x-3">
                   <LanguageSwitcher />
+                  <ThemeToggle />
                 </div>
-                <Link
-                  to="/scholarships"
-                  className="block mx-3 bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg text-center font-semibold"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {t("common.getStarted")}
-                </Link>
+                <div className="px-3 space-y-2">
+                  <Link
+                    to="/auth"
+                    className="flex items-center space-x-2 text-white hover:text-ydf-golden-yellow py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Sign In</span>
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="block bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg text-center font-semibold"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}
