@@ -1,8 +1,8 @@
 import path from "path";
-import { createServer } from "./index";
-import * as express from "express";
+import express from "express";
 
-const app = createServer();
+// Simple production server for serving static files
+const app = express();
 const port = process.env.PORT || 3000;
 
 // In production, serve the built SPA files
