@@ -133,9 +133,9 @@ export default function Auth() {
         className="w-full max-w-md"
       >
         <div className="mb-6 text-center">
-          <img 
-            src="https://ik.imagekit.io/buildship/ydf-2_F9xklvxMX?updatedAt=1734938806162" 
-            alt="Youth Dreamers Foundation" 
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2F209099442e6c42e883b3d324b2f06354?format=webp&width=800"
+            alt="Youth Dreamers Foundation"
             className="h-16 mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-gray-900">
