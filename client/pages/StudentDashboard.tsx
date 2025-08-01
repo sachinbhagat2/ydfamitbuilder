@@ -117,7 +117,15 @@ const StudentDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      {showOnboarding && (
+        <OnboardingTour
+          userType="student"
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-ydf-light-gray">
         <div className="px-6 py-4">
@@ -321,7 +329,8 @@ const StudentDashboard = () => {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
