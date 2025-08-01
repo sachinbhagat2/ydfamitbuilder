@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
       db.select()
         .from(scholarships)
         .where(whereClause)
-        .orderBy(sortOrder === 'desc' ? desc(scholarships[sortBy as keyof typeof scholarships]) : scholarships[sortBy as keyof typeof scholarships])
+        .orderBy(sortOrder === 'desc' ? desc(scholarships.createdAt) : scholarships.createdAt)
         .limit(Number(limit))
         .offset(offset),
       db.select({ count: count() })
