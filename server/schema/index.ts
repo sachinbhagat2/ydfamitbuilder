@@ -8,7 +8,7 @@ export const users = pgTable('users', {
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   phone: text('phone'),
-  userType: text('user_type').notNull(), // 'student', 'admin', 'reviewer', 'donor'
+  userType: text('user_type', { enum: ['student', 'admin', 'reviewer', 'donor'] }).notNull(),
   isActive: boolean('is_active').default(true),
   emailVerified: boolean('email_verified').default(false),
   createdAt: timestamp('created_at').defaultNow(),
