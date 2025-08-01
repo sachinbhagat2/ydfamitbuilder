@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { db } from './config/database';
+import { db, sql } from './config/database';
 import authRoutes from './routes/auth';
 import scholarshipRoutes from './routes/scholarships';
 
