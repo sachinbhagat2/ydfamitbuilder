@@ -26,33 +26,35 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="ydf-ui-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/splash" element={<Splash />} />
-            <Route path="/student-dashboard" element={<StudentDashboard />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/reviewer-dashboard" element={<ReviewerDashboard />} />
-            <Route path="/donor-dashboard" element={<DonorDashboard />} />
-            <Route path="/scholarships" element={<Scholarships />} />
-            <Route path="/support" element={<Support />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/profile" element={<Profile />} />
-            {/* Legacy routes for backward compatibility */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/reviewer" element={<ReviewerDashboard />} />
-            <Route path="/donor" element={<DonorDashboard />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider defaultTheme="light" storageKey="ydf-ui-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Homepage />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/splash" element={<Splash />} />
+              <Route path="/student-dashboard" element={<StudentDashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/reviewer-dashboard" element={<ReviewerDashboard />} />
+              <Route path="/donor-dashboard" element={<DonorDashboard />} />
+              <Route path="/scholarships" element={<Scholarships />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/progress" element={<Progress />} />
+              <Route path="/profile" element={<Profile />} />
+              {/* Legacy routes for backward compatibility */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/reviewer" element={<ReviewerDashboard />} />
+              <Route path="/donor" element={<DonorDashboard />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
