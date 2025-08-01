@@ -186,7 +186,7 @@ const Homepage = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
               {navigation.map((item) => (
                 <a
                   key={item.name}
@@ -196,13 +196,24 @@ const Homepage = () => {
                   {item.name}
                 </a>
               ))}
-              <LanguageSwitcher />
-              <Link
-                to="/scholarships"
-                className="bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors font-semibold"
-              >
-                {t("common.getStarted")}
-              </Link>
+              <div className="flex items-center space-x-3">
+                <LanguageSwitcher />
+                <ThemeToggle />
+                <Link
+                  to="/auth"
+                  className="flex items-center space-x-1 text-white hover:text-ydf-golden-yellow transition-colors font-medium"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Sign In</span>
+                </Link>
+                <Link
+                  to="/auth"
+                  className="bg-ydf-golden-yellow text-ydf-deep-blue px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors font-semibold flex items-center space-x-1"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Sign Up</span>
+                </Link>
+              </div>
             </div>
 
             {/* Mobile menu button */}
