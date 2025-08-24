@@ -1,138 +1,138 @@
-import { pgTable, text, serial, timestamp, boolean, integer, decimal, jsonb } from 'drizzle-orm/pg-core';
+import { mysqlTable, text, int, timestamp, boolean, decimal, json, varchar } from 'drizzle-orm/mysql-core';
 
 // Users table - for all user types (students, admins, reviewers, donors)
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  email: text('email').unique().notNull(),
+export const users = mysqlTable('users', {
+  id: int('id').primaryKey().autoincrement(),
+  email: varchar('email', { length: 255 }).unique().notNull(),
   password: text('password').notNull(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
-  phone: text('phone'),
-  userType: text('user_type', { enum: ['student', 'admin', 'reviewer', 'donor'] }).notNull(),
+  firstName: varchar('first_name', { length: 100 }).notNull(),
+  lastName: varchar('last_name', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  userType: varchar('user_type', { length: 20 }).notNull(), // 'student', 'admin', 'reviewer', 'donor'
   isActive: boolean('is_active').default(true),
   emailVerified: boolean('email_verified').default(false),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-  profileData: jsonb('profile_data'), // Additional profile info based on user type
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  profileData: json('profile_data'), // Additional profile info based on user type
 });
 
 // Scholarship schemes table
-export const scholarships = pgTable('scholarships', {
-  id: serial('id').primaryKey(),
-  title: text('title').notNull(),
+export const scholarships = mysqlTable('scholarships', {
+  id: int('id').primaryKey().autoincrement(),
+  title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').default('INR'),
-  eligibilityCriteria: jsonb('eligibility_criteria').notNull(),
-  requiredDocuments: jsonb('required_documents').notNull(),
+  currency: varchar('currency', { length: 10 }).default('INR'),
+  eligibilityCriteria: json('eligibility_criteria').notNull(),
+  requiredDocuments: json('required_documents').notNull(),
   applicationDeadline: timestamp('application_deadline').notNull(),
   selectionDeadline: timestamp('selection_deadline'),
-  maxApplications: integer('max_applications'),
-  currentApplications: integer('current_applications').default(0),
-  status: text('status').default('active'), // 'active', 'inactive', 'closed'
-  createdBy: integer('created_by').references(() => users.id),
+  maxApplications: int('max_applications'),
+  currentApplications: int('current_applications').default(0),
+  status: varchar('status', { length: 20 }).default('active'), // 'active', 'inactive', 'closed'
+  createdBy: int('created_by'),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-  tags: jsonb('tags'), // Array of tags for categorization
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  tags: json('tags'), // Array of tags for categorization
 });
 
 // Scholarship applications table
-export const applications = pgTable('applications', {
-  id: serial('id').primaryKey(),
-  studentId: integer('student_id').references(() => users.id).notNull(),
-  scholarshipId: integer('scholarship_id').references(() => scholarships.id).notNull(),
-  status: text('status').default('submitted'), // 'submitted', 'under_review', 'approved', 'rejected', 'waitlisted'
-  applicationData: jsonb('application_data').notNull(), // Form responses
-  documents: jsonb('documents'), // Array of document URLs and metadata
+export const applications = mysqlTable('applications', {
+  id: int('id').primaryKey().autoincrement(),
+  studentId: int('student_id').notNull(),
+  scholarshipId: int('scholarship_id').notNull(),
+  status: varchar('status', { length: 20 }).default('submitted'), // 'submitted', 'under_review', 'approved', 'rejected', 'waitlisted'
+  applicationData: json('application_data').notNull(), // Form responses
+  documents: json('documents'), // Array of document URLs and metadata
   score: decimal('score', { precision: 5, scale: 2 }), // Review score
   reviewNotes: text('review_notes'),
-  reviewedBy: integer('reviewed_by').references(() => users.id),
+  reviewedBy: int('reviewed_by'),
   submittedAt: timestamp('submitted_at').defaultNow(),
   reviewedAt: timestamp('reviewed_at'),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 // Reviews and evaluations table
-export const reviews = pgTable('reviews', {
-  id: serial('id').primaryKey(),
-  applicationId: integer('application_id').references(() => applications.id).notNull(),
-  reviewerId: integer('reviewer_id').references(() => users.id).notNull(),
-  criteria: jsonb('criteria').notNull(), // Evaluation criteria and scores
+export const reviews = mysqlTable('reviews', {
+  id: int('id').primaryKey().autoincrement(),
+  applicationId: int('application_id').notNull(),
+  reviewerId: int('reviewer_id').notNull(),
+  criteria: json('criteria').notNull(), // Evaluation criteria and scores
   overallScore: decimal('overall_score', { precision: 5, scale: 2 }).notNull(),
   comments: text('comments'),
-  recommendation: text('recommendation'), // 'approve', 'reject', 'conditionally_approve'
+  recommendation: varchar('recommendation', { length: 30 }), // 'approve', 'reject', 'conditionally_approve'
   isComplete: boolean('is_complete').default(false),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 // Notifications table
-export const notifications = pgTable('notifications', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
-  title: text('title').notNull(),
+export const notifications = mysqlTable('notifications', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('user_id').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
   message: text('message').notNull(),
-  type: text('type').notNull(), // 'application', 'deadline', 'announcement', 'message'
+  type: varchar('type', { length: 20 }).notNull(), // 'application', 'deadline', 'announcement', 'message'
   isRead: boolean('is_read').default(false),
-  relatedId: integer('related_id'), // ID of related entity (scholarship, application, etc.)
-  relatedType: text('related_type'), // Type of related entity
+  relatedId: int('related_id'), // ID of related entity (scholarship, application, etc.)
+  relatedType: varchar('related_type', { length: 50 }), // Type of related entity
   createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Documents table
-export const documents = pgTable('documents', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
-  applicationId: integer('application_id').references(() => applications.id),
-  fileName: text('file_name').notNull(),
-  originalName: text('original_name').notNull(),
-  mimeType: text('mime_type').notNull(),
-  fileSize: integer('file_size').notNull(),
+export const documents = mysqlTable('documents', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('user_id').notNull(),
+  applicationId: int('application_id'),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  originalName: varchar('original_name', { length: 255 }).notNull(),
+  mimeType: varchar('mime_type', { length: 100 }).notNull(),
+  fileSize: int('file_size').notNull(),
   fileUrl: text('file_url').notNull(),
-  documentType: text('document_type').notNull(), // 'marksheet', 'certificate', 'id_proof', etc.
+  documentType: varchar('document_type', { length: 50 }).notNull(), // 'marksheet', 'certificate', 'id_proof', etc.
   isVerified: boolean('is_verified').default(false),
   verificationNotes: text('verification_notes'),
   uploadedAt: timestamp('uploaded_at').defaultNow(),
 });
 
 // Announcements table
-export const announcements = pgTable('announcements', {
-  id: serial('id').primaryKey(),
-  title: text('title').notNull(),
+export const announcements = mysqlTable('announcements', {
+  id: int('id').primaryKey().autoincrement(),
+  title: varchar('title', { length: 255 }).notNull(),
   content: text('content').notNull(),
-  type: text('type').default('general'), // 'general', 'deadline', 'result', 'maintenance'
-  targetAudience: jsonb('target_audience'), // Array of user types to show this to
+  type: varchar('type', { length: 20 }).default('general'), // 'general', 'deadline', 'result', 'maintenance'
+  targetAudience: json('target_audience'), // Array of user types to show this to
   isActive: boolean('is_active').default(true),
-  priority: text('priority').default('normal'), // 'low', 'normal', 'high', 'urgent'
+  priority: varchar('priority', { length: 10 }).default('normal'), // 'low', 'normal', 'high', 'urgent'
   validFrom: timestamp('valid_from').defaultNow(),
   validTo: timestamp('valid_to'),
-  createdBy: integer('created_by').references(() => users.id),
+  createdBy: int('created_by'),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 // Donor contributions table
-export const contributions = pgTable('contributions', {
-  id: serial('id').primaryKey(),
-  donorId: integer('donor_id').references(() => users.id).notNull(),
-  scholarshipId: integer('scholarship_id').references(() => scholarships.id),
+export const contributions = mysqlTable('contributions', {
+  id: int('id').primaryKey().autoincrement(),
+  donorId: int('donor_id').notNull(),
+  scholarshipId: int('scholarship_id'),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').default('INR'),
-  paymentMethod: text('payment_method'),
-  paymentId: text('payment_id'), // Payment gateway transaction ID
-  status: text('status').default('pending'), // 'pending', 'completed', 'failed', 'refunded'
-  contributionType: text('contribution_type').default('one_time'), // 'one_time', 'recurring'
+  currency: varchar('currency', { length: 10 }).default('INR'),
+  paymentMethod: varchar('payment_method', { length: 50 }),
+  paymentId: varchar('payment_id', { length: 255 }), // Payment gateway transaction ID
+  status: varchar('status', { length: 20 }).default('pending'), // 'pending', 'completed', 'failed', 'refunded'
+  contributionType: varchar('contribution_type', { length: 20 }).default('one_time'), // 'one_time', 'recurring'
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow(),
   completedAt: timestamp('completed_at'),
 });
 
 // Settings table for application configuration
-export const settings = pgTable('settings', {
-  id: serial('id').primaryKey(),
-  key: text('key').unique().notNull(),
-  value: jsonb('value').notNull(),
+export const settings = mysqlTable('settings', {
+  id: int('id').primaryKey().autoincrement(),
+  key: varchar('key', { length: 100 }).unique().notNull(),
+  value: json('value').notNull(),
   description: text('description'),
-  updatedBy: integer('updated_by').references(() => users.id),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  updatedBy: int('updated_by'),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });

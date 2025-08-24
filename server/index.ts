@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { db, sql } from './config/database';
+import { db, mysql } from './config/database';
 import authRoutes from './routes/auth';
 import scholarshipRoutes from './routes/scholarships';
 
@@ -31,8 +31,8 @@ app.use('/api/scholarships', scholarshipRoutes);
 // Database connection test
 app.get('/api/db-test', async (req, res) => {
   try {
-    // Simple query to test database connection - using sql template
-    const result = await sql`SELECT NOW() as current_time`;
+    // Simple query to test database connection
+    const [result] = await mysql.execute('SELECT NOW() as current_time');
     res.json({
       success: true,
       message: 'Database connection successful',
