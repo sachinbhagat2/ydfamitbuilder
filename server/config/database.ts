@@ -22,7 +22,7 @@ const connectionConfig = {
 const pool = mysql.createPool({
   ...connectionConfig,
   waitForConnections: true,
-  connectionLimit: 3, // Conservative limit for shared hosting
+  connectionLimit: 3,
   queueLimit: 0,
   acquireTimeout: 60000,
   timeout: 60000,
@@ -32,7 +32,6 @@ const pool = mysql.createPool({
 
 // Create Drizzle instance
 export const db = drizzle(pool);
-
 export { pool as mysql };
 
 // Test connection function
@@ -45,6 +44,6 @@ export async function testConnection() {
     return { success: true, data: rows };
   } catch (error) {
     console.error('❌ Database connection test failed:', error);
-    throw error;
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
