@@ -92,9 +92,11 @@ app.get('*', (req, res) => {
     const staticPath = path.join(__dirname, '../spa');
     res.sendFile(path.join(staticPath, 'index.html'));
   } else {
+    // In development, don't handle frontend routes - let Vite proxy handle them
     res.status(404).json({ 
       success: false,
-      error: 'Route not found',
+      error: 'Frontend route - should be handled by Vite dev server',
+      message: 'This route should be accessed through the Vite dev server on port 5173',
       path: req.path,
       method: req.method
     });
