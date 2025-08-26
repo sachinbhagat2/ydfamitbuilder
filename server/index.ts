@@ -21,6 +21,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Basic API routes
 app.get('/api/demo', handleDemo);
+app.use('/api/auth', require('./routes/auth').default);
+app.use('/api/scholarships', require('./routes/scholarships').default);
 app.use('/api/test', testRoutes);
 app.get('/api/ping', (req, res) => {
   res.json({ message: 'Server is running', timestamp: new Date().toISOString() });
