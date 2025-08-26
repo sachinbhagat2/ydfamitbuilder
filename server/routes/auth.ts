@@ -15,6 +15,98 @@ import { CreateUserInput, LoginInput, AuthResponse, ApiResponse } from '../../sh
 
 const router = Router();
 
+// Create default users endpoint (for initial setup)
+router.post('/create-default-users', async (req, res) => {
+  try {
+    const defaultUsers = [
+      {
+        email: 'student@ydf.org',
+        password: 'Student123!',
+        firstName: 'Demo',
+        lastName: 'Student',
+        phone: '+91 9876543210',
+        userType: 'student' as const,
+        profileData: { course: 'B.Tech Computer Science', college: 'Demo College' }
+      },
+      {
+        email: 'admin@ydf.org',
+        password: 'Admin123!',
+        firstName: 'Demo',
+        lastName: 'Admin',
+        phone: '+91 9876543211',
+        userType: 'admin' as const,
+        profileData: { department: 'Administration' }
+      },
+      {
+        email: 'reviewer@ydf.org',
+        password: 'Reviewer123!',
+        firstName: 'Demo',
+        lastName: 'Reviewer',
+        phone: '+91 9876543212',
+        userType: 'reviewer' as const,
+        profileData: { specialization: 'Academic Review' }
+      },
+      {
+        email: 'donor@ydf.org',
+        password: 'Donor123!',
+        firstName: 'Demo',
+        lastName: 'Donor',
+        phone: '+91 9876543213',
+        userType: 'donor' as const,
+        profileData: { organization: 'Demo Foundation' }
+      }
+    ];
+
+    const createdUsers = [];
+    
+    for (const userData of defaultUsers) {
+      // Check if user already exists
+      const existingUser = await db.select().from(users).where(eq(users.email, userData.email)).limit(1);
+      
+      if (existingUser.length === 0) {
+        // Hash password and create user
+        const hashedPassword = await hashPassword(userData.password);
+        
+        const newUser = await db.insert(users).values({
+          email: userData.email,
+          password: hashedPassword,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+          userType: userData.userType,
+          profileData: userData.profileData,
+          isActive: true,
+          emailVerified: true
+        }).returning();
+        
+        createdUsers.push({
+          ...userData,
+          id: newUser[0].id,
+          password: userData.password // Return plain password for credentials
+        });
+      } else {
+        createdUsers.push({
+          ...userData,
+          id: existingUser[0].id,
+          exists: true
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Default users created/verified successfully',
+      users: createdUsers
+    });
+  } catch (error) {
+    console.error('Create default users error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create default users'
+    });
+  }
+});
+
 // Register new user
 router.post('/register', async (req, res) => {
   try {
