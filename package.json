@@ -20,6 +20,7 @@
     "build:production": "npm run build",
     "start": "node dist/server/node-build.mjs",
     "start:server": "tsx server/index.ts",
+    "preview": "vite preview",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
