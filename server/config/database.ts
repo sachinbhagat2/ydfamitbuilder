@@ -1,13 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 
-// Get the database URL from environment variables
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
-
 // Connection configuration for sparsindia.com
 const connectionConfig = {
   host: 'sparsindia.com',
