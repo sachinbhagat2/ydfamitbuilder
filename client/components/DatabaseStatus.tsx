@@ -12,12 +12,7 @@ const DatabaseStatus = () => {
       try {
         const response = await fetch('/api/test/connection');
         const result = await response.json();
-        if (result.success) {
-          setIsConnected(true);
-        } else {
-          setIsConnected(false);
-        }
-        setIsConnected(true);
+        setIsConnected(result.success);
       } catch (error) {
         setIsConnected(false);
       } finally {
@@ -76,13 +71,10 @@ const DatabaseStatus = () => {
               MySQL Setup Guide
             </Button>
           </div>
+        </div>
       </AlertDescription>
     </Alert>
   );
 };
 
 export default DatabaseStatus;
-  )
-}
-  )
-}
