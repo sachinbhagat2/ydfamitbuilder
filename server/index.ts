@@ -31,18 +31,21 @@ app.use('/api/scholarships', scholarshipRoutes);
 // Database connection test
 app.get('/api/db-test', async (req, res) => {
   try {
-    // Simple query to test database connection
-    const [result] = await mysql.execute('SELECT NOW() as current_time');
+    // Test database connection with Bluehost MySQL
+    const connection = await mysql.getConnection();
+    const [result] = await connection.execute('SELECT NOW() as current_time, DATABASE() as database_name');
+    connection.release();
+    
     res.json({
       success: true,
-      message: 'Database connection successful',
+      message: 'Bluehost MySQL database connection successful',
       data: result
     });
   } catch (error) {
     console.error('Database connection error:', error);
     res.status(500).json({
       success: false,
-      message: 'Database connection failed',
+      message: 'Bluehost MySQL database connection failed',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
