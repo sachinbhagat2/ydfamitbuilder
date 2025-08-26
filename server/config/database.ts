@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 
 const connectionConfig = {
-  host: '162.214.80.161',
+  host: 'sparsindia.com',
   port: 3306,
   user: 'sparsind_ydf',
   password: 'Vishwanath!@3',
@@ -10,8 +10,11 @@ const connectionConfig = {
   ssl: {
     rejectUnauthorized: false
   },
-  connectTimeout: 10000,
-  charset: 'utf8mb4'
+  connectTimeout: 60000,
+  acquireTimeout: 60000,
+  timeout: 60000,
+  charset: 'utf8mb4',
+  multipleStatements: true
 };
 
 // Create MySQL connection pool
