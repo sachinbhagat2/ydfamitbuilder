@@ -100,6 +100,8 @@ export default function Auth() {
         const success = await register(userData);
         if (success) {
           setSuccess('Account created successfully! Redirecting...');
+          // Don't set loading to false here, let AuthContext handle it
+          return;
         } else {
           setError('Registration failed. Please try again.');
         }
@@ -108,6 +110,8 @@ export default function Auth() {
         const success = await login(formData.email, formData.password);
         if (success) {
           setSuccess('Login successful! Redirecting...');
+          // Don't set loading to false here, let AuthContext handle it
+          return;
         } else {
           setError('Invalid email or password. Please try again.');
         }
@@ -115,9 +119,9 @@ export default function Auth() {
     } catch (error) {
       console.error('Auth error:', error);
       setError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
+    
+    setIsLoading(false);
   };
 
   const handleSocialAuth = (provider: string) => {

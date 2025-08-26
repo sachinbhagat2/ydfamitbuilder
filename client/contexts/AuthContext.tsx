@@ -84,8 +84,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         break;
     }
   };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      setIsLoading(true);
       const response = await apiService.login({ email, password });
       if (response.success && response.data) {
         setUser(response.data.user);
@@ -99,11 +101,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Login error:', error);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const register = async (userData: any): Promise<boolean> => {
     try {
+      setIsLoading(true);
       const response = await apiService.register(userData);
       if (response.success && response.data) {
         setUser(response.data.user);
@@ -117,6 +122,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Register error:', error);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
