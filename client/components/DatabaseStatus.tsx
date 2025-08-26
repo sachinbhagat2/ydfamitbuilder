@@ -76,13 +76,6 @@ export const DatabaseStatus = () => {
               MySQL Setup Guide
             </Button>
           </div>
-        ✅ MySQL database connected successfully! Authentication is ready.
       </AlertDescription>
     </Alert>
   );
-};
-
-export default DatabaseStatus;
-
-  )
-}

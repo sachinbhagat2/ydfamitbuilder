@@ -10,7 +10,7 @@ const connectionConfig = {
   ssl: {
     rejectUnauthorized: false
   },
-  connectTimeout: 60000,
+  connectTimeout: 10000,
   charset: 'utf8mb4'
 };
 
@@ -21,7 +21,7 @@ const pool = mysql.createPool({
   connectionLimit: 5,
   queueLimit: 0,
   acquireTimeout: 60000,
-  timeout: 60000,
+  timeout: 10000,
   idleTimeout: 300000,
   maxIdle: 5
 });
