@@ -4,10 +4,16 @@ config();
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { initializeDatabase } from './config/database';
 import { handleDemo } from './routes/demo';
 import testRoutes from './routes/test';
 import authRoutes from './routes/auth';
 import scholarshipRoutes from './routes/scholarships';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +25,12 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  const staticPath = path.join(__dirname, '../spa');
+  app.use(express.static(staticPath));
+}
 
 // API routes
 app.get('/api/demo', handleDemo);
@@ -51,6 +63,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Serve React app for all non-API routes
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  if (process.env.NODE_ENV === 'production') {
+    const staticPath = path.join(__dirname, '../spa');
+    res.sendFile(path.join(staticPath, 'index.html'));
+  } else {
+    res.json({ 
+      message: 'Development mode - frontend served by Vite',
+      frontend: 'http://localhost:5173'
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled error:', err);
@@ -60,21 +89,27 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: `API endpoint not found: ${req.path}`
-  });
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Initialize database tables
+    await initializeDatabase();
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔗 API demo: http://localhost:${PORT}/api/demo`);
+      console.log(`🔗 API ping: http://localhost:${PORT}/api/ping`);
+      console.log(`🔗 Create users: http://localhost:${PORT}/api/auth/create-default-users`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API demo: http://localhost:${PORT}/api/demo`);
-  console.log(`🔗 API ping: http://localhost:${PORT}/api/ping`);
-});
+startServer();
 
 export function createServer() {
   return app;
