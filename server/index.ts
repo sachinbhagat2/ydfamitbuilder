@@ -85,16 +85,38 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Initialize database and start server
 async function startServer() {
   try {
+    console.log('🚀 Starting Youth Dreamers Foundation Server...');
+    
+    // Test database connection first
+    const connectionTest = await testConnection();
+    if (!connectionTest.success) {
+      console.error('❌ Database connection failed:', connectionTest.error);
+      process.exit(1);
+    }
+    
     // Initialize database tables
-    await initializeDatabase();
+    const dbInit = await initializeDatabase();
+    if (!dbInit.success) {
+      console.error('❌ Database initialization failed:', dbInit.error);
+      process.exit(1);
+    }
+    
+    // Create default users
+    await createDefaultUsers();
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🚀 Youth Dreamers Foundation Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API demo: http://localhost:${PORT}/api/demo`);
       console.log(`🔗 API ping: http://localhost:${PORT}/api/ping`);
-      console.log(`🔗 Create users: http://localhost:${PORT}/api/auth/create-default-users`);
+      console.log(`🔗 Database test: http://localhost:${PORT}/api/test/connection`);
+      console.log('');
+      console.log('🔐 Default Login Credentials:');
+      console.log('   Student: student@ydf.org / Student123!');
+      console.log('   Admin: admin@ydf.org / Admin123!');
+      console.log('   Reviewer: reviewer@ydf.org / Reviewer123!');
+      console.log('   Donor: donor@ydf.org / Donor123!');
     });
   } catch (error) {
     console.error('Failed to start server:', error);
