@@ -107,7 +107,20 @@ class ApiService {
       headers: this.getAuthHeaders()
     });
     
-    return this.handleResponse<User>(response);
+    if (!response.ok) {
+      // If token verification fails, clear auth data
+      this.clearAuth();
+      throw new Error('Token verification failed');
+    }
+    
+    const result = await this.handleResponse<User>(response);
+    
+    // Update stored user data if verification succeeds
+    if (result.success && result.data) {
+      localStorage.setItem('ydf_user', JSON.stringify(result.data));
+    }
+    
+    return result;
   }
 
   // Utility methods
