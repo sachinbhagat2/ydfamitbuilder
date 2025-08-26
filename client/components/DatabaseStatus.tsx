@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle, Database, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
 
-export const DatabaseStatus = () => {
+const DatabaseStatus = () => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,5 +79,6 @@ export const DatabaseStatus = () => {
       </AlertDescription>
     </Alert>
   );
-  )
-}
+};
+
+export default DatabaseStatus;
