@@ -46,11 +46,12 @@ export { pool as mysql };
 export async function testConnection() {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.execute('SELECT 1 as test');
+    const [rows] = await connection.execute('SELECT VERSION() as version, NOW() as current_time, 1 as test');
     connection.release();
+    console.log('✅ Database connection test successful');
     return { success: true, data: rows };
   } catch (error) {
-    console.error('Database connection test failed:', error);
+    console.error('❌ Database connection test failed:', error);
     throw error;
   }
 }
