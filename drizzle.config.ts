@@ -5,7 +5,7 @@ export default {
   out: './drizzle',
   dialect: 'mysql',
   dbCredentials: {
-    host: 'sparshindia.com',
+    host: 'bluehost.in',
     port: 3306,
     user: 'sparsind_ydf',
     password: 'Vishwanath!@3',

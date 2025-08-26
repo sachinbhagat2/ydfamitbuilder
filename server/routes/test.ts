@@ -91,7 +91,7 @@ router.get('/check-tables', async (req, res) => {
     res.json({
       success: true,
       database: 'sparsind_ydf_ngo',
-      host: 'sparsindia.com',
+      host: 'bluehost.in',
       tablesCount: tables.length,
       tables: tableDetails
     });
@@ -115,7 +115,7 @@ router.get('/connection', async (req, res) => {
       environment: process.env.NODE_ENV || 'development'
     },
     database: {
-      host: 'sparsindia.com',
+      host: 'bluehost.in',
       database: 'sparsind_ydf_ngo',
       user: 'sparsind_ydf',
       status: 'unknown',
