@@ -69,15 +69,8 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  if (process.env.NODE_ENV === 'production') {
-    const staticPath = path.join(__dirname, '../spa');
-    res.sendFile(path.join(staticPath, 'index.html'));
-  } else {
-    res.json({ 
-      message: 'Development mode - frontend served by Vite',
-      frontend: 'http://localhost:5173'
-    });
-  }
+  // In development, proxy to Vite dev server
+  res.redirect('http://localhost:5173' + req.path);
 });
 
 // Error handling middleware
