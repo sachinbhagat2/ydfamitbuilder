@@ -11,9 +11,6 @@ const connectionConfig = {
     rejectUnauthorized: false
   },
   connectTimeout: 60000,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true,
   charset: 'utf8mb4'
 };
 
