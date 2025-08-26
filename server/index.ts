@@ -1,12 +1,11 @@
 // Load environment variables first
-import dotenv from 'dotenv';
-dotenv.config();
+import { config } from 'dotenv';
+config();
 
 import express from 'express';
 import cors from 'cors';
-import { db, mysql } from './config/database';
-import authRoutes from './routes/auth';
-import scholarshipRoutes from './routes/scholarships';
+// Import routes
+import { handleDemo } from './routes/demo';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +18,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Basic API routes
+app.get('/api/demo', handleDemo);
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'Server is running', timestamp: new Date().toISOString() });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -26,33 +31,6 @@ app.get('/health', (req, res) => {
     message: 'Youth Dreamers Foundation API is running',
     timestamp: new Date().toISOString()
   });
-});
-
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/scholarships', scholarshipRoutes);
-
-// Database connection test
-app.get('/api/db-test', async (req, res) => {
-  try {
-    // Test database connection with Bluehost MySQL
-    const connection = await mysql.getConnection();
-    const [result] = await connection.execute('SELECT NOW() as current_time, DATABASE() as database_name');
-    connection.release();
-    
-    res.json({
-      success: true,
-      message: 'Bluehost MySQL database connection successful',
-      data: result
-    });
-  } catch (error) {
-    console.error('Database connection error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Bluehost MySQL database connection failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
 });
 
 // Error handling middleware
@@ -74,10 +52,8 @@ app.use('*', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Youth Dreamers Foundation API server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-  console.log(`🎓 Scholarship endpoints: http://localhost:${PORT}/api/scholarships`);
+  console.log(`🔗 API endpoints: http://localhost:${PORT}/api`);
 });
 
-export default app;
