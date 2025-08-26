@@ -83,3 +83,6 @@ export const DatabaseStatus = () => {
 };
 
 export default DatabaseStatus;
+
+  )
+}
