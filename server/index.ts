@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initializeDatabase, testConnection, createDefaultUsers } from './config/database';
+import { initializeDatabase, testConnection, createDefaultUsers, mockDatabase } from './config/database';
 import { handleDemo } from './routes/demo';
 import testRoutes from './routes/test';
 import authRoutes from './routes/auth';
@@ -31,6 +31,12 @@ if (process.env.NODE_ENV === 'production') {
   const staticPath = path.join(__dirname, '../spa');
   app.use(express.static(staticPath));
 }
+
+// Add request logging middleware for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
 
 // API routes
 app.get('/api/demo', handleDemo);
@@ -63,18 +69,35 @@ app.get('/health', (req, res) => {
   });
 });
 
+// API 404 handler - must come before the catch-all
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ 
+    success: false,
+    error: `API endpoint not found: ${req.path}`,
+    availableEndpoints: [
+      '/api/demo',
+      '/api/ping',
+      '/api/test/connection',
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/scholarships'
+    ]
+  });
+});
+
 // Serve React app for all non-API routes
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
   // In development, let Vite handle the routing
   if (process.env.NODE_ENV === 'production') {
     const staticPath = path.join(__dirname, '../spa');
     res.sendFile(path.join(staticPath, 'index.html'));
   } else {
-    res.status(404).json({ error: 'Route not found' });
+    res.status(404).json({ 
+      success: false,
+      error: 'Route not found',
+      path: req.path,
+      method: req.method
+    });
   }
 });
 
@@ -95,15 +118,13 @@ async function startServer() {
     // Test database connection first
     const connectionTest = await testConnection();
     if (!connectionTest.success) {
-      console.error('❌ Database connection failed:', connectionTest.error);
-      process.exit(1);
+      console.warn('⚠️ Database connection failed, using mock database:', connectionTest.error);
     }
     
     // Initialize database tables
     const dbInit = await initializeDatabase();
     if (!dbInit.success) {
-      console.error('❌ Database initialization failed:', dbInit.error);
-      process.exit(1);
+      console.warn('⚠️ Database initialization failed, using mock database:', dbInit.error);
     }
     
     // Create default users
