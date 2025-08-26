@@ -1,7 +1,5 @@
 import { Router } from 'express';
-import { eq } from 'drizzle-orm';
-import { db } from '../config/database';
-import { users } from '../schema';
+import { mockDatabase } from '../config/database';
 import { 
   hashPassword, 
   comparePassword, 
@@ -60,14 +58,14 @@ router.post('/create-default-users', async (req, res) => {
     const createdUsers = [];
     
     for (const userData of defaultUsers) {
-      // Check if user already exists
-      const existingUser = await db.select().from(users).where(eq(users.email, userData.email)).limit(1);
+      // Check if user already exists in mock database
+      const existingUser = await mockDatabase.findUserByEmail(userData.email);
       
-      if (existingUser.length === 0) {
+      if (!existingUser) {
         // Hash password and create user
         const hashedPassword = await hashPassword(userData.password);
         
-        const newUser = await db.insert(users).values({
+        const newUser = await mockDatabase.createUser({
           email: userData.email,
           password: hashedPassword,
           firstName: userData.firstName,
@@ -77,17 +75,17 @@ router.post('/create-default-users', async (req, res) => {
           profileData: userData.profileData,
           isActive: true,
           emailVerified: true
-        }).returning();
+        });
         
         createdUsers.push({
           ...userData,
-          id: newUser[0].id,
+          id: newUser.id,
           password: userData.password // Return plain password for credentials
         });
       } else {
         createdUsers.push({
           ...userData,
-          id: existingUser[0].id,
+          id: existingUser.id,
           exists: true
         });
       }
@@ -146,9 +144,9 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Check if user already exists
-    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (existingUser.length > 0) {
+    // Check if user already exists in mock database
+    const existingUser = await mockDatabase.findUserByEmail(email);
+    if (existingUser) {
       return res.status(409).json({
         success: false,
         error: 'User with this email already exists'
@@ -158,8 +156,8 @@ router.post('/register', async (req, res) => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
-    const newUser = await db.insert(users).values({
+    // Create user in mock database
+    const newUser = await mockDatabase.createUser({
       email,
       password: hashedPassword,
       firstName,
@@ -169,17 +167,10 @@ router.post('/register', async (req, res) => {
       profileData,
       isActive: true,
       emailVerified: false
-    }).returning();
-
-    if (newUser.length === 0) {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to create user'
-      });
-    }
+    });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser[0];
+    const { password: _, ...userWithoutPassword } = newUser;
 
     // Generate token
     const token = generateToken(userWithoutPassword);
@@ -217,16 +208,16 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Find user by email
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (user.length === 0) {
+    // Find user by email in mock database
+    const user = await mockDatabase.findUserByEmail(email);
+    if (!user) {
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password'
       });
     }
 
-    const foundUser = user[0];
+    const foundUser = user;
 
     // Check if user is active
     if (!foundUser.isActive) {
@@ -282,8 +273,8 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res) => {
       });
     }
 
-    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    if (user.length === 0) {
+    const user = await mockDatabase.findUserById(userId);
+    if (!user) {
       return res.status(404).json({
         success: false,
         error: 'User not found'
@@ -291,7 +282,7 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user[0];
+    const { password: _, ...userWithoutPassword } = user;
 
     const response: ApiResponse = {
       success: true,
@@ -322,19 +313,16 @@ router.put('/profile', authenticateToken, async (req: AuthRequest, res) => {
 
     const { firstName, lastName, phone, profileData } = req.body;
 
-    // Update user
-    const updatedUser = await db.update(users)
-      .set({
-        firstName,
-        lastName,
-        phone,
-        profileData,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
+    // Update user in mock database
+    const updatedUser = await mockDatabase.updateUser(userId, {
+      firstName,
+      lastName,
+      phone,
+      profileData,
+      updatedAt: new Date()
+    });
 
-    if (updatedUser.length === 0) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
         error: 'User not found'
@@ -342,7 +330,7 @@ router.put('/profile', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = updatedUser[0];
+    const { password: _, ...userWithoutPassword } = updatedUser;
 
     const response: ApiResponse = {
       success: true,

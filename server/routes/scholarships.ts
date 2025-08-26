@@ -1,7 +1,5 @@
 import { Router } from 'express';
-import { eq, desc, and, gte, lte, like, count } from 'drizzle-orm';
-import { db } from '../config/database';
-import { scholarships, applications } from '../schema';
+import { mockDatabase } from '../config/database';
 import { authenticateToken, authorize, AuthRequest } from '../utils/auth';
 import { 
   CreateScholarshipInput, 
@@ -28,43 +26,27 @@ router.get('/', async (req, res) => {
       maxAmount
     }: ScholarshipQueryParams = req.query;
 
-    const offset = (Number(page) - 1) * Number(limit);
-
-    // Build query conditions
-    const conditions = [];
+    // Get scholarships from mock database
+    const allScholarships = await mockDatabase.getAllScholarships();
     
-    if (status) {
-      conditions.push(eq(scholarships.status, status));
+    // Apply filters
+    let filteredScholarships = allScholarships;
+    
+    if (status && status !== 'all') {
+      filteredScholarships = filteredScholarships.filter(s => s.status === status);
     }
     
     if (search) {
-      conditions.push(like(scholarships.title, `%${search}%`));
+      filteredScholarships = filteredScholarships.filter(s => 
+        s.title.toLowerCase().includes(search.toLowerCase())
+      );
     }
     
-    if (minAmount) {
-      conditions.push(gte(scholarships.amount, minAmount.toString()));
-    }
-    
-    if (maxAmount) {
-      conditions.push(lte(scholarships.amount, maxAmount.toString()));
-    }
-
-    // Get scholarships with pagination
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-    
-    const [scholarshipList, totalCount] = await Promise.all([
-      db.select()
-        .from(scholarships)
-        .where(whereClause)
-        .orderBy(sortOrder === 'desc' ? desc(scholarships.createdAt) : scholarships.createdAt)
-        .limit(Number(limit))
-        .offset(offset),
-      db.select({ count: count() })
-        .from(scholarships)
-        .where(whereClause)
-    ]);
-
-    const totalPages = Math.ceil(totalCount[0].count / Number(limit));
+    // Pagination
+    const offset = (Number(page) - 1) * Number(limit);
+    const scholarshipList = filteredScholarships.slice(offset, offset + Number(limit));
+    const totalCount = filteredScholarships.length;
+    const totalPages = Math.ceil(totalCount / Number(limit));
 
     const response: PaginatedResponse<Scholarship> = {
       success: true,
@@ -72,7 +54,7 @@ router.get('/', async (req, res) => {
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        total: totalCount[0].count,
+        total: totalCount,
         totalPages
       },
       message: 'Scholarships retrieved successfully'
@@ -93,12 +75,9 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const scholarship = await db.select()
-      .from(scholarships)
-      .where(eq(scholarships.id, Number(id)))
-      .limit(1);
+    const scholarship = await mockDatabase.getScholarshipById(Number(id));
 
-    if (scholarship.length === 0) {
+    if (!scholarship) {
       return res.status(404).json({
         success: false,
         error: 'Scholarship not found'
@@ -107,7 +86,7 @@ router.get('/:id', async (req, res) => {
 
     const response: ApiResponse<Scholarship> = {
       success: true,
-      data: scholarship[0],
+      data: scholarship,
       message: 'Scholarship retrieved successfully'
     };
 
