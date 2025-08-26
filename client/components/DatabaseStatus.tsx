@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Database, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
-import apiService from '../services/api';
 
 export const DatabaseStatus = () => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
@@ -11,7 +10,13 @@ export const DatabaseStatus = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        await apiService.testConnection();
+        const response = await fetch('/api/test/connection');
+        const result = await response.json();
+        if (result.success) {
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+        }
         setIsConnected(true);
       } catch (error) {
         setIsConnected(false);
@@ -50,28 +55,28 @@ export const DatabaseStatus = () => {
       <AlertCircle className="h-4 w-4 text-orange-600" />
       <AlertDescription className="text-orange-700">
         <div className="space-y-3">
-          <p className="font-medium">⚡ Backend server not connected</p>
+          <p className="font-medium">⚡ MySQL database not connected</p>
           <p className="text-sm">
-            To enable real authentication, you need to:
+            To connect to your MySQL database:
           </p>
           <ol className="text-sm space-y-1 ml-4 list-decimal">
-            <li>Set up PostgreSQL database (locally or cloud)</li>
-            <li>Create <code className="bg-orange-100 px-1 rounded">.env</code> file with DATABASE_URL</li>
-            <li>Run <code className="bg-orange-100 px-1 rounded">npm run db:migrate</code> to setup tables</li>
-            <li>Run <code className="bg-orange-100 px-1 rounded">npm run dev:server</code> in a new terminal</li>
+            <li>Ensure MySQL server is running on sparsindia.com</li>
+            <li>Verify database credentials are correct</li>
+            <li>Import the database_setup.sql file</li>
+            <li>Start backend server: <code className="bg-orange-100 px-1 rounded">npm run dev:server</code></li>
           </ol>
           <div className="flex items-center space-x-2 mt-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open('/docs/POSTGRESQL_SETUP.md', '_blank')}
+              onClick={() => window.open('/docs/MYSQL_SETUP.md', '_blank')}
               className="text-orange-700 border-orange-300 hover:bg-orange-100"
             >
               <ExternalLink className="h-3 w-3 mr-1" />
-              PostgreSQL Setup Guide
+              MySQL Setup Guide
             </Button>
           </div>
-        </div>
+        ✅ MySQL database connected successfully! Authentication is ready.
       </AlertDescription>
     </Alert>
   );

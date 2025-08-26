@@ -156,7 +156,7 @@ class ApiService {
 
   // Test database connection
   async testConnection(): Promise<ApiResponse> {
-    const response = await fetch(`${API_BASE_URL}/../health`, {
+    const response = await fetch(`${API_BASE_URL}/test/connection`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
