@@ -334,7 +334,6 @@ export async function createDefaultUsers() {
 export async function testConnection() {
   try {
     console.log('🔄 Testing database connection...');
-    console.log('🔄 Testing database connection...');
     const connection = await pool.getConnection();
     const [rows] = await connection.execute('SELECT VERSION() as version, NOW() as current_time, DATABASE() as database_name');
     connection.release();

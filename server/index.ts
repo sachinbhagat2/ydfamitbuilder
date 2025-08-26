@@ -69,8 +69,13 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  // In development, proxy to Vite dev server
-  res.redirect('http://localhost:5173' + req.path);
+  // In development, let Vite handle the routing
+  if (process.env.NODE_ENV === 'production') {
+    const staticPath = path.join(__dirname, '../spa');
+    res.sendFile(path.join(staticPath, 'index.html'));
+  } else {
+    res.status(404).json({ error: 'Route not found' });
+  }
 });
 
 // Error handling middleware
