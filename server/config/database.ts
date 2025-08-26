@@ -2,19 +2,26 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 
 const connectionConfig = {
-  host: 'bluehost.in',
+  host: 'sparshindia.com',
   port: 3306,
   user: 'sparsind_ydf',
   password: 'Vishwanath!@3',
   database: 'sparsind_ydf_ngo',
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    ca: undefined,
+    cert: undefined,
+    key: undefined
   },
-  connectTimeout: 60000,
-  acquireTimeout: 60000,
-  timeout: 60000,
+  connectTimeout: 120000,
+  acquireTimeout: 120000,
+  timeout: 120000,
+  socketTimeout: 120000,
   charset: 'utf8mb4',
-  multipleStatements: true
+  multipleStatements: true,
+  reconnect: true,
+  keepAliveInitialDelay: 0,
+  enableKeepAlive: true
 };
 
 // Create MySQL connection pool
