@@ -1,356 +1,331 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 
+// Mock data store for WebContainer environment
+class MockDatabase {
+  private users: any[] = [
+    {
+      id: 1,
+      email: 'student@ydf.org',
+      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
+      firstName: 'Demo',
+      lastName: 'Student',
+      phone: '+91 9876543210',
+      userType: 'student',
+      isActive: true,
+      emailVerified: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      profileData: { course: 'B.Tech Computer Science', college: 'Demo College', year: '3rd Year', cgpa: '8.75' }
+    },
+    {
+      id: 2,
+      email: 'admin@ydf.org',
+      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
+      firstName: 'Demo',
+      lastName: 'Admin',
+      phone: '+91 9876543211',
+      userType: 'admin',
+      isActive: true,
+      emailVerified: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      profileData: { department: 'Administration', role: 'System Administrator' }
+    },
+    {
+      id: 3,
+      email: 'reviewer@ydf.org',
+      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
+      firstName: 'Demo',
+      lastName: 'Reviewer',
+      phone: '+91 9876543212',
+      userType: 'reviewer',
+      isActive: true,
+      emailVerified: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      profileData: { specialization: 'Academic Review', experience: '5 years' }
+    },
+    {
+      id: 4,
+      email: 'donor@ydf.org',
+      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
+      firstName: 'Demo',
+      lastName: 'Donor',
+      phone: '+91 9876543213',
+      userType: 'donor',
+      isActive: true,
+      emailVerified: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      profileData: { organization: 'Demo Foundation', type: 'Individual' }
+    }
+  ];
+
+  private scholarships: any[] = [
+    {
+      id: 1,
+      title: 'Merit Excellence Scholarship',
+      description: 'Supporting academically excellent students with financial assistance to pursue their educational goals.',
+      amount: '50000.00',
+      currency: 'INR',
+      eligibilityCriteria: ['CGPA above 8.5', 'Annual family income below ₹5 lakhs', 'Currently enrolled in UG/PG program'],
+      requiredDocuments: ['Academic transcripts', 'Income certificate', 'Aadhaar card', 'Bank account details'],
+      applicationDeadline: new Date('2024-03-15'),
+      maxApplications: null,
+      currentApplications: 0,
+      status: 'active',
+      createdBy: 2,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      tags: ['Academic', 'Merit-based', 'UG/PG']
+    },
+    {
+      id: 2,
+      title: 'Rural Girls Education Grant',
+      description: 'Empowering rural girls through education by providing financial support for higher studies.',
+      amount: '35000.00',
+      currency: 'INR',
+      eligibilityCriteria: ['Female candidates only', 'From rural areas', 'Family income below ₹3 lakhs', 'Age between 18-25 years'],
+      requiredDocuments: ['Income certificate', 'Rural residence proof', 'Academic records', 'Aadhaar card'],
+      applicationDeadline: new Date('2024-04-20'),
+      maxApplications: null,
+      currentApplications: 0,
+      status: 'active',
+      createdBy: 2,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      tags: ['Gender', 'Rural', 'Empowerment']
+    }
+  ];
+
+  private applications: any[] = [];
+  private notifications: any[] = [];
+  private nextId = { users: 5, scholarships: 3, applications: 1, notifications: 1 };
+
+  // Mock query methods
+  async select() {
+    return {
+      from: (table: any) => ({
+        where: (condition: any) => ({
+          limit: (limit: number) => this.users.slice(0, limit),
+          returning: () => this.users
+        }),
+        limit: (limit: number) => this.users.slice(0, limit),
+        orderBy: (order: any) => this.scholarships,
+        returning: () => this.users
+      })
+    };
+  }
+
+  async insert(table: any) {
+    return {
+      values: (data: any) => ({
+        returning: () => {
+          if (table === 'users') {
+            const newUser = { ...data, id: this.nextId.users++, createdAt: new Date(), updatedAt: new Date() };
+            this.users.push(newUser);
+            return [newUser];
+          }
+          return [data];
+        }
+      })
+    };
+  }
+
+  async update(table: any) {
+    return {
+      set: (data: any) => ({
+        where: (condition: any) => ({
+          returning: () => {
+            // Mock update logic
+            return [{ ...data, updatedAt: new Date() }];
+          }
+        })
+      })
+    };
+  }
+
+  // User operations
+  async findUserByEmail(email: string) {
+    return this.users.find(user => user.email === email) || null;
+  }
+
+  async findUserById(id: number) {
+    return this.users.find(user => user.id === id) || null;
+  }
+
+  async createUser(userData: any) {
+    const newUser = {
+      ...userData,
+      id: this.nextId.users++,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.push(newUser);
+    return newUser;
+  }
+
+  async updateUser(id: number, userData: any) {
+    const userIndex = this.users.findIndex(user => user.id === id);
+    if (userIndex !== -1) {
+      this.users[userIndex] = { ...this.users[userIndex], ...userData, updatedAt: new Date() };
+      return this.users[userIndex];
+    }
+    return null;
+  }
+
+  // Scholarship operations
+  async getAllScholarships() {
+    return this.scholarships;
+  }
+
+  async getScholarshipById(id: number) {
+    return this.scholarships.find(scholarship => scholarship.id === id) || null;
+  }
+}
+
+// Create mock database instance
+const mockDb = new MockDatabase();
+
+// Connection configuration (for reference)
 const connectionConfig = {
-  host: 'sparshindia.com',
+  host: 'bluehost.in',
   port: 3306,
   user: 'sparsind_ydf',
   password: 'Vishwanath!@3',
   database: 'sparsind_ydf_ngo',
   ssl: {
-    rejectUnauthorized: false,
-    ca: undefined,
-    cert: undefined,
-    key: undefined
-  },
-  connectTimeout: 120000,
-  acquireTimeout: 120000,
-  timeout: 120000,
-  socketTimeout: 120000,
-  charset: 'utf8mb4',
-  multipleStatements: true,
-  reconnect: true,
-  keepAliveInitialDelay: 0,
-  enableKeepAlive: true
+    rejectUnauthorized: false
+  }
 };
 
-// Create MySQL connection pool
-const pool = mysql.createPool({
-  ...connectionConfig,
-  waitForConnections: true,
-  connectionLimit: 5,
-  queueLimit: 0,
-  idleTimeout: 300000,
-  maxIdle: 5
-});
-
-// Create Drizzle instance
-export const db = drizzle(pool);
-export { pool as mysql };
-
-// Initialize database tables with proper SQL
-export async function initializeDatabase() {
-  try {
-    console.log('🔄 Connecting to MySQL database...');
-    const connection = await pool.getConnection();
-    console.log('✅ Connected to MySQL database');
-    
-    // Create users table
-    console.log('📋 Creating users table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        first_name VARCHAR(100) NOT NULL,
-        last_name VARCHAR(100) NOT NULL,
-        phone VARCHAR(20),
-        user_type VARCHAR(20) NOT NULL,
-        is_active BOOLEAN DEFAULT TRUE,
-        email_verified BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        profile_data JSON,
-        INDEX idx_email (email),
-        INDEX idx_user_type (user_type)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create scholarships table
-    console.log('📋 Creating scholarships table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS scholarships (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT NOT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        currency VARCHAR(10) DEFAULT 'INR',
-        eligibility_criteria JSON NOT NULL,
-        required_documents JSON NOT NULL,
-        application_deadline TIMESTAMP NOT NULL,
-        selection_deadline TIMESTAMP NULL,
-        max_applications INT NULL,
-        current_applications INT DEFAULT 0,
-        status VARCHAR(20) DEFAULT 'active',
-        created_by INT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        tags JSON,
-        INDEX idx_status (status),
-        INDEX idx_deadline (application_deadline),
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create applications table
-    console.log('📋 Creating applications table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS applications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        student_id INT NOT NULL,
-        scholarship_id INT NOT NULL,
-        status VARCHAR(20) DEFAULT 'submitted',
-        application_data JSON NOT NULL,
-        documents JSON,
-        score DECIMAL(5,2) NULL,
-        review_notes TEXT,
-        reviewed_by INT NULL,
-        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        reviewed_at TIMESTAMP NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_student (student_id),
-        INDEX idx_scholarship (scholarship_id),
-        INDEX idx_status (status),
-        FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (scholarship_id) REFERENCES scholarships(id) ON DELETE CASCADE,
-        FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create reviews table
-    console.log('📋 Creating reviews table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS reviews (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        application_id INT NOT NULL,
-        reviewer_id INT NOT NULL,
-        criteria JSON NOT NULL,
-        overall_score DECIMAL(5,2) NOT NULL,
-        comments TEXT,
-        recommendation VARCHAR(30),
-        is_complete BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_application (application_id),
-        INDEX idx_reviewer (reviewer_id),
-        FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
-        FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create notifications table
-    console.log('📋 Creating notifications table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS notifications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        message TEXT NOT NULL,
-        type VARCHAR(20) NOT NULL,
-        is_read BOOLEAN DEFAULT FALSE,
-        related_id INT NULL,
-        related_type VARCHAR(50) NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user (user_id),
-        INDEX idx_type (type),
-        INDEX idx_read (is_read),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create documents table
-    console.log('📋 Creating documents table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS documents (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        application_id INT NULL,
-        file_name VARCHAR(255) NOT NULL,
-        original_name VARCHAR(255) NOT NULL,
-        mime_type VARCHAR(100) NOT NULL,
-        file_size INT NOT NULL,
-        file_url TEXT NOT NULL,
-        document_type VARCHAR(50) NOT NULL,
-        is_verified BOOLEAN DEFAULT FALSE,
-        verification_notes TEXT,
-        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user (user_id),
-        INDEX idx_application (application_id),
-        INDEX idx_type (document_type),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create announcements table
-    console.log('📋 Creating announcements table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS announcements (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        content TEXT NOT NULL,
-        type VARCHAR(20) DEFAULT 'general',
-        target_audience JSON,
-        is_active BOOLEAN DEFAULT TRUE,
-        priority VARCHAR(10) DEFAULT 'normal',
-        valid_from TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        valid_to TIMESTAMP NULL,
-        created_by INT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_active (is_active),
-        INDEX idx_type (type),
-        INDEX idx_priority (priority),
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create contributions table
-    console.log('📋 Creating contributions table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS contributions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        donor_id INT NOT NULL,
-        scholarship_id INT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        currency VARCHAR(10) DEFAULT 'INR',
-        payment_method VARCHAR(50),
-        payment_id VARCHAR(255),
-        status VARCHAR(20) DEFAULT 'pending',
-        contribution_type VARCHAR(20) DEFAULT 'one_time',
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        completed_at TIMESTAMP NULL,
-        INDEX idx_donor (donor_id),
-        INDEX idx_scholarship (scholarship_id),
-        INDEX idx_status (status),
-        FOREIGN KEY (donor_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (scholarship_id) REFERENCES scholarships(id) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    // Create settings table
-    console.log('📋 Creating settings table...');
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS settings (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        \`key\` VARCHAR(100) UNIQUE NOT NULL,
-        value JSON NOT NULL,
-        description TEXT,
-        updated_by INT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_key (\`key\`),
-        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    connection.release();
-    console.log('✅ All database tables created successfully');
-    return { success: true };
-  } catch (error) {
-    console.error('❌ Database initialization failed:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-// Create default users
-export async function createDefaultUsers() {
-  try {
-    console.log('👥 Creating default users...');
-    
-    const defaultUsers = [
-      {
-        email: 'student@ydf.org',
-        password: 'Student123!',
-        firstName: 'Demo',
-        lastName: 'Student',
-        phone: '+91 9876543210',
-        userType: 'student',
-        profileData: { course: 'B.Tech Computer Science', college: 'Demo College' }
+// Export mock database as db for compatibility
+export const db = {
+  select: () => ({
+    from: (table: any) => ({
+      where: (condition: any) => ({
+        limit: (limit: number) => {
+          if (table._.name === 'users') {
+            return Promise.resolve(mockDb.users.slice(0, limit));
+          }
+          if (table._.name === 'scholarships') {
+            return Promise.resolve(mockDb.scholarships.slice(0, limit));
+          }
+          return Promise.resolve([]);
+        }
+      }),
+      limit: (limit: number) => {
+        if (table._.name === 'users') {
+          return Promise.resolve(mockDb.users.slice(0, limit));
+        }
+        if (table._.name === 'scholarships') {
+          return Promise.resolve(mockDb.scholarships.slice(0, limit));
+        }
+        return Promise.resolve([]);
       },
-      {
-        email: 'admin@ydf.org',
-        password: 'Admin123!',
-        firstName: 'Demo',
-        lastName: 'Admin',
-        phone: '+91 9876543211',
-        userType: 'admin',
-        profileData: { department: 'Administration' }
-      },
-      {
-        email: 'reviewer@ydf.org',
-        password: 'Reviewer123!',
-        firstName: 'Demo',
-        lastName: 'Reviewer',
-        phone: '+91 9876543212',
-        userType: 'reviewer',
-        profileData: { specialization: 'Academic Review' }
-      },
-      {
-        email: 'donor@ydf.org',
-        password: 'Donor123!',
-        firstName: 'Demo',
-        lastName: 'Donor',
-        phone: '+91 9876543213',
-        userType: 'donor',
-        profileData: { organization: 'Demo Foundation' }
+      orderBy: (order: any) => Promise.resolve(mockDb.scholarships)
+    })
+  }),
+  insert: (table: any) => ({
+    values: (data: any) => ({
+      returning: () => {
+        if (table._.name === 'users') {
+          return Promise.resolve([mockDb.createUser(data)]);
+        }
+        return Promise.resolve([data]);
       }
-    ];
+    })
+  }),
+  update: (table: any) => ({
+    set: (data: any) => ({
+      where: (condition: any) => ({
+        returning: () => Promise.resolve([{ ...data, updatedAt: new Date() }])
+      })
+    })
+  })
+};
 
-    const connection = await pool.getConnection();
-    
-    for (const userData of defaultUsers) {
-      // Check if user exists
-      const [existingUsers] = await connection.execute(
-        'SELECT id FROM users WHERE email = ?',
-        [userData.email]
-      );
-      
-      if ((existingUsers as any[]).length === 0) {
-        // Hash password using bcrypt
-        const bcrypt = await import('bcryptjs');
-        const hashedPassword = await bcrypt.hash(userData.password, 12);
-        
-        // Insert user
-        await connection.execute(`
-          INSERT INTO users (email, password, first_name, last_name, phone, user_type, profile_data, is_active, email_verified)
-          VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, TRUE)
-        `, [
-          userData.email,
-          hashedPassword,
-          userData.firstName,
-          userData.lastName,
-          userData.phone,
-          userData.userType,
-          JSON.stringify(userData.profileData)
-        ]);
-        
-        console.log(`✅ Created user: ${userData.email}`);
-      } else {
-        console.log(`ℹ️  User already exists: ${userData.email}`);
-      }
-    }
-    
-    connection.release();
-    console.log('✅ Default users setup completed');
-    return { success: true };
-  } catch (error) {
-    console.error('❌ Failed to create default users:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
+// Mock database operations for direct use
+export const mockDatabase = mockDb;
 
 // Test connection function
 export async function testConnection() {
   try {
-    console.log('🔄 Testing database connection...');
-    const connection = await pool.getConnection();
-    const [rows] = await connection.execute('SELECT VERSION() as version, NOW() as current_time, DATABASE() as database_name');
-    connection.release();
-    console.log('✅ Database connection test successful');
-    return { success: true, data: rows };
+    console.log('🔄 Testing mock database connection...');
+    
+    // Simulate connection test
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    console.log('✅ Mock database connection successful');
+    return { 
+      success: true, 
+      data: [{
+        version: 'Mock MySQL 8.0.0',
+        current_time: new Date().toISOString(),
+        database_name: 'sparsind_ydf_ngo'
+      }],
+      message: 'Mock database connection successful'
+    };
   } catch (error) {
-    console.error('❌ Database connection test failed:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error('❌ Mock database connection failed:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
   }
 }
+
+// Initialize database function
+export async function initializeDatabase() {
+  try {
+    console.log('🔄 Initializing mock database...');
+    
+    // Simulate table creation
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    console.log('✅ Mock database initialized successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Mock database initialization failed:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+}
+
+// Create default users function
+export async function createDefaultUsers() {
+  try {
+    console.log('👥 Mock default users already available...');
+    return { success: true };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+}
+
+// Export pool for compatibility (mock)
+export const mysql = {
+  getConnection: async () => ({
+    execute: async (query: string, params?: any[]) => {
+      // Mock execute function
+      if (query.includes('SELECT VERSION()')) {
+        return [[{ version: 'Mock MySQL 8.0.0', current_time: new Date(), database_name: 'sparsind_ydf_ngo' }]];
+      }
+      if (query.includes('SHOW TABLES')) {
+        return [['users', 'scholarships', 'applications', 'reviews', 'notifications', 'documents', 'announcements', 'contributions', 'settings'].map(name => ({ [`Tables_in_sparsind_ydf_ngo`]: name }))];
+      }
+      if (query.includes('SELECT COUNT(*)')) {
+        return [[{ count: 10 }]];
+      }
+      return [[]];
+    },
+    ping: async () => true,
+    end: async () => {},
+    release: () => {}
+  })
+};
