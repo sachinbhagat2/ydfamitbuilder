@@ -4,9 +4,10 @@ config();
 
 import express from 'express';
 import cors from 'cors';
-// Import routes
 import { handleDemo } from './routes/demo';
 import testRoutes from './routes/test';
+import authRoutes from './routes/auth';
+import scholarshipRoutes from './routes/scholarships';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,13 +20,18 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Basic API routes
+// API routes
 app.get('/api/demo', handleDemo);
-app.use('/api/auth', require('./routes/auth').default);
-app.use('/api/scholarships', require('./routes/scholarships').default);
+app.use('/api/auth', authRoutes);
+app.use('/api/scholarships', scholarshipRoutes);
 app.use('/api/test', testRoutes);
+
 app.get('/api/ping', (req, res) => {
-  res.json({ message: 'Server is running', timestamp: new Date().toISOString() });
+  res.json({ 
+    success: true,
+    message: 'Server is running', 
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // Health check endpoint
@@ -33,7 +39,15 @@ app.get('/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'Youth Dreamers Foundation API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    endpoints: [
+      '/api/demo',
+      '/api/ping', 
+      '/api/test/connection',
+      '/api/auth/login',
+      '/api/auth/register',
+      '/health'
+    ]
   });
 });
 
@@ -46,11 +60,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Endpoint not found'
+    error: `API endpoint not found: ${req.path}`
   });
 });
 
@@ -58,6 +72,10 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API endpoints: http://localhost:${PORT}/api`);
+  console.log(`🔗 API demo: http://localhost:${PORT}/api/demo`);
+  console.log(`🔗 API ping: http://localhost:${PORT}/api/ping`);
 });
 
+export function createServer() {
+  return app;
+}
