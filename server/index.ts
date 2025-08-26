@@ -22,10 +22,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // API routes
 app.get('/api/demo', handleDemo);
-app.use('/api/auth', authRoutes);
-app.use('/api/scholarships', scholarshipRoutes);
-app.use('/api/test', testRoutes);
-
 app.get('/api/ping', (req, res) => {
   res.json({ 
     success: true,
@@ -33,6 +29,10 @@ app.get('/api/ping', (req, res) => {
     timestamp: new Date().toISOString() 
   });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/scholarships', scholarshipRoutes);
+app.use('/api/test', testRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
