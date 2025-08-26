@@ -1,148 +1,196 @@
-import { useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Shield, AlertCircle, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import apiService from '../services/api';
+import { User, CreateUserInput } from '../../shared/types/database';
+import { toast } from '../components/ui/use-toast';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles: string[];
+interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (userData: CreateUserInput) => Promise<boolean>;
+  logout: () => void;
+  redirectToDashboard: () => void;
 }
 
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { user, isAuthenticated, isLoading, redirectToDashboard } = useAuth();
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Initialize auth state on app load
   useEffect(() => {
-    // If user is authenticated but accessing wrong dashboard, redirect to correct one
-    if (isAuthenticated && user && !allowedRoles.includes(user.userType)) {
-      redirectToDashboard();
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('ydf_token');
+        const storedUser = localStorage.getItem('ydf_user');
+
+        if (token && storedUser) {
+          // Verify token with server
+          try {
+            const response = await apiService.verifyToken();
+            if (response.success && response.data) {
+              setUser(response.data);
+              setIsAuthenticated(true);
+            } else {
+              // Token invalid, clear auth data
+              apiService.clearAuth();
+            }
+          } catch (error) {
+            // Token verification failed, clear auth data
+            apiService.clearAuth();
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.login({ email, password });
+      
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${response.data.user.firstName}!`,
+        });
+
+        // Redirect to appropriate dashboard
+        redirectToDashboard(response.data.user);
+        return true;
+      } else {
+        toast({
+          title: "Login Failed",
+          description: response.error || "Invalid credentials",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login Error",
+        description: error instanceof Error ? error.message : "Login failed",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [isAuthenticated, user, allowedRoles, redirectToDashboard]);
+  };
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading...</h2>
-          <p className="text-gray-600">Verifying your authentication</p>
-        </motion.div>
-      </div>
-    );
-  }
+  const register = async (userData: CreateUserInput): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.register(userData);
+      
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        
+        toast({
+          title: "Registration Successful",
+          description: `Welcome to Youth Dreamers Foundation, ${response.data.user.firstName}!`,
+        });
 
-  // Show login required message
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
-        >
-          <Card>
-            <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-xl">Authentication Required</CardTitle>
-              <CardDescription>
-                You need to sign in to access this page
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <LogIn className="h-4 w-4" />
-                <AlertDescription>
-                  Please sign in with your account to continue
-                </AlertDescription>
-              </Alert>
-              <div className="flex flex-col space-y-2">
-                <Button 
-                  onClick={() => navigate('/auth')}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => navigate('/')}
-                  className="w-full"
-                >
-                  Back to Home
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
+        // Redirect to appropriate dashboard
+        redirectToDashboard(response.data.user);
+        return true;
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: response.error || "Registration failed",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration Error",
+        description: error instanceof Error ? error.message : "Registration failed",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Show access denied for wrong role
-  if (!allowedRoles.includes(user.userType)) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
-        >
-          <Card>
-            <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-xl">Access Denied</CardTitle>
-              <CardDescription>
-                You don't have permission to access this page
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert className="border-red-200 bg-red-50">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-700">
-                  This page is restricted to: {allowedRoles.join(', ')} users.
-                  <br />
-                  Your account type: <strong>{user.userType}</strong>
-                </AlertDescription>
-              </Alert>
-              <div className="flex flex-col space-y-2">
-                <Button 
-                  onClick={() => redirectToDashboard()}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  Go to My Dashboard
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.href = '/'}
-                  className="w-full"
-                >
-                  Back to Home
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
+  const logout = () => {
+    try {
+      apiService.clearAuth();
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
-  // Render protected content
-  return <>{children}</>;
+  const redirectToDashboard = (userToRedirect?: User) => {
+    const targetUser = userToRedirect || user;
+    if (!targetUser) return;
+
+    switch (targetUser.userType) {
+      case 'student':
+        navigate('/student-dashboard');
+        break;
+      case 'admin':
+        navigate('/admin-dashboard');
+        break;
+      case 'reviewer':
+        navigate('/reviewer-dashboard');
+        break;
+      case 'donor':
+        navigate('/donor-dashboard');
+        break;
+      default:
+        navigate('/student-dashboard');
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    register,
+    logout,
+    redirectToDashboard,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export default ProtectedRoute;
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

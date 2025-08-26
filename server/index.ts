@@ -1,4 +1,7 @@
-import 'dotenv/config';
+// Load environment variables first
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import { db, mysql } from './config/database';
