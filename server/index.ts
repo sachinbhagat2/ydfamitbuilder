@@ -24,6 +24,38 @@ app.get('/api/ping', (req, res) => {
   res.json({ message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
+// Database connection test endpoint
+app.get('/api/db-test', async (req, res) => {
+  try {
+    // Import database connection
+    const { db } = await import('./config/database.js');
+    
+    // Test query - get database version
+    const result = await db.execute('SELECT VERSION() as version, NOW() as current_time');
+    
+    res.json({
+      success: true,
+      message: 'Database connection successful',
+      data: {
+        server: 'sparsindia.com',
+        database: 'sparsind_ydf_ngo',
+        version: result[0]?.version || 'Unknown',
+        currentTime: result[0]?.current_time || new Date(),
+        connectionStatus: 'Connected'
+      }
+    });
+  } catch (error) {
+    console.error('Database connection test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Database connection failed',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      server: 'sparsindia.com',
+      database: 'sparsind_ydf_ngo'
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 

@@ -8,34 +8,49 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-// Parse the database URL to extract connection details
-const url = new URL(databaseUrl);
+// Connection configuration for sparsindia.com
 const connectionConfig = {
-  host: url.hostname,
-  port: url.port ? parseInt(url.port) : 3306,
-  user: url.username,
-  password: url.password,
-  database: url.pathname.slice(1), // Remove leading slash
+  host: 'sparsindia.com',
+  port: 3306,
+  user: 'sparsind_ydf',
+  password: 'Vishwanath!@3',
+  database: 'sparsind_ydf_ngo',
   ssl: {
-    rejectUnauthorized: false // Required for many shared hosting providers
+    rejectUnauthorized: false
   },
   connectTimeout: 60000,
   acquireTimeout: 60000,
   timeout: 60000,
-  reconnect: true
+  reconnect: true,
+  charset: 'utf8mb4'
 };
 
 // Create MySQL connection pool
 const pool = mysql.createPool({
   ...connectionConfig,
   waitForConnections: true,
-  connectionLimit: 5, // Reduced for shared hosting
+  connectionLimit: 3, // Conservative limit for shared hosting
   queueLimit: 0,
   acquireTimeout: 60000,
-  timeout: 60000
+  timeout: 60000,
+  idleTimeout: 300000,
+  maxIdle: 3
 });
 
 // Create Drizzle instance
 export const db = drizzle(pool);
 
 export { pool as mysql };
+
+// Test connection function
+export async function testConnection() {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute('SELECT 1 as test');
+    connection.release();
+    return { success: true, data: rows };
+  } catch (error) {
+    console.error('Database connection test failed:', error);
+    throw error;
+  }
+}
