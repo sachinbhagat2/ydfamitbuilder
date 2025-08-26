@@ -43,6 +43,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<Homepage />} />
                 <Route path="/auth" element={<Auth />} />
+               <Route path="/index" element={<Homepage />} />
+               <Route path="/home" element={<Homepage />} />
                 <Route 
                   path="/student-dashboard" 
                   element={
