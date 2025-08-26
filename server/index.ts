@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initializeDatabase } from './config/database';
+import { initializeDatabase, testConnection } from './config/database';
 import { handleDemo } from './routes/demo';
 import testRoutes from './routes/test';
 import authRoutes from './routes/auth';
