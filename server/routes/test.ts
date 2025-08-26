@@ -105,6 +105,55 @@ router.get('/check-tables', async (req, res) => {
   }
 });
 
+// Test different connection methods
+router.get('/connection-methods', async (req, res) => {
+  const testResults = [];
+  
+  // Test different hosts
+  const hostsToTest = [
+    'sparshindia.com',
+    'bluehost.in', 
+    'server.sparshindia.com',
+    'mysql.sparshindia.com'
+  ];
+  
+  for (const host of hostsToTest) {
+    try {
+      const mysql = await import('mysql2/promise');
+      const testConnection = await mysql.createConnection({
+        host,
+        port: 3306,
+        user: 'sparsind_ydf',
+        password: 'Vishwanath!@3',
+        database: 'sparsind_ydf_ngo',
+        connectTimeout: 30000,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      await testConnection.ping();
+      await testConnection.end();
+      
+      testResults.push({
+        host,
+        status: 'success',
+        message: 'Connection successful'
+      });
+    } catch (error) {
+      testResults.push({
+        host,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+  
+  res.json({
+    success: true,
+    message: 'Connection test results',
+    results: testResults
+  });
+});
+
 // Comprehensive API and database test endpoint
 router.get('/connection', async (req, res) => {
   const testResults = {
