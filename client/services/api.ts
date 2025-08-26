@@ -51,7 +51,12 @@ class ApiService {
       body: JSON.stringify(loginData)
     });
     
-    const result = await this.handleResponse<AuthResponse>(response);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Login failed');
+    }
+    
+    const result = await response.json();
     
     // Store token and user data on successful login
     if (result.success && result.data) {
@@ -69,7 +74,12 @@ class ApiService {
     });
     
     // Clear local storage regardless of response
-    localStorage.removeItem('ydf_token');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Registration failed');
+    }
+    
+    const result = await response.json();
     localStorage.removeItem('ydf_user');
     
     return this.handleResponse(response);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Chrome, Linkedin } from 'lucide-react';
@@ -9,9 +9,9 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import apiService from '../services/api';
 import DatabaseStatus from '../components/DatabaseStatus';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from '../components/ui/use-toast';
 
 type AuthMode = 'login' | 'signup' | 'forgot-password';
 
@@ -84,6 +84,10 @@ export default function Auth() {
       if (mode === 'forgot-password') {
         // TODO: Implement forgot password API
         setSuccess('Password reset link has been sent to your email');
+        toast({
+          title: "Reset Link Sent",
+          description: "Please check your email for password reset instructions",
+        });
         setTimeout(() => setMode('login'), 3000);
       } else if (mode === 'signup') {
         // Use AuthContext register method
@@ -99,7 +103,6 @@ export default function Auth() {
 
         const success = await register(userData);
         if (success) {
-          setSuccess('Account created successfully! Redirecting...');
           // Don't set loading to false here, let AuthContext handle it
           return;
         } else {
@@ -109,7 +112,6 @@ export default function Auth() {
         // Use AuthContext login method
         const success = await login(formData.email, formData.password);
         if (success) {
-          setSuccess('Login successful! Redirecting...');
           // Don't set loading to false here, let AuthContext handle it
           return;
         } else {
@@ -137,6 +139,17 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
+      {/* Back to Home Button */}
+      <div className="absolute top-4 left-4">
+        <Link
+          to="/"
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -297,10 +310,10 @@ export default function Auth() {
                       name="userType"
                       value={formData.userType}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-background"
                     >
                       <option value="student">Student</option>
-                      <option value="admin">Administrator</option>
+                      <option value="admin">Admin</option>
                       <option value="reviewer">Reviewer</option>
                       <option value="donor">Donor</option>
                     </select>
@@ -435,6 +448,19 @@ export default function Auth() {
               {mode === 'signup' && (
                 <div className="text-sm text-gray-600">
                   Already have an account?{' '}
+                  <Button
+                    variant="link"
+                    onClick={() => setMode('login')}
+                    className="text-blue-600 hover:text-blue-700 p-0 h-auto"
+                  >
+                    Sign in
+                  </Button>
+                </div>
+              )}
+
+              {mode === 'forgot-password' && (
+                <div className="text-sm text-gray-600">
+                  Remember your password?{' '}
                   <Button
                     variant="link"
                     onClick={() => setMode('login')}

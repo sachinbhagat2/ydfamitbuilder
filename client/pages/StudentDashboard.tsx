@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "../contexts/AuthContext";
+import RoleBasedNavigation from "../components/RoleBasedNavigation";
 import OnboardingTour from "../components/OnboardingTour";
 import {
   GraduationCap,
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 
 const StudentDashboard = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -126,27 +129,29 @@ const StudentDashboard = () => {
         />
       )}
       <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-ydf-light-gray">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Good Morning, Arjun!
-              </h1>
-              <p className="text-sm text-gray-600">
-                Ready to explore new opportunities?
-              </p>
-            </div>
-            <div className="relative">
-              <Bell className="h-6 w-6 text-gray-600" />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                3
-              </span>
+        <RoleBasedNavigation />
+        
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-ydf-light-gray">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Good Morning, {user?.firstName || 'Student'}!
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Ready to explore new opportunities?
+                </p>
+              </div>
+              <div className="relative">
+                <Bell className="h-6 w-6 text-gray-600" />
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  3
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       <div className="px-6 py-6 space-y-6">
         {/* Stats Cards */}

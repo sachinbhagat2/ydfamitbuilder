@@ -204,10 +204,12 @@ const Homepage = () => {
                 {isAuthenticated ? (
                   <>
                     <Link
-                      to={user?.userType === 'student' ? '/student-dashboard' : 
-                          user?.userType === 'admin' ? '/admin-dashboard' :
-                          user?.userType === 'reviewer' ? '/reviewer-dashboard' :
-                          user?.userType === 'donor' ? '/donor-dashboard' : '/student-dashboard'}
+                      to={
+                        user?.userType === 'student' ? '/student-dashboard' : 
+                        user?.userType === 'admin' ? '/admin-dashboard' :
+                        user?.userType === 'reviewer' ? '/reviewer-dashboard' :
+                        user?.userType === 'donor' ? '/donor-dashboard' : '/student-dashboard'
+                      }
                       className="text-white hover:text-ydf-golden-yellow transition-colors font-medium"
                     >
                       Dashboard

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../contexts/AuthContext";
+import RoleBasedNavigation from "../components/RoleBasedNavigation";
 import OnboardingTour from "../components/OnboardingTour";
 import {
   Users,
@@ -23,6 +25,7 @@ import {
 } from "lucide-react";
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -462,29 +465,31 @@ const AdminDashboard = () => {
         />
       )}
       <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-ydf-light-gray">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Admin Dashboard
-              </h1>
-              <p className="text-sm text-gray-600">
-                Manage scholarships and applications
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <Download className="h-5 w-5 text-gray-600" />
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <Settings className="h-5 w-5 text-gray-600" />
-              </button>
+        <RoleBasedNavigation />
+        
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-ydf-light-gray">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Admin Dashboard
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Welcome back, {user?.firstName}! Manage scholarships and applications
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <Download className="h-5 w-5 text-gray-600" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <Settings className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       <div className="flex">
         {/* Sidebar Navigation */}

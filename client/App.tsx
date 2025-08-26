@@ -103,7 +103,7 @@ const App = () => (
               />
               {/* Legacy routes for backward compatibility */}
               <Route 
-                path="/admin" 
+                path="/admin"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminDashboard />
@@ -111,7 +111,7 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/reviewer" 
+                path="/reviewer"
                 element={
                   <ProtectedRoute allowedRoles={['reviewer']}>
                     <ReviewerDashboard />
@@ -119,7 +119,7 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/donor" 
+                path="/donor"
                 element={
                   <ProtectedRoute allowedRoles={['donor']}>
                     <DonorDashboard />

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, AlertCircle, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
@@ -13,11 +14,14 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, isAuthenticated, isLoading, redirectToDashboard } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // If user is authenticated but accessing wrong dashboard, redirect to correct one
     if (isAuthenticated && user && !allowedRoles.includes(user.userType)) {
-      redirectToDashboard();
+      setTimeout(() => {
+        redirectToDashboard();
+      }, 1000);
     }
   }, [isAuthenticated, user, allowedRoles, redirectToDashboard]);
 
@@ -68,7 +72,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
               </Alert>
               <div className="flex flex-col space-y-2">
                 <Button 
-                  onClick={() => window.location.href = '/auth'}
+                  onClick={() => navigate('/auth')}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   <LogIn className="h-4 w-4 mr-2" />
@@ -76,7 +80,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => navigate('/')}
                   className="w-full"
                 >
                   Back to Home
@@ -126,7 +130,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => navigate('/')}
                   className="w-full"
                 >
                   Back to Home

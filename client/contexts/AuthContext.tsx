@@ -1,167 +1,148 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { User } from '../../shared/types/database';
-import apiService from '../services/api';
+import { motion } from 'framer-motion';
+import { Shield, AlertCircle, LogIn } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Alert, AlertDescription } from './ui/alert';
 
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  register: (userData: any) => Promise<boolean>;
-  updateUser: (userData: Partial<User>) => void;
-  redirectToDashboard: (userType?: string) => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
+interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles: string[];
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const { user, isAuthenticated, isLoading, redirectToDashboard } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already logged in on app start
-    const initializeAuth = async () => {
-      try {
-        const token = apiService.getToken();
-        const storedUser = apiService.getCurrentUser();
-        
-        if (token && storedUser) {
-          // Verify token is still valid
-          try {
-            const response = await apiService.verifyToken();
-            if (response.success) {
-              setUser(storedUser);
-            } else {
-              // Token is invalid, clear auth
-              apiService.clearAuth();
-            }
-          } catch (error) {
-            // Token verification failed, clear auth
-            apiService.clearAuth();
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        apiService.clearAuth();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  const redirectToDashboard = (userType?: string) => {
-    const type = userType || user?.userType;
-    switch (type) {
-      case 'admin':
-        navigate('/admin-dashboard');
-        break;
-      case 'reviewer':
-        navigate('/reviewer-dashboard');
-        break;
-      case 'donor':
-        navigate('/donor-dashboard');
-        break;
-      case 'student':
-      default:
-        navigate('/student-dashboard');
-        break;
+    // If user is authenticated but accessing wrong dashboard, redirect to correct one
+    if (isAuthenticated && user && !allowedRoles.includes(user.userType)) {
+      redirectToDashboard();
     }
-  };
+  }, [isAuthenticated, user, allowedRoles, redirectToDashboard]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.login({ email, password });
-      if (response.success && response.data) {
-        setUser(response.data.user);
-        // Auto-redirect to appropriate dashboard after successful login
-        setTimeout(() => {
-          redirectToDashboard(response.data.user.userType);
-        }, 100);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading...</h2>
+          <p className="text-gray-600">Verifying your authentication</p>
+        </motion.div>
+      </div>
+    );
+  }
 
-  const register = async (userData: any): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.register(userData);
-      if (response.success && response.data) {
-        setUser(response.data.user);
-        // Auto-redirect to appropriate dashboard after successful registration
-        setTimeout(() => {
-          redirectToDashboard(response.data.user.userType);
-        }, 100);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Register error:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Show login required message
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <Card>
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-xl">Authentication Required</CardTitle>
+              <CardDescription>
+                You need to sign in to access this page
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <LogIn className="h-4 w-4" />
+                <AlertDescription>
+                  Please sign in with your account to continue
+                </AlertDescription>
+              </Alert>
+              <div className="flex flex-col space-y-2">
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/')}
+                  className="w-full"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
-  const logout = async (): Promise<void> => {
-    try {
-      await apiService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setUser(null);
-      navigate('/');
-    }
-  };
+  // Show access denied for wrong role
+  if (!allowedRoles.includes(user.userType)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <Card>
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-xl">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to access this page
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-700">
+                  This page is restricted to: {allowedRoles.join(', ')} users.
+                  <br />
+                  Your account type: <strong>{user.userType}</strong>
+                </AlertDescription>
+              </Alert>
+              <div className="flex flex-col space-y-2">
+                <Button 
+                  onClick={() => redirectToDashboard()}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  Go to My Dashboard
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/'}
+                  className="w-full"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
-  const updateUser = (userData: Partial<User>): void => {
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-      localStorage.setItem('ydf_user', JSON.stringify(updatedUser));
-    }
-  };
-
-  const value: AuthContextType = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    login,
-    logout,
-    register,
-    updateUser,
-    redirectToDashboard,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  // Render protected content
+  return <>{children}</>;
 };
 
-export default AuthContext;
+export default ProtectedRoute;

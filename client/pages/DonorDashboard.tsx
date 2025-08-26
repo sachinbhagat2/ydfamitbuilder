@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../contexts/AuthContext";
+import RoleBasedNavigation from "../components/RoleBasedNavigation";
 import {
   Heart,
   Users,
@@ -20,6 +22,7 @@ import {
 } from "lucide-react";
 
 const DonorDashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   const donorStats = [
@@ -524,6 +527,8 @@ const DonorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <RoleBasedNavigation />
+      
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-ydf-light-gray">
         <div className="px-6 py-4">
@@ -533,7 +538,7 @@ const DonorDashboard = () => {
                 Donor Dashboard
               </h1>
               <p className="text-sm text-gray-600">
-                Track your contributions and support students
+                Welcome back, {user?.firstName}! Track your contributions and support students
               </p>
             </div>
             <div className="flex items-center space-x-2">
