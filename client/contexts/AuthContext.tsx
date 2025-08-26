@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '../../shared/types/database';
 import apiService from '../services/api';
 
@@ -10,6 +11,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   register: (userData: any) => Promise<boolean>;
   updateUser: (userData: Partial<User>) => void;
+  redirectToDashboard: (userType?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +31,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is already logged in on app start
@@ -39,11 +42,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         if (token && storedUser) {
           // Verify token is still valid
-          const response = await apiService.verifyToken();
-          if (response.success) {
-            setUser(storedUser);
-          } else {
-            // Token is invalid, clear auth
+          try {
+            const response = await apiService.verifyToken();
+            if (response.success) {
+              setUser(storedUser);
+            } else {
+              // Token is invalid, clear auth
+              apiService.clearAuth();
+            }
+          } catch (error) {
+            // Token verification failed, clear auth
             apiService.clearAuth();
           }
         }
@@ -58,11 +66,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  const redirectToDashboard = (userType?: string) => {
+    const type = userType || user?.userType;
+    switch (type) {
+      case 'admin':
+        navigate('/admin-dashboard');
+        break;
+      case 'reviewer':
+        navigate('/reviewer-dashboard');
+        break;
+      case 'donor':
+        navigate('/donor-dashboard');
+        break;
+      case 'student':
+      default:
+        navigate('/student-dashboard');
+        break;
+    }
+  };
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await apiService.login({ email, password });
       if (response.success && response.data) {
         setUser(response.data.user);
+        // Auto-redirect to appropriate dashboard after successful login
+        setTimeout(() => {
+          redirectToDashboard(response.data.user.userType);
+        }, 100);
         return true;
       }
       return false;
@@ -77,6 +107,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiService.register(userData);
       if (response.success && response.data) {
         setUser(response.data.user);
+        // Auto-redirect to appropriate dashboard after successful registration
+        setTimeout(() => {
+          redirectToDashboard(response.data.user.userType);
+        }, 100);
         return true;
       }
       return false;
@@ -93,6 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
+      navigate('/');
     }
   };
 
@@ -112,6 +147,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     register,
     updateUser,
+    redirectToDashboard,
   };
 
   return (
