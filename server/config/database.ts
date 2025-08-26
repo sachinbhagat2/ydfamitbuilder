@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 
 const connectionConfig = {
-  host: 'sparsindia.com',
+  host: '162.214.80.161',
   port: 3306,
   user: 'sparsind_ydf',
   password: 'Vishwanath!@3',
