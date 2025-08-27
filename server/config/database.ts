@@ -526,7 +526,32 @@ export async function createDefaultUsers() {
     ];
 
     if (USE_MOCK || !pool) {
-      // Already present in memory
+      for (const u of defaults) {
+        const existing = memory.users.find((x) => x.email === u.email);
+        const hashed = await hashPassword(u.password);
+        if (!existing) {
+          memory.users.push({
+            id: memory.users.length ? Math.max(...memory.users.map((m: any) => m.id)) + 1 : 1,
+            email: u.email,
+            password: hashed,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            phone: u.phone,
+            userType: u.userType,
+            isActive: u.isActive,
+            emailVerified: u.emailVerified,
+            profileData: u.profileData,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          existing.password = hashed;
+          existing.userType = u.userType;
+          existing.isActive = true;
+          existing.emailVerified = true;
+          existing.updatedAt = new Date();
+        }
+      }
       return { success: true };
     }
 
