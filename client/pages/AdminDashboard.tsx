@@ -588,6 +588,52 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4">
+            <h3 className="text-lg font-semibold">{editing ? 'Edit Scholarship' : 'Create Scholarship'}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">Title</label>
+                <input className="w-full border rounded px-3 py-2" value={form.title} onChange={e=> setForm({...form, title: e.target.value})} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">Description</label>
+                <textarea className="w-full border rounded px-3 py-2" rows={3} value={form.description} onChange={e=> setForm({...form, description: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Amount (INR)</label>
+                <input className="w-full border rounded px-3 py-2" value={form.amount} onChange={e=> setForm({...form, amount: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Max Applications</label>
+                <input className="w-full border rounded px-3 py-2" value={form.maxApplications} onChange={e=> setForm({...form, maxApplications: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Application Deadline</label>
+                <input type="datetime-local" className="w-full border rounded px-3 py-2" value={form.applicationDeadline} onChange={e=> setForm({...form, applicationDeadline: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Selection Deadline</label>
+                <input type="datetime-local" className="w-full border rounded px-3 py-2" value={form.selectionDeadline} onChange={e=> setForm({...form, selectionDeadline: e.target.value})} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">Eligibility (comma separated)</label>
+                <input className="w-full border rounded px-3 py-2" value={Array.isArray(form.eligibilityCriteria)? form.eligibilityCriteria.join(', '): form.eligibilityCriteria} onChange={e=> setForm({...form, eligibilityCriteria: e.target.value})} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">Required Documents (comma separated)</label>
+                <input className="w-full border rounded px-3 py-2" value={Array.isArray(form.requiredDocuments)? form.requiredDocuments.join(', '): form.requiredDocuments} onChange={e=> setForm({...form, requiredDocuments: e.target.value})} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={()=> setShowForm(false)} className="px-4 py-2 rounded border">Cancel</button>
+              <button onClick={submitForm} className="px-4 py-2 rounded bg-ydf-deep-blue text-white">{editing ? 'Save Changes' : 'Create'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
