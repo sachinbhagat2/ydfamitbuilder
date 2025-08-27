@@ -152,6 +152,16 @@ async function ensureUsersTable() {
       updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+  try {
+    const [cols]: any = await pool.execute("SHOW COLUMNS FROM users LIKE 'userType'");
+    const col = (cols as any[])[0];
+    const typeStr = (col && col.Type) || (col && col['Type']);
+    if (typeStr && !String(typeStr).includes("surveyor")) {
+      await pool.execute(`ALTER TABLE users MODIFY COLUMN userType ENUM('student','admin','reviewer','donor','surveyor') NOT NULL`);
+    }
+  } catch (e) {
+    console.warn('Could not verify/alter users.userType enum:', e instanceof Error ? e.message : e);
+  }
 }
 
 // Adapter to provide the same interface used by routes
