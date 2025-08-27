@@ -66,12 +66,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(response.data.user);
         setIsAuthenticated(true);
 
+        // Verify token to ensure fresh role data
+        try {
+          const verified = await apiService.verifyToken();
+          if (verified.success && verified.data) {
+            const merged: any = { ...response.data.user, ...verified.data };
+            setUser(merged);
+            toast({
+              title: "Login Successful",
+              description: `Welcome back, ${merged.firstName || response.data.user.firstName}!`,
+            });
+            redirectToDashboard(merged);
+            return true;
+          }
+        } catch {}
+
         toast({
           title: "Login Successful",
           description: `Welcome back, ${response.data.user.firstName}!`,
         });
-
-        // Redirect to appropriate dashboard
         redirectToDashboard(response.data.user);
         return true;
       } else {
