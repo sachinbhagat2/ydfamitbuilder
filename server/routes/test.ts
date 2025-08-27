@@ -90,8 +90,8 @@ router.get('/check-tables', async (req, res) => {
     
     res.json({
       success: true,
-      database: 'sparsind_ydf_ngo',
-      host: 'bluehost.in',
+      database: (process.env.DB_NAME || '').trim(),
+      host: (process.env.DB_HOST || '').trim(),
       tablesCount: tables.length,
       tables: tableDetails
     });
@@ -110,11 +110,11 @@ router.get('/connection-methods', async (req, res) => {
   const testResults = [];
   
   // Test different hosts
+  const envHost = (process.env.DB_HOST || '').trim() || 'localhost';
   const hostsToTest = [
-    'sparshindia.com',
-    'bluehost.in', 
-    'server.sparshindia.com',
-    'mysql.sparshindia.com'
+    envHost,
+    `mysql.${envHost}`,
+    `server.${envHost}`
   ];
   
   for (const host of hostsToTest) {
@@ -123,9 +123,9 @@ router.get('/connection-methods', async (req, res) => {
       const testConnection = await mysql.createConnection({
         host,
         port: 3306,
-        user: 'sparsind_ydf',
-        password: 'Vishwanath!@3',
-        database: 'sparsind_ydf_ngo',
+        user: (process.env.DB_USER || '').trim(),
+        password: process.env.DB_PASSWORD || '',
+        database: (process.env.DB_NAME || '').trim(),
         connectTimeout: 30000,
         ssl: { rejectUnauthorized: false }
       });
@@ -164,9 +164,9 @@ router.get('/connection', async (req, res) => {
       environment: process.env.NODE_ENV || 'development'
     },
     database: {
-      host: 'bluehost.in',
-      database: 'sparsind_ydf_ngo',
-      user: 'sparsind_ydf',
+      host: (process.env.DB_HOST || '').trim(),
+      database: (process.env.DB_NAME || '').trim(),
+      user: (process.env.DB_USER || '').trim(),
       status: 'unknown',
       version: null,
       connectionTime: null,

@@ -1,9 +1,21 @@
-import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
+import { hashPassword } from '../utils/auth';
 
-// Mock data store for WebContainer environment
-class MockDatabase {
-  private users: any[] = [
+// Determine whether to use mock DB (default false if full credentials are provided)
+const useMockExplicit = (process.env.USE_MOCK_DB || '').toLowerCase() === 'true';
+
+const DB_HOST = (process.env.DB_HOST || '').trim();
+const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10);
+const DB_USER = (process.env.DB_USER || '').trim();
+const DB_PASSWORD = process.env.DB_PASSWORD || '';
+const DB_NAME = (process.env.DB_NAME || '').trim();
+
+const hasCreds = DB_HOST && DB_USER && DB_PASSWORD && DB_NAME;
+const USE_MOCK = useMockExplicit || !hasCreds;
+
+// In-memory fallback store
+class InMemoryStore {
+  public users: any[] = [
     {
       id: 1,
       email: 'student@ydf.org',
@@ -61,271 +73,198 @@ class MockDatabase {
       profileData: { organization: 'Demo Foundation', type: 'Individual' }
     }
   ];
+}
 
-  private scholarships: any[] = [
-    {
-      id: 1,
-      title: 'Merit Excellence Scholarship',
-      description: 'Supporting academically excellent students with financial assistance to pursue their educational goals.',
-      amount: '50000.00',
-      currency: 'INR',
-      eligibilityCriteria: ['CGPA above 8.5', 'Annual family income below ₹5 lakhs', 'Currently enrolled in UG/PG program'],
-      requiredDocuments: ['Academic transcripts', 'Income certificate', 'Aadhaar card', 'Bank account details'],
-      applicationDeadline: new Date('2024-03-15'),
-      maxApplications: null,
-      currentApplications: 0,
-      status: 'active',
-      createdBy: 2,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      tags: ['Academic', 'Merit-based', 'UG/PG']
-    },
-    {
-      id: 2,
-      title: 'Rural Girls Education Grant',
-      description: 'Empowering rural girls through education by providing financial support for higher studies.',
-      amount: '35000.00',
-      currency: 'INR',
-      eligibilityCriteria: ['Female candidates only', 'From rural areas', 'Family income below ₹3 lakhs', 'Age between 18-25 years'],
-      requiredDocuments: ['Income certificate', 'Rural residence proof', 'Academic records', 'Aadhaar card'],
-      applicationDeadline: new Date('2024-04-20'),
-      maxApplications: null,
-      currentApplications: 0,
-      status: 'active',
-      createdBy: 2,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      tags: ['Gender', 'Rural', 'Empowerment']
+const memory = new InMemoryStore();
+
+// MySQL pool
+export const pool = !USE_MOCK
+  ? mysql.createPool({
+      host: DB_HOST,
+      port: DB_PORT,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      database: DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      connectTimeout: 30000,
+      ssl: { rejectUnauthorized: false }
+    })
+  : null as unknown as mysql.Pool;
+
+// Provide a compatibility wrapper like previous `mysql.getConnection()` export
+export const mysql as any = {
+  getConnection: async () => {
+    if (USE_MOCK || !pool) {
+      return {
+        execute: async (_q: string, _p?: any[]) => [[]],
+        ping: async () => true,
+        end: async () => {},
+        release: () => {}
+      };
     }
-  ];
-
-  private applications: any[] = [];
-  private notifications: any[] = [];
-  private nextId = { users: 5, scholarships: 3, applications: 1, notifications: 1 };
-
-  // Mock query methods
-  async select() {
-    return {
-      from: (table: any) => ({
-        where: (condition: any) => ({
-          limit: (limit: number) => this.users.slice(0, limit),
-          returning: () => this.users
-        }),
-        limit: (limit: number) => this.users.slice(0, limit),
-        orderBy: (order: any) => this.scholarships,
-        returning: () => this.users
-      })
-    };
+    return pool.getConnection();
   }
+};
 
-  async insert(table: any) {
-    return {
-      values: (data: any) => ({
-        returning: () => {
-          if (table === 'users') {
-            const newUser = { ...data, id: this.nextId.users++, createdAt: new Date(), updatedAt: new Date() };
-            this.users.push(newUser);
-            return [newUser];
-          }
-          return [data];
-        }
-      })
-    };
-  }
+// Helper to ensure tables exist in MySQL
+async function ensureUsersTable() {
+  if (USE_MOCK || !pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      firstName VARCHAR(100) NOT NULL,
+      lastName VARCHAR(100) NOT NULL,
+      phone VARCHAR(50),
+      userType ENUM('student','admin','reviewer','donor') NOT NULL,
+      isActive TINYINT(1) NOT NULL DEFAULT 1,
+      emailVerified TINYINT(1) NOT NULL DEFAULT 0,
+      profileData JSON NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
 
-  async update(table: any) {
-    return {
-      set: (data: any) => ({
-        where: (condition: any) => ({
-          returning: () => {
-            // Mock update logic
-            return [{ ...data, updatedAt: new Date() }];
-          }
-        })
-      })
-    };
-  }
-
-  // User operations
+// Adapter to provide the same interface used by routes
+class DatabaseAdapter {
   async findUserByEmail(email: string) {
-    return this.users.find(user => user.email === email) || null;
+    if (USE_MOCK || !pool) {
+      return memory.users.find(u => u.email === email) || null;
+    }
+    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ? LIMIT 1', [email]);
+    return (rows as any[])[0] || null;
   }
 
   async findUserById(id: number) {
-    return this.users.find(user => user.id === id) || null;
+    if (USE_MOCK || !pool) {
+      return memory.users.find(u => u.id === id) || null;
+    }
+    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+    return (rows as any[])[0] || null;
   }
 
   async createUser(userData: any) {
-    const newUser = {
-      ...userData,
-      id: this.nextId.users++,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.users.push(newUser);
-    return newUser;
+    if (USE_MOCK || !pool) {
+      const newUser = { ...userData, id: memory.users.length + 1, createdAt: new Date(), updatedAt: new Date() };
+      memory.users.push(newUser);
+      return newUser;
+    }
+    const fields = [
+      'email','password','firstName','lastName','phone','userType','isActive','emailVerified','profileData'
+    ];
+    const values = [
+      userData.email,
+      userData.password,
+      userData.firstName,
+      userData.lastName,
+      userData.phone ?? null,
+      userData.userType,
+      userData.isActive ? 1 : 0,
+      userData.emailVerified ? 1 : 0,
+      userData.profileData ? JSON.stringify(userData.profileData) : null
+    ];
+    const placeholders = fields.map(() => '?').join(',');
+    const sql = `INSERT INTO users (${fields.join(',')}) VALUES (${placeholders})`;
+    const [result]: any = await pool.execute(sql, values);
+    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [result.insertId]);
+    return (rows as any[])[0];
   }
 
   async updateUser(id: number, userData: any) {
-    const userIndex = this.users.findIndex(user => user.id === id);
-    if (userIndex !== -1) {
-      this.users[userIndex] = { ...this.users[userIndex], ...userData, updatedAt: new Date() };
-      return this.users[userIndex];
+    if (USE_MOCK || !pool) {
+      const idx = memory.users.findIndex(u => u.id === id);
+      if (idx === -1) return null;
+      memory.users[idx] = { ...memory.users[idx], ...userData, updatedAt: new Date() };
+      return memory.users[idx];
     }
-    return null;
-  }
-
-  // Scholarship operations
-  async getAllScholarships() {
-    return this.scholarships;
-  }
-
-  async getScholarshipById(id: number) {
-    return this.scholarships.find(scholarship => scholarship.id === id) || null;
+    const columns: string[] = [];
+    const values: any[] = [];
+    for (const [key, val] of Object.entries(userData)) {
+      if (['email','password','firstName','lastName','phone','userType','isActive','emailVerified','profileData'].includes(key)) {
+        columns.push(`${key} = ?`);
+        values.push(key === 'profileData' && val != null ? JSON.stringify(val) : val);
+      }
+    }
+    if (!columns.length) {
+      const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+      return (rows as any[])[0] || null;
+    }
+    const sql = `UPDATE users SET ${columns.join(', ')}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`;
+    values.push(id);
+    await pool.execute(sql, values);
+    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+    return (rows as any[])[0] || null;
   }
 }
 
-// Create mock database instance
-const mockDb = new MockDatabase();
+export const mockDatabase = new DatabaseAdapter();
 
-// Connection configuration (for reference)
-const connectionConfig = {
-  host: 'bluehost.in',
-  port: 3306,
-  user: 'sparsind_ydf',
-  password: 'Vishwanath!@3',
-  database: 'sparsind_ydf_ngo',
-  ssl: {
-    rejectUnauthorized: false
-  }
-};
-
-// Export mock database as db for compatibility
-export const db = {
-  select: () => ({
-    from: (table: any) => ({
-      where: (condition: any) => ({
-        limit: (limit: number) => {
-          if (table._.name === 'users') {
-            return Promise.resolve(mockDb.users.slice(0, limit));
-          }
-          if (table._.name === 'scholarships') {
-            return Promise.resolve(mockDb.scholarships.slice(0, limit));
-          }
-          return Promise.resolve([]);
-        }
-      }),
-      limit: (limit: number) => {
-        if (table._.name === 'users') {
-          return Promise.resolve(mockDb.users.slice(0, limit));
-        }
-        if (table._.name === 'scholarships') {
-          return Promise.resolve(mockDb.scholarships.slice(0, limit));
-        }
-        return Promise.resolve([]);
-      },
-      orderBy: (order: any) => Promise.resolve(mockDb.scholarships)
-    })
-  }),
-  insert: (table: any) => ({
-    values: (data: any) => ({
-      returning: () => {
-        if (table._.name === 'users') {
-          return Promise.resolve([mockDb.createUser(data)]);
-        }
-        return Promise.resolve([data]);
-      }
-    })
-  }),
-  update: (table: any) => ({
-    set: (data: any) => ({
-      where: (condition: any) => ({
-        returning: () => Promise.resolve([{ ...data, updatedAt: new Date() }])
-      })
-    })
-  })
-};
-
-// Mock database operations for direct use
-export const mockDatabase = mockDb;
-
-// Test connection function
+// Public API for server/index.ts and routes/test.ts
 export async function testConnection() {
   try {
-    console.log('🔄 Testing mock database connection...');
-    
-    // Simulate connection test
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log('✅ Mock database connection successful');
-    return { 
-      success: true, 
-      data: [{
-        version: 'Mock MySQL 8.0.0',
-        current_time: new Date().toISOString(),
-        database_name: 'sparsind_ydf_ngo'
-      }],
-      message: 'Mock database connection successful'
+    if (USE_MOCK || !pool) {
+      return {
+        success: true,
+        data: [{ version: 'Mock MySQL 8.0.0', current_time: new Date().toISOString(), database_name: DB_NAME || 'in-memory' }],
+        message: 'Mock database connection successful'
+      };
+    }
+    const conn = await pool.getConnection();
+    const [rows] = await conn.query('SELECT VERSION() as version');
+    conn.release();
+    return {
+      success: true,
+      data: [{ version: (rows as any[])[0].version, current_time: new Date().toISOString(), database_name: DB_NAME }],
+      message: 'Database connection successful'
     };
   } catch (error) {
-    console.error('❌ Mock database connection failed:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
+    console.error('Database connection failed:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
-// Initialize database function
 export async function initializeDatabase() {
   try {
-    console.log('🔄 Initializing mock database...');
-    
-    // Simulate table creation
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    console.log('✅ Mock database initialized successfully');
+    if (USE_MOCK || !pool) {
+      return { success: true };
+    }
+    await ensureUsersTable();
     return { success: true };
   } catch (error) {
-    console.error('❌ Mock database initialization failed:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
+    console.error('Database initialization failed:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
-// Create default users function
 export async function createDefaultUsers() {
   try {
-    console.log('👥 Mock default users already available...');
+    const defaults = [
+      { email: 'student@ydf.org', password: 'Student123!', firstName: 'Demo', lastName: 'Student', phone: '+91 9876543210', userType: 'student', profileData: { course: 'B.Tech Computer Science', college: 'Demo College' }, isActive: true, emailVerified: true },
+      { email: 'admin@ydf.org', password: 'Admin123!', firstName: 'Demo', lastName: 'Admin', phone: '+91 9876543211', userType: 'admin', profileData: { department: 'Administration' }, isActive: true, emailVerified: true },
+      { email: 'reviewer@ydf.org', password: 'Reviewer123!', firstName: 'Demo', lastName: 'Reviewer', phone: '+91 9876543212', userType: 'reviewer', profileData: { specialization: 'Academic Review' }, isActive: true, emailVerified: true },
+      { email: 'donor@ydf.org', password: 'Donor123!', firstName: 'Demo', lastName: 'Donor', phone: '+91 9876543213', userType: 'donor', profileData: { organization: 'Demo Foundation' }, isActive: true, emailVerified: true }
+    ];
+
+    if (USE_MOCK || !pool) {
+      // Already present in memory
+      return { success: true };
+    }
+
+    await ensureUsersTable();
+
+    for (const u of defaults) {
+      const existing = await mockDatabase.findUserByEmail(u.email);
+      if (!existing) {
+        const hashed = await hashPassword(u.password);
+        await mockDatabase.createUser({ ...u, password: hashed });
+      }
+    }
     return { success: true };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
-
-// Export pool for compatibility (mock)
-export const mysql = {
-  getConnection: async () => ({
-    execute: async (query: string, params?: any[]) => {
-      // Mock execute function
-      if (query.includes('SELECT VERSION()')) {
-        return [[{ version: 'Mock MySQL 8.0.0', current_time: new Date(), database_name: 'sparsind_ydf_ngo' }]];
-      }
-      if (query.includes('SHOW TABLES')) {
-        return [['users', 'scholarships', 'applications', 'reviews', 'notifications', 'documents', 'announcements', 'contributions', 'settings'].map(name => ({ [`Tables_in_sparsind_ydf_ngo`]: name }))];
-      }
-      if (query.includes('SELECT COUNT(*)')) {
-        return [[{ count: 10 }]];
-      }
-      return [[]];
-    },
-    ping: async () => true,
-    end: async () => {},
-    release: () => {}
-  })
-};
