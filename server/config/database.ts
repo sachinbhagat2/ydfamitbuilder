@@ -332,6 +332,76 @@ class DatabaseAdapter {
     );
     return (rows as any[])[0] || null;
   }
+
+  // Scholarships CRUD
+  async getAllScholarships() {
+    if (USE_MOCK || !pool) {
+      return memory.scholarships.sort((a: any, b: any) => (b.createdAt as any) - (a.createdAt as any));
+    }
+    await ensureScholarshipsTable();
+    const [rows] = await pool.execute("SELECT * FROM scholarships ORDER BY createdAt DESC");
+    return rows as any[];
+  }
+
+  async getScholarshipById(id: number) {
+    if (USE_MOCK || !pool) {
+      return memory.scholarships.find((s: any) => s.id === id) || null;
+    }
+    await ensureScholarshipsTable();
+    const [rows] = await pool.execute("SELECT * FROM scholarships WHERE id = ? LIMIT 1", [id]);
+    return (rows as any[])[0] || null;
+  }
+
+  async createScholarship(input: any, createdBy?: number) {
+    const now = new Date();
+    if (USE_MOCK || !pool) {
+      const nextId = memory.scholarships.length ? Math.max(...memory.scholarships.map((s:any)=>s.id)) + 1 : 1;
+      const rec = { id: nextId, ...input, createdBy: createdBy ?? null, currentApplications: 0, status: input.status || 'active', createdAt: now, updatedAt: now };
+      memory.scholarships.unshift(rec);
+      return rec;
+    }
+    await ensureScholarshipsTable();
+    const fields = ['title','description','amount','currency','eligibilityCriteria','requiredDocuments','applicationDeadline','selectionDeadline','maxApplications','currentApplications','status','createdBy','tags'];
+    const values = [input.title, input.description, input.amount, input.currency || 'INR', JSON.stringify(input.eligibilityCriteria), JSON.stringify(input.requiredDocuments), input.applicationDeadline, input.selectionDeadline ?? null, input.maxApplications ?? null, 0, input.status || 'active', createdBy ?? null, input.tags ? JSON.stringify(input.tags) : null];
+    const placeholders = fields.map(()=>'?').join(',');
+    const [result]: any = await pool.execute(`INSERT INTO scholarships (${fields.join(',')}) VALUES (${placeholders})`, values);
+    const [rows] = await pool.execute('SELECT * FROM scholarships WHERE id = ? LIMIT 1', [result.insertId]);
+    return (rows as any[])[0];
+  }
+
+  async updateScholarship(id: number, data: any) {
+    if (USE_MOCK || !pool) {
+      const idx = memory.scholarships.findIndex((s:any)=> s.id === id);
+      if (idx === -1) return null;
+      memory.scholarships[idx] = { ...memory.scholarships[idx], ...data, updatedAt: new Date() };
+      return memory.scholarships[idx];
+    }
+    await ensureScholarshipsTable();
+    const cols: string[] = []; const vals: any[] = [];
+    for (const [k,v] of Object.entries(data)) {
+      if (['title','description','amount','currency','eligibilityCriteria','requiredDocuments','applicationDeadline','selectionDeadline','maxApplications','currentApplications','status','tags'].includes(k)) {
+        cols.push(`${k} = ?`);
+        vals.push((k==='eligibilityCriteria'||k==='requiredDocuments'||k==='tags') && v!=null ? JSON.stringify(v) : v);
+      }
+    }
+    if (!cols.length) return this.getScholarshipById(id);
+    vals.push(id);
+    await pool.execute(`UPDATE scholarships SET ${cols.join(', ')}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`, vals);
+    const [rows] = await pool.execute('SELECT * FROM scholarships WHERE id = ? LIMIT 1', [id]);
+    return (rows as any[])[0];
+  }
+
+  async deleteScholarship(id: number) {
+    if (USE_MOCK || !pool) {
+      const idx = memory.scholarships.findIndex((s:any)=> s.id === id);
+      if (idx === -1) return false;
+      memory.scholarships.splice(idx,1);
+      return true;
+    }
+    await ensureScholarshipsTable();
+    await pool.execute('DELETE FROM scholarships WHERE id = ?', [id]);
+    return true;
+  }
 }
 
 export const mockDatabase = new DatabaseAdapter();
