@@ -414,6 +414,14 @@ export async function createDefaultUsers() {
       if (!existing) {
         const hashed = await hashPassword(u.password);
         await mockDatabase.createUser({ ...u, password: hashed });
+      } else {
+        const toUpdate: any = {};
+        if (existing.userType !== u.userType) toUpdate.userType = u.userType;
+        if (existing.isActive !== u.isActive) toUpdate.isActive = u.isActive;
+        if (existing.emailVerified !== u.emailVerified) toUpdate.emailVerified = u.emailVerified;
+        if (Object.keys(toUpdate).length) {
+          await mockDatabase.updateUser(existing.id, toUpdate);
+        }
       }
     }
     return { success: true };
