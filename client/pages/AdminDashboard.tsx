@@ -397,7 +397,7 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-ydf-light-gray">
-              {schemes.map((scheme) => (
+              {schemes.filter(s=> (s.title || s.name || '').toLowerCase().includes(searchQuery.toLowerCase())).map((scheme) => (
                 <tr key={scheme.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div>
