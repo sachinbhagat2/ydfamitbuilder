@@ -81,6 +81,20 @@ class InMemoryStore {
       updatedAt: new Date("2024-01-01"),
       profileData: { organization: "Demo Foundation", type: "Individual" },
     },
+    {
+      id: 5,
+      email: "surveyor@ydf.org",
+      password: "$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS",
+      firstName: "Demo",
+      lastName: "Surveyor",
+      phone: "+91 9876543214",
+      userType: "surveyor",
+      isActive: true,
+      emailVerified: true,
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      profileData: { department: "Field Verification" },
+    },
   ];
 }
 
