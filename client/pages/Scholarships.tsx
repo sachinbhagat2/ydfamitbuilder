@@ -287,6 +287,24 @@ const Scholarships = () => {
     }
   };
 
+  const scholarships = (remoteScholarships && remoteScholarships.length ? remoteScholarships.map((s:any)=> ({
+    id: s.id,
+    name: s.title,
+    organization: 'Youth Dreamers Foundation',
+    amount: `₹${s.amount}`,
+    category: 'General',
+    deadline: s.applicationDeadline ? new Date(s.applicationDeadline).toISOString().slice(0,10) : '',
+    applicants: s.currentApplications || 0,
+    eligibility: Array.isArray(s.eligibilityCriteria) ? s.eligibilityCriteria : [],
+    description: s.description,
+    benefits: [],
+    documents: Array.isArray(s.requiredDocuments) ? s.requiredDocuments : [],
+    status: s.status === 'active' ? 'Open' : s.status === 'closed' ? 'Closed' : 'Open',
+    difficulty: 'Medium',
+    rating: 4.6,
+    tags: Array.isArray(s.tags) ? s.tags : [],
+  })) : fallbackScholarships);
+
   const filteredScholarships = scholarships.filter((scholarship) => {
     const matchesSearch =
       searchQuery === "" ||
