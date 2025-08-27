@@ -19,7 +19,8 @@ const DatabaseStatus = () => {
         setIsConnected(ok); // API reachable -> app usable
         setDbConnected(dbOk);
       } catch (error) {
-        setIsConnected(false);
+        // Fall back to mock mode when API check fails
+        setIsConnected(true);
         setDbConnected(false);
       } finally {
         setIsLoading(false);
