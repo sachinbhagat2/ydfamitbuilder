@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import RoleBasedNavigation from "../components/RoleBasedNavigation";
@@ -190,7 +190,7 @@ const ReviewerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <RoleBasedNavigation />
-      
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-ydf-light-gray">
         <div className="px-6 py-4">
@@ -200,7 +200,8 @@ const ReviewerDashboard = () => {
                 Reviewer Dashboard
               </h1>
               <p className="text-sm text-gray-600">
-                Welcome back, {user?.firstName}! Review and evaluate scholarship applications
+                Welcome back, {user?.firstName}! Review and evaluate scholarship
+                applications
               </p>
             </div>
             <div className="flex items-center space-x-2">

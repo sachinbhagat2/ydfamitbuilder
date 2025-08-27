@@ -1,95 +1,114 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Chrome, Linkedin } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Separator } from '../components/ui/separator';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import DatabaseStatus from '../components/DatabaseStatus';
-import { useAuth } from '../contexts/AuthContext';
-import { toast } from '../components/ui/use-toast';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  ArrowLeft,
+  Chrome,
+  Linkedin,
+} from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Separator } from "../components/ui/separator";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import DatabaseStatus from "../components/DatabaseStatus";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "../components/ui/use-toast";
 
-type AuthMode = 'login' | 'signup' | 'forgot-password';
+type AuthMode = "login" | "signup" | "forgot-password";
 
 export default function Auth() {
   const { login, register } = useAuth();
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    userType: 'student'
+    email: "",
+    password: "",
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    userType: "student",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
-    setError('');
+    setError("");
   };
 
   const validateForm = () => {
-    if (!formData.email || !formData.email.includes('@')) {
-      setError('Please enter a valid email address');
+    if (!formData.email || !formData.email.includes("@")) {
+      setError("Please enter a valid email address");
       return false;
     }
-    
-    if (mode === 'signup') {
+
+    if (mode === "signup") {
       if (!formData.firstName || !formData.lastName) {
-        setError('Please enter your full name');
+        setError("Please enter your full name");
         return false;
       }
       if (!formData.password || formData.password.length < 8) {
-        setError('Password must be at least 8 characters long');
+        setError("Password must be at least 8 characters long");
         return false;
       }
       if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
+        setError("Passwords do not match");
         return false;
       }
-    } else if (mode === 'login' && !formData.password) {
-      setError('Please enter your password');
+    } else if (mode === "login" && !formData.password) {
+      setError("Please enter your password");
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (!validateForm()) return;
 
     setIsLoading(true);
 
     try {
-      if (mode === 'forgot-password') {
+      if (mode === "forgot-password") {
         // TODO: Implement forgot password API
-        setSuccess('Password reset link has been sent to your email');
+        setSuccess("Password reset link has been sent to your email");
         toast({
           title: "Reset Link Sent",
-          description: "Please check your email for password reset instructions",
+          description:
+            "Please check your email for password reset instructions",
         });
-        setTimeout(() => setMode('login'), 3000);
-      } else if (mode === 'signup') {
+        setTimeout(() => setMode("login"), 3000);
+      } else if (mode === "signup") {
         // Use AuthContext register method
         const userData = {
           email: formData.email,
@@ -97,8 +116,12 @@ export default function Auth() {
           firstName: formData.firstName,
           lastName: formData.lastName,
           phone: formData.phone,
-          userType: formData.userType as 'student' | 'admin' | 'reviewer' | 'donor',
-          profileData: {}
+          userType: formData.userType as
+            | "student"
+            | "admin"
+            | "reviewer"
+            | "donor",
+          profileData: {},
         };
 
         const success = await register(userData);
@@ -106,7 +129,7 @@ export default function Auth() {
           // Don't set loading to false here, let AuthContext handle it
           return;
         } else {
-          setError('Registration failed. Please try again.');
+          setError("Registration failed. Please try again.");
         }
       } else {
         // Use AuthContext login method
@@ -115,21 +138,25 @@ export default function Auth() {
           // Don't set loading to false here, let AuthContext handle it
           return;
         } else {
-          setError('Invalid email or password. Please try again.');
+          setError("Invalid email or password. Please try again.");
         }
       }
     } catch (error) {
-      console.error('Auth error:', error);
-      setError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+      console.error("Auth error:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
     }
-    
+
     setIsLoading(false);
   };
 
   const handleSocialAuth = (provider: string) => {
-    setError('');
+    setError("");
     setIsLoading(true);
-    
+
     // Simulate social auth
     setTimeout(() => {
       setError(`${provider} authentication will be available soon`);
@@ -166,9 +193,9 @@ export default function Auth() {
             Youth Dreamers Foundation
           </h1>
           <p className="text-gray-600 mt-2">
-            {mode === 'login' && 'Welcome back! Sign in to your account'}
-            {mode === 'signup' && 'Create your account to get started'}
-            {mode === 'forgot-password' && 'Reset your password'}
+            {mode === "login" && "Welcome back! Sign in to your account"}
+            {mode === "signup" && "Create your account to get started"}
+            {mode === "forgot-password" && "Reset your password"}
           </p>
         </div>
 
@@ -179,47 +206,54 @@ export default function Auth() {
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center space-x-2">
-              {mode !== 'login' && (
+              {mode !== "login" && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setMode('login')}
+                  onClick={() => setMode("login")}
                   className="p-1"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
               <CardTitle className="text-xl">
-                {mode === 'login' && 'Sign In'}
-                {mode === 'signup' && 'Create Account'}
-                {mode === 'forgot-password' && 'Reset Password'}
+                {mode === "login" && "Sign In"}
+                {mode === "signup" && "Create Account"}
+                {mode === "forgot-password" && "Reset Password"}
               </CardTitle>
             </div>
             <CardDescription>
-              {mode === 'login' && 'Enter your credentials to access your dashboard'}
-              {mode === 'signup' && 'Fill in your details to create a new account'}
-              {mode === 'forgot-password' && 'Enter your email to receive a reset link'}
+              {mode === "login" &&
+                "Enter your credentials to access your dashboard"}
+              {mode === "signup" &&
+                "Fill in your details to create a new account"}
+              {mode === "forgot-password" &&
+                "Enter your email to receive a reset link"}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
             {error && (
               <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
+                <AlertDescription className="text-red-700">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
 
             {success && (
               <Alert className="border-green-200 bg-green-50">
-                <AlertDescription className="text-green-700">{success}</AlertDescription>
+                <AlertDescription className="text-green-700">
+                  {success}
+                </AlertDescription>
               </Alert>
             )}
 
-            {mode !== 'forgot-password' && (
+            {mode !== "forgot-password" && (
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant="outline"
-                  onClick={() => handleSocialAuth('Google')}
+                  onClick={() => handleSocialAuth("Google")}
                   disabled={isLoading}
                   className="flex items-center justify-center space-x-2"
                 >
@@ -228,7 +262,7 @@ export default function Auth() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => handleSocialAuth('LinkedIn')}
+                  onClick={() => handleSocialAuth("LinkedIn")}
                   disabled={isLoading}
                   className="flex items-center justify-center space-x-2"
                 >
@@ -238,19 +272,21 @@ export default function Auth() {
               </div>
             )}
 
-            {mode !== 'forgot-password' && (
+            {mode !== "forgot-password" && (
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <Separator className="w-full" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+                  <span className="bg-white px-2 text-gray-500">
+                    Or continue with email
+                  </span>
                 </div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'signup' && (
+              {mode === "signup" && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -338,7 +374,7 @@ export default function Auth() {
                 </div>
               </div>
 
-              {mode !== 'forgot-password' && (
+              {mode !== "forgot-password" && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -346,7 +382,7 @@ export default function Auth() {
                     <Input
                       id="password"
                       name="password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={formData.password}
                       onChange={handleInputChange}
@@ -370,7 +406,7 @@ export default function Auth() {
                 </div>
               )}
 
-              {mode === 'signup' && (
+              {mode === "signup" && (
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
                   <div className="relative">
@@ -378,7 +414,7 @@ export default function Auth() {
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm your password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
@@ -390,7 +426,9 @@ export default function Auth() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-1 top-1 h-8 w-8 p-0"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4 text-gray-400" />
@@ -402,9 +440,9 @@ export default function Auth() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700" 
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -414,29 +452,29 @@ export default function Auth() {
                   </div>
                 ) : (
                   <>
-                    {mode === 'login' && 'Sign In'}
-                    {mode === 'signup' && 'Create Account'}
-                    {mode === 'forgot-password' && 'Send Reset Link'}
+                    {mode === "login" && "Sign In"}
+                    {mode === "signup" && "Create Account"}
+                    {mode === "forgot-password" && "Send Reset Link"}
                   </>
                 )}
               </Button>
             </form>
 
             <div className="text-center space-y-2">
-              {mode === 'login' && (
+              {mode === "login" && (
                 <>
                   <Button
                     variant="link"
-                    onClick={() => setMode('forgot-password')}
+                    onClick={() => setMode("forgot-password")}
                     className="text-sm text-blue-600 hover:text-blue-700"
                   >
                     Forgot your password?
                   </Button>
                   <div className="text-sm text-gray-600">
-                    Don't have an account?{' '}
+                    Don't have an account?{" "}
                     <Button
                       variant="link"
-                      onClick={() => setMode('signup')}
+                      onClick={() => setMode("signup")}
                       className="text-blue-600 hover:text-blue-700 p-0 h-auto"
                     >
                       Sign up
@@ -445,12 +483,12 @@ export default function Auth() {
                 </>
               )}
 
-              {mode === 'signup' && (
+              {mode === "signup" && (
                 <div className="text-sm text-gray-600">
-                  Already have an account?{' '}
+                  Already have an account?{" "}
                   <Button
                     variant="link"
-                    onClick={() => setMode('login')}
+                    onClick={() => setMode("login")}
                     className="text-blue-600 hover:text-blue-700 p-0 h-auto"
                   >
                     Sign in
@@ -458,12 +496,12 @@ export default function Auth() {
                 </div>
               )}
 
-              {mode === 'forgot-password' && (
+              {mode === "forgot-password" && (
                 <div className="text-sm text-gray-600">
-                  Remember your password?{' '}
+                  Remember your password?{" "}
                   <Button
                     variant="link"
-                    onClick={() => setMode('login')}
+                    onClick={() => setMode("login")}
                     className="text-blue-600 hover:text-blue-700 p-0 h-auto"
                   >
                     Sign in
@@ -475,10 +513,14 @@ export default function Auth() {
         </Card>
 
         <div className="mt-6 text-center text-xs text-gray-500">
-          By continuing, you agree to Youth Dreamers Foundation's{' '}
-          <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>
-          {' '}and{' '}
-          <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+          By continuing, you agree to Youth Dreamers Foundation's{" "}
+          <a href="#" className="text-blue-600 hover:underline">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="#" className="text-blue-600 hover:underline">
+            Privacy Policy
+          </a>
         </div>
       </motion.div>
     </div>

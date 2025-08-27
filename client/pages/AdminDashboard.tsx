@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import RoleBasedNavigation from "../components/RoleBasedNavigation";
@@ -31,19 +31,19 @@ const AdminDashboard = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('ydf_onboarding_admin');
+    const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
     if (!hasSeenOnboarding) {
       setShowOnboarding(true);
     }
   }, []);
 
   const handleOnboardingComplete = () => {
-    localStorage.setItem('ydf_onboarding_admin', 'true');
+    localStorage.setItem("ydf_onboarding_admin", "true");
     setShowOnboarding(false);
   };
 
   const handleOnboardingSkip = () => {
-    localStorage.setItem('ydf_onboarding_admin', 'skipped');
+    localStorage.setItem("ydf_onboarding_admin", "skipped");
     setShowOnboarding(false);
   };
 
@@ -466,7 +466,7 @@ const AdminDashboard = () => {
       )}
       <div className="min-h-screen bg-gray-50">
         <RoleBasedNavigation />
-        
+
         {/* Header */}
         <div className="bg-white shadow-sm border-b border-ydf-light-gray">
           <div className="px-6 py-4">
@@ -476,7 +476,8 @@ const AdminDashboard = () => {
                   Admin Dashboard
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Welcome back, {user?.firstName}! Manage scholarships and applications
+                  Welcome back, {user?.firstName}! Manage scholarships and
+                  applications
                 </p>
               </div>
               <div className="flex items-center space-x-2">
@@ -491,40 +492,40 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <div className="w-64 bg-white shadow-sm border-r border-ydf-light-gray min-h-screen">
-          <nav className="p-4 space-y-2">
-            {[
-              { id: "overview", label: "Overview", icon: BarChart3 },
-              { id: "schemes", label: "Manage Schemes", icon: FileText },
-              { id: "applications", label: "View Applications", icon: Users },
-              { id: "analytics", label: "Analytics", icon: TrendingUp },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-ydf-deep-blue text-white"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <tab.icon className="h-5 w-5" />
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+        <div className="flex">
+          {/* Sidebar Navigation */}
+          <div className="w-64 bg-white shadow-sm border-r border-ydf-light-gray min-h-screen">
+            <nav className="p-4 space-y-2">
+              {[
+                { id: "overview", label: "Overview", icon: BarChart3 },
+                { id: "schemes", label: "Manage Schemes", icon: FileText },
+                { id: "applications", label: "View Applications", icon: Users },
+                { id: "analytics", label: "Analytics", icon: TrendingUp },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                    activeTab === tab.id
+                      ? "bg-ydf-deep-blue text-white"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <tab.icon className="h-5 w-5" />
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          {activeTab === "overview" && renderOverview()}
-          {activeTab === "schemes" && renderSchemes()}
-          {activeTab === "applications" && renderOverview()}
-          {activeTab === "analytics" && renderAnalytics()}
+          {/* Main Content */}
+          <div className="flex-1 p-6">
+            {activeTab === "overview" && renderOverview()}
+            {activeTab === "schemes" && renderSchemes()}
+            {activeTab === "applications" && renderOverview()}
+            {activeTab === "analytics" && renderAnalytics()}
+          </div>
         </div>
-      </div>
       </div>
     </>
   );

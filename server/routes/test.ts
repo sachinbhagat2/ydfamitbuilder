@@ -1,20 +1,24 @@
-import { Router } from 'express';
-import { testConnection, initializeDatabase, createDefaultUsers } from '../config/database';
+import { Router } from "express";
+import {
+  testConnection,
+  initializeDatabase,
+  createDefaultUsers,
+} from "../config/database";
 
 const router = Router();
 
 // Manual database setup endpoint
-router.post('/setup-database', async (req, res) => {
+router.post("/setup-database", async (req, res) => {
   try {
-    console.log('🔄 Manual database setup initiated...');
-    
+    console.log("🔄 Manual database setup initiated...");
+
     // Test connection first
     const connectionTest = await testConnection();
     if (!connectionTest.success) {
       return res.status(500).json({
         success: false,
-        error: 'Database connection failed',
-        details: connectionTest.error
+        error: "Database connection failed",
+        details: connectionTest.error,
       });
     }
 
@@ -23,8 +27,8 @@ router.post('/setup-database', async (req, res) => {
     if (!dbInit.success) {
       return res.status(500).json({
         success: false,
-        error: 'Database initialization failed',
-        details: dbInit.error
+        error: "Database initialization failed",
+        details: dbInit.error,
       });
     }
 
@@ -33,154 +37,156 @@ router.post('/setup-database', async (req, res) => {
     if (!usersResult.success) {
       return res.status(500).json({
         success: false,
-        error: 'Failed to create default users',
-        details: usersResult.error
+        error: "Failed to create default users",
+        details: usersResult.error,
       });
     }
 
     res.json({
       success: true,
-      message: 'Database setup completed successfully',
+      message: "Database setup completed successfully",
       steps: [
-        'Database connection verified',
-        'All tables created',
-        'Default users created'
+        "Database connection verified",
+        "All tables created",
+        "Default users created",
       ],
       credentials: [
-        { role: 'Student', email: 'student@ydf.org', password: 'Student123!' },
-        { role: 'Admin', email: 'admin@ydf.org', password: 'Admin123!' },
-        { role: 'Reviewer', email: 'reviewer@ydf.org', password: 'Reviewer123!' },
-        { role: 'Donor', email: 'donor@ydf.org', password: 'Donor123!' }
-      ]
+        { role: "Student", email: "student@ydf.org", password: "Student123!" },
+        { role: "Admin", email: "admin@ydf.org", password: "Admin123!" },
+        {
+          role: "Reviewer",
+          email: "reviewer@ydf.org",
+          password: "Reviewer123!",
+        },
+        { role: "Donor", email: "donor@ydf.org", password: "Donor123!" },
+      ],
     });
   } catch (error) {
-    console.error('Manual database setup error:', error);
+    console.error("Manual database setup error:", error);
     res.status(500).json({
       success: false,
-      error: 'Database setup failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: "Database setup failed",
+      details: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
 
 // Check if tables exist
-router.get('/check-tables', async (req, res) => {
+router.get("/check-tables", async (req, res) => {
   try {
-    const { mysqlCompat } = await import('../config/database');
+    const { mysqlCompat } = await import("../config/database");
     const connection = await mysqlCompat.getConnection();
-    
+
     // Get list of tables
-    const [tables] = await connection.execute('SHOW TABLES');
-    
+    const [tables] = await connection.execute("SHOW TABLES");
+
     // Get table details
     const tableDetails = [];
     for (const table of tables as any[]) {
       const tableName = Object.values(table)[0] as string;
       const [columns] = await connection.execute(`DESCRIBE ${tableName}`);
-      const [count] = await connection.execute(`SELECT COUNT(*) as count FROM ${tableName}`);
-      
+      const [count] = await connection.execute(
+        `SELECT COUNT(*) as count FROM ${tableName}`,
+      );
+
       tableDetails.push({
         name: tableName,
         columns: (columns as any[]).length,
-        records: (count as any[])[0].count
+        records: (count as any[])[0].count,
       });
     }
-    
+
     connection.release();
-    
+
     res.json({
       success: true,
-      database: (process.env.DB_NAME || '').trim(),
-      host: (process.env.DB_HOST || '').trim(),
+      database: (process.env.DB_NAME || "").trim(),
+      host: (process.env.DB_HOST || "").trim(),
       tablesCount: tables.length,
-      tables: tableDetails
+      tables: tableDetails,
     });
   } catch (error) {
-    console.error('Check tables error:', error);
+    console.error("Check tables error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to check tables',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: "Failed to check tables",
+      details: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
 
 // Test different connection methods
-router.get('/connection-methods', async (req, res) => {
+router.get("/connection-methods", async (req, res) => {
   const testResults = [];
-  
+
   // Test different hosts
-  const envHost = (process.env.DB_HOST || '').trim() || 'localhost';
-  const hostsToTest = [
-    envHost,
-    `mysql.${envHost}`,
-    `server.${envHost}`
-  ];
-  
+  const envHost = (process.env.DB_HOST || "").trim() || "localhost";
+  const hostsToTest = [envHost, `mysql.${envHost}`, `server.${envHost}`];
+
   for (const host of hostsToTest) {
     try {
-      const mysql = await import('mysql2/promise');
+      const mysql = await import("mysql2/promise");
       const testConnection = await mysql.createConnection({
         host,
         port: 3306,
-        user: (process.env.DB_USER || '').trim(),
-        password: process.env.DB_PASSWORD || '',
-        database: (process.env.DB_NAME || '').trim(),
+        user: (process.env.DB_USER || "").trim(),
+        password: process.env.DB_PASSWORD || "",
+        database: (process.env.DB_NAME || "").trim(),
         connectTimeout: 30000,
-        ssl: { rejectUnauthorized: false }
+        ssl: { rejectUnauthorized: false },
       });
-      
+
       await testConnection.ping();
       await testConnection.end();
-      
+
       testResults.push({
         host,
-        status: 'success',
-        message: 'Connection successful'
+        status: "success",
+        message: "Connection successful",
       });
     } catch (error) {
       testResults.push({
         host,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
-  
+
   res.json({
     success: true,
-    message: 'Connection test results',
-    results: testResults
+    message: "Connection test results",
+    results: testResults,
   });
 });
 
 // Comprehensive API and database test endpoint
-router.get('/connection', async (req, res) => {
+router.get("/connection", async (req, res) => {
   const testResults = {
     timestamp: new Date().toISOString(),
     server: {
-      status: 'running',
+      status: "running",
       port: process.env.PORT || 3000,
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || "development",
     },
     database: {
-      host: (process.env.DB_HOST || '').trim(),
-      database: (process.env.DB_NAME || '').trim(),
-      user: (process.env.DB_USER || '').trim(),
-      status: 'unknown',
+      host: (process.env.DB_HOST || "").trim(),
+      database: (process.env.DB_NAME || "").trim(),
+      user: (process.env.DB_USER || "").trim(),
+      status: "unknown",
       version: null,
       connectionTime: null,
-      error: null
+      error: null,
     },
     api: {
-      status: 'working',
+      status: "working",
       endpoints: [
-        '/api/test/connection',
-        '/api/test/ping',
-        '/api/demo',
-        '/health'
-      ]
-    }
+        "/api/test/connection",
+        "/api/test/ping",
+        "/api/demo",
+        "/health",
+      ],
+    },
   };
 
   // Test database connection
@@ -189,78 +195,88 @@ router.get('/connection', async (req, res) => {
     const dbResult = await testConnection();
     const connectionTime = Date.now() - startTime;
 
-    testResults.database.status = 'connected';
+    testResults.database.status = "connected";
     testResults.database.connectionTime = `${connectionTime}ms`;
-    
-    if (dbResult.data && Array.isArray(dbResult.data) && dbResult.data.length > 0) {
-      testResults.database.version = dbResult.data[0].version || 'Unknown';
+
+    if (
+      dbResult.data &&
+      Array.isArray(dbResult.data) &&
+      dbResult.data.length > 0
+    ) {
+      testResults.database.version = dbResult.data[0].version || "Unknown";
     }
 
     res.json({
       success: true,
-      message: 'All systems operational',
-      results: testResults
+      message: "All systems operational",
+      results: testResults,
     });
-
   } catch (error) {
-    testResults.database.status = 'failed';
-    testResults.database.error = error instanceof Error ? error.message : 'Unknown error';
+    testResults.database.status = "failed";
+    testResults.database.error =
+      error instanceof Error ? error.message : "Unknown error";
 
     res.status(500).json({
       success: false,
-      message: 'Database connection failed',
+      message: "Database connection failed",
       results: testResults,
       troubleshooting: {
         possibleCauses: [
-          'Database server is down',
-          'Incorrect credentials',
-          'Network connectivity issues',
-          'Firewall blocking connection',
-          'SSL/TLS configuration issues'
+          "Database server is down",
+          "Incorrect credentials",
+          "Network connectivity issues",
+          "Firewall blocking connection",
+          "SSL/TLS configuration issues",
         ],
         nextSteps: [
-          'Verify database credentials',
-          'Check if sparsindia.com is accessible',
-          'Ensure MySQL service is running',
-          'Check firewall settings'
-        ]
-      }
+          "Verify database credentials",
+          "Check if sparsindia.com is accessible",
+          "Ensure MySQL service is running",
+          "Check firewall settings",
+        ],
+      },
     });
   }
 });
 
 // Simple ping test
-router.get('/ping', (req, res) => {
+router.get("/ping", (req, res) => {
   res.json({
     success: true,
-    message: 'API is responding',
+    message: "API is responding",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
 // Environment check
-router.get('/env', (req, res) => {
+router.get("/env", (req, res) => {
   res.json({
     success: true,
     environment: {
-      nodeEnv: process.env.NODE_ENV || 'development',
+      nodeEnv: process.env.NODE_ENV || "development",
       port: process.env.PORT || 3000,
       hasDatabaseUrl: !!process.env.DATABASE_URL,
       hasJwtSecret: !!process.env.JWT_SECRET,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
-    }
+      frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+    },
   });
 });
 
 // Egress IP check
-router.get('/egress-ip', async (req, res) => {
+router.get("/egress-ip", async (req, res) => {
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
+    const response = await fetch("https://api.ipify.org?format=json");
     const data = await response.json();
     res.json({ success: true, ip: data?.ip || null });
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Failed to detect egress IP' });
+    res
+      .status(500)
+      .json({
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to detect egress IP",
+      });
   }
 });
 

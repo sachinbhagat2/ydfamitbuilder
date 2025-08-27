@@ -1,14 +1,15 @@
-import mysql from 'mysql2/promise';
-import { hashPassword } from '../utils/auth';
+import mysql from "mysql2/promise";
+import { hashPassword } from "../utils/auth";
 
 // Determine whether to use mock DB (default false if full credentials are provided)
-const useMockExplicit = (process.env.USE_MOCK_DB || '').toLowerCase() === 'true';
+const useMockExplicit =
+  (process.env.USE_MOCK_DB || "").toLowerCase() === "true";
 
-const DB_HOST = (process.env.DB_HOST || '').trim();
-const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10);
-const DB_USER = (process.env.DB_USER || '').trim();
-const DB_PASSWORD = process.env.DB_PASSWORD || '';
-const DB_NAME = (process.env.DB_NAME || '').trim();
+const DB_HOST = (process.env.DB_HOST || "").trim();
+const DB_PORT = parseInt(process.env.DB_PORT || "3306", 10);
+const DB_USER = (process.env.DB_USER || "").trim();
+const DB_PASSWORD = process.env.DB_PASSWORD || "";
+const DB_NAME = (process.env.DB_NAME || "").trim();
 
 const hasCreds = DB_HOST && DB_USER && DB_PASSWORD && DB_NAME;
 const USE_MOCK = useMockExplicit || !hasCreds;
@@ -18,60 +19,68 @@ class InMemoryStore {
   public users: any[] = [
     {
       id: 1,
-      email: 'student@ydf.org',
-      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
-      firstName: 'Demo',
-      lastName: 'Student',
-      phone: '+91 9876543210',
-      userType: 'student',
+      email: "student@ydf.org",
+      password: "$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS",
+      firstName: "Demo",
+      lastName: "Student",
+      phone: "+91 9876543210",
+      userType: "student",
       isActive: true,
       emailVerified: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      profileData: { course: 'B.Tech Computer Science', college: 'Demo College', year: '3rd Year', cgpa: '8.75' }
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      profileData: {
+        course: "B.Tech Computer Science",
+        college: "Demo College",
+        year: "3rd Year",
+        cgpa: "8.75",
+      },
     },
     {
       id: 2,
-      email: 'admin@ydf.org',
-      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
-      firstName: 'Demo',
-      lastName: 'Admin',
-      phone: '+91 9876543211',
-      userType: 'admin',
+      email: "admin@ydf.org",
+      password: "$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS",
+      firstName: "Demo",
+      lastName: "Admin",
+      phone: "+91 9876543211",
+      userType: "admin",
       isActive: true,
       emailVerified: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      profileData: { department: 'Administration', role: 'System Administrator' }
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      profileData: {
+        department: "Administration",
+        role: "System Administrator",
+      },
     },
     {
       id: 3,
-      email: 'reviewer@ydf.org',
-      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
-      firstName: 'Demo',
-      lastName: 'Reviewer',
-      phone: '+91 9876543212',
-      userType: 'reviewer',
+      email: "reviewer@ydf.org",
+      password: "$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS",
+      firstName: "Demo",
+      lastName: "Reviewer",
+      phone: "+91 9876543212",
+      userType: "reviewer",
       isActive: true,
       emailVerified: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      profileData: { specialization: 'Academic Review', experience: '5 years' }
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      profileData: { specialization: "Academic Review", experience: "5 years" },
     },
     {
       id: 4,
-      email: 'donor@ydf.org',
-      password: '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS',
-      firstName: 'Demo',
-      lastName: 'Donor',
-      phone: '+91 9876543213',
-      userType: 'donor',
+      email: "donor@ydf.org",
+      password: "$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS",
+      firstName: "Demo",
+      lastName: "Donor",
+      phone: "+91 9876543213",
+      userType: "donor",
       isActive: true,
       emailVerified: true,
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      profileData: { organization: 'Demo Foundation', type: 'Individual' }
-    }
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      profileData: { organization: "Demo Foundation", type: "Individual" },
+    },
   ];
 }
 
@@ -89,9 +98,11 @@ export const pool = !USE_MOCK
       connectionLimit: 10,
       queueLimit: 0,
       connectTimeout: 30000,
-      ...(String(process.env.DB_SSL || '').toLowerCase() === 'true' ? { ssl: { rejectUnauthorized: false } } : {})
+      ...(String(process.env.DB_SSL || "").toLowerCase() === "true"
+        ? { ssl: { rejectUnauthorized: false } }
+        : {}),
     } as any)
-  : null as unknown as mysql.Pool;
+  : (null as unknown as mysql.Pool);
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
 export const mysqlCompat = {
@@ -101,11 +112,11 @@ export const mysqlCompat = {
         execute: async (_q: string, _p?: any[]) => [[]],
         ping: async () => true,
         end: async () => {},
-        release: () => {}
+        release: () => {},
       } as any;
     }
     return pool.getConnection();
-  }
+  },
 } as any;
 
 // Helper to ensure tables exist in MySQL
@@ -133,28 +144,47 @@ async function ensureUsersTable() {
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
     if (USE_MOCK || !pool) {
-      return memory.users.find(u => u.email === email) || null;
+      return memory.users.find((u) => u.email === email) || null;
     }
-    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ? LIMIT 1', [email]);
+    const [rows] = await pool.execute(
+      "SELECT * FROM users WHERE email = ? LIMIT 1",
+      [email],
+    );
     return (rows as any[])[0] || null;
   }
 
   async findUserById(id: number) {
     if (USE_MOCK || !pool) {
-      return memory.users.find(u => u.id === id) || null;
+      return memory.users.find((u) => u.id === id) || null;
     }
-    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+    const [rows] = await pool.execute(
+      "SELECT * FROM users WHERE id = ? LIMIT 1",
+      [id],
+    );
     return (rows as any[])[0] || null;
   }
 
   async createUser(userData: any) {
     if (USE_MOCK || !pool) {
-      const newUser = { ...userData, id: memory.users.length + 1, createdAt: new Date(), updatedAt: new Date() };
+      const newUser = {
+        ...userData,
+        id: memory.users.length + 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       memory.users.push(newUser);
       return newUser;
     }
     const fields = [
-      'email','password','firstName','lastName','phone','userType','isActive','emailVerified','profileData'
+      "email",
+      "password",
+      "firstName",
+      "lastName",
+      "phone",
+      "userType",
+      "isActive",
+      "emailVerified",
+      "profileData",
     ];
     const values = [
       userData.email,
@@ -165,38 +195,65 @@ class DatabaseAdapter {
       userData.userType,
       userData.isActive ? 1 : 0,
       userData.emailVerified ? 1 : 0,
-      userData.profileData ? JSON.stringify(userData.profileData) : null
+      userData.profileData ? JSON.stringify(userData.profileData) : null,
     ];
-    const placeholders = fields.map(() => '?').join(',');
-    const sql = `INSERT INTO users (${fields.join(',')}) VALUES (${placeholders})`;
+    const placeholders = fields.map(() => "?").join(",");
+    const sql = `INSERT INTO users (${fields.join(",")}) VALUES (${placeholders})`;
     const [result]: any = await pool.execute(sql, values);
-    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [result.insertId]);
+    const [rows] = await pool.execute(
+      "SELECT * FROM users WHERE id = ? LIMIT 1",
+      [result.insertId],
+    );
     return (rows as any[])[0];
   }
 
   async updateUser(id: number, userData: any) {
     if (USE_MOCK || !pool) {
-      const idx = memory.users.findIndex(u => u.id === id);
+      const idx = memory.users.findIndex((u) => u.id === id);
       if (idx === -1) return null;
-      memory.users[idx] = { ...memory.users[idx], ...userData, updatedAt: new Date() };
+      memory.users[idx] = {
+        ...memory.users[idx],
+        ...userData,
+        updatedAt: new Date(),
+      };
       return memory.users[idx];
     }
     const columns: string[] = [];
     const values: any[] = [];
     for (const [key, val] of Object.entries(userData)) {
-      if (['email','password','firstName','lastName','phone','userType','isActive','emailVerified','profileData'].includes(key)) {
+      if (
+        [
+          "email",
+          "password",
+          "firstName",
+          "lastName",
+          "phone",
+          "userType",
+          "isActive",
+          "emailVerified",
+          "profileData",
+        ].includes(key)
+      ) {
         columns.push(`${key} = ?`);
-        values.push(key === 'profileData' && val != null ? JSON.stringify(val) : val);
+        values.push(
+          key === "profileData" && val != null ? JSON.stringify(val) : val,
+        );
       }
     }
     if (!columns.length) {
-      const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+      const [rows] = await pool.execute(
+        "SELECT * FROM users WHERE id = ? LIMIT 1",
+        [id],
+      );
       return (rows as any[])[0] || null;
     }
-    const sql = `UPDATE users SET ${columns.join(', ')}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`;
+    const sql = `UPDATE users SET ${columns.join(", ")}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`;
     values.push(id);
     await pool.execute(sql, values);
-    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+    const [rows] = await pool.execute(
+      "SELECT * FROM users WHERE id = ? LIMIT 1",
+      [id],
+    );
     return (rows as any[])[0] || null;
   }
 }
@@ -209,21 +266,36 @@ export async function testConnection() {
     if (USE_MOCK || !pool) {
       return {
         success: true,
-        data: [{ version: 'Mock MySQL 8.0.0', current_time: new Date().toISOString(), database_name: DB_NAME || 'in-memory' }],
-        message: 'Mock database connection successful'
+        data: [
+          {
+            version: "Mock MySQL 8.0.0",
+            current_time: new Date().toISOString(),
+            database_name: DB_NAME || "in-memory",
+          },
+        ],
+        message: "Mock database connection successful",
       };
     }
     const conn = await pool.getConnection();
-    const [rows] = await conn.query('SELECT VERSION() as version');
+    const [rows] = await conn.query("SELECT VERSION() as version");
     conn.release();
     return {
       success: true,
-      data: [{ version: (rows as any[])[0].version, current_time: new Date().toISOString(), database_name: DB_NAME }],
-      message: 'Database connection successful'
+      data: [
+        {
+          version: (rows as any[])[0].version,
+          current_time: new Date().toISOString(),
+          database_name: DB_NAME,
+        },
+      ],
+      message: "Database connection successful",
     };
   } catch (error) {
-    console.error('Database connection failed:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Database connection failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -235,18 +307,64 @@ export async function initializeDatabase() {
     await ensureUsersTable();
     return { success: true };
   } catch (error) {
-    console.error('Database initialization failed:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Database initialization failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
 export async function createDefaultUsers() {
   try {
     const defaults = [
-      { email: 'student@ydf.org', password: 'Student123!', firstName: 'Demo', lastName: 'Student', phone: '+91 9876543210', userType: 'student', profileData: { course: 'B.Tech Computer Science', college: 'Demo College' }, isActive: true, emailVerified: true },
-      { email: 'admin@ydf.org', password: 'Admin123!', firstName: 'Demo', lastName: 'Admin', phone: '+91 9876543211', userType: 'admin', profileData: { department: 'Administration' }, isActive: true, emailVerified: true },
-      { email: 'reviewer@ydf.org', password: 'Reviewer123!', firstName: 'Demo', lastName: 'Reviewer', phone: '+91 9876543212', userType: 'reviewer', profileData: { specialization: 'Academic Review' }, isActive: true, emailVerified: true },
-      { email: 'donor@ydf.org', password: 'Donor123!', firstName: 'Demo', lastName: 'Donor', phone: '+91 9876543213', userType: 'donor', profileData: { organization: 'Demo Foundation' }, isActive: true, emailVerified: true }
+      {
+        email: "student@ydf.org",
+        password: "Student123!",
+        firstName: "Demo",
+        lastName: "Student",
+        phone: "+91 9876543210",
+        userType: "student",
+        profileData: {
+          course: "B.Tech Computer Science",
+          college: "Demo College",
+        },
+        isActive: true,
+        emailVerified: true,
+      },
+      {
+        email: "admin@ydf.org",
+        password: "Admin123!",
+        firstName: "Demo",
+        lastName: "Admin",
+        phone: "+91 9876543211",
+        userType: "admin",
+        profileData: { department: "Administration" },
+        isActive: true,
+        emailVerified: true,
+      },
+      {
+        email: "reviewer@ydf.org",
+        password: "Reviewer123!",
+        firstName: "Demo",
+        lastName: "Reviewer",
+        phone: "+91 9876543212",
+        userType: "reviewer",
+        profileData: { specialization: "Academic Review" },
+        isActive: true,
+        emailVerified: true,
+      },
+      {
+        email: "donor@ydf.org",
+        password: "Donor123!",
+        firstName: "Demo",
+        lastName: "Donor",
+        phone: "+91 9876543213",
+        userType: "donor",
+        profileData: { organization: "Demo Foundation" },
+        isActive: true,
+        emailVerified: true,
+      },
     ];
 
     if (USE_MOCK || !pool) {
@@ -265,6 +383,9 @@ export async function createDefaultUsers() {
     }
     return { success: true };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
