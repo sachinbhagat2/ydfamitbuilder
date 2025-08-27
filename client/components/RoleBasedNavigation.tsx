@@ -1,19 +1,20 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  Home, 
-  Users, 
-  FileText, 
-  BarChart3, 
-  Settings, 
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  Home,
+  Users,
+  FileText,
+  BarChart3,
+  Settings,
   Award,
   Heart,
   Search,
   MessageCircle,
   User,
-  LogOut
-} from 'lucide-react';
-import { Button } from './ui/button';
+  LogOut,
+} from "lucide-react";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +22,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import { Avatar, AvatarFallback } from './ui/avatar';
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
 const RoleBasedNavigation = () => {
   const { user, logout } = useAuth();
@@ -32,34 +33,71 @@ const RoleBasedNavigation = () => {
 
   const getNavigationItems = () => {
     switch (user.userType) {
-      case 'student':
+      case "student":
         return [
-          { path: '/student-dashboard', label: 'Dashboard', icon: Home },
-          { path: '/scholarships', label: 'Scholarships', icon: Search },
-          { path: '/progress', label: 'Progress', icon: FileText },
-          { path: '/support', label: 'Support', icon: MessageCircle },
+          { path: "/student-dashboard", label: "Dashboard", icon: Home },
+          { path: "/scholarships", label: "Scholarships", icon: Search },
+          { path: "/progress", label: "Progress", icon: FileText },
+          { path: "/support", label: "Support", icon: MessageCircle },
         ];
-      case 'admin':
+      case "admin":
         return [
-          { path: '/admin-dashboard', label: 'Dashboard', icon: Home },
-          { path: '/admin/schemes', label: 'Manage Schemes', icon: Award },
-          { path: '/admin/applications', label: 'Applications', icon: FileText },
-          { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-          { path: '/admin/users', label: 'Users', icon: Users },
-          { path: '/admin/settings', label: 'Settings', icon: Settings },
+          { path: "/admin-dashboard", label: "Dashboard", icon: Home },
+          {
+            path: "/admin-dashboard?tab=schemes",
+            label: "Manage Schemes",
+            icon: Award,
+          },
+          {
+            path: "/admin-dashboard?tab=applications",
+            label: "Applications",
+            icon: FileText,
+          },
+          {
+            path: "/admin-dashboard?tab=analytics",
+            label: "Analytics",
+            icon: BarChart3,
+          },
+          { path: "/admin-dashboard?tab=users", label: "Users", icon: Users },
+          {
+            path: "/admin-dashboard?tab=settings",
+            label: "Settings",
+            icon: Settings,
+          },
         ];
-      case 'reviewer':
+      case "reviewer":
         return [
-          { path: '/reviewer-dashboard', label: 'Dashboard', icon: Home },
-          { path: '/reviewer/applications', label: 'Review Applications', icon: FileText },
-          { path: '/reviewer/reports', label: 'Reports', icon: BarChart3 },
+          { path: "/reviewer-dashboard", label: "Dashboard", icon: Home },
+          {
+            path: "/reviewer/applications",
+            label: "Review Applications",
+            icon: FileText,
+          },
+          { path: "/reviewer/reports", label: "Reports", icon: BarChart3 },
         ];
-      case 'donor':
+      case "donor":
         return [
-          { path: '/donor-dashboard', label: 'Dashboard', icon: Home },
-          { path: '/donor/contributions', label: 'My Contributions', icon: Heart },
-          { path: '/donor/impact', label: 'Impact Tracker', icon: BarChart3 },
-          { path: '/donor/opportunities', label: 'New Opportunities', icon: Search },
+          { path: "/donor-dashboard", label: "Dashboard", icon: Home },
+          {
+            path: "/donor/contributions",
+            label: "My Contributions",
+            icon: Heart,
+          },
+          { path: "/donor/impact", label: "Impact Tracker", icon: BarChart3 },
+          {
+            path: "/donor/opportunities",
+            label: "New Opportunities",
+            icon: Search,
+          },
+        ];
+      case "surveyor":
+        return [
+          { path: "/surveyor-dashboard", label: "Dashboard", icon: Home },
+          {
+            path: "/surveyor-dashboard",
+            label: "My Verifications",
+            icon: FileText,
+          },
         ];
       default:
         return [];
@@ -80,7 +118,8 @@ const RoleBasedNavigation = () => {
               className="h-8 w-auto"
             />
             <span className="text-lg font-semibold text-gray-900">
-              YDF {user.userType.charAt(0).toUpperCase() + user.userType.slice(1)}
+              YDF{" "}
+              {user.userType.charAt(0).toUpperCase() + user.userType.slice(1)}
             </span>
           </div>
 
@@ -90,12 +129,12 @@ const RoleBasedNavigation = () => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
-                  key={item.path}
+                  key={`${item.path}-${item.label}`}
                   to={item.path}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -116,10 +155,16 @@ const RoleBasedNavigation = () => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-600 text-white">
-                      {user.firstName[0]}{user.lastName[0]}
+                      {(
+                        (user.firstName?.[0] || user.email?.[0] || "U") +
+                        (user.lastName?.[0] || "")
+                      ).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

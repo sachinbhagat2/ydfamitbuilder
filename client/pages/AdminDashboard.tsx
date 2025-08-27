@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import RoleBasedNavigation from "../components/RoleBasedNavigation";
 import OnboardingTour from "../components/OnboardingTour";
@@ -26,24 +27,49 @@ import {
 
 const AdminDashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("schemes");
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('ydf_onboarding_admin');
+    const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
     if (!hasSeenOnboarding) {
       setShowOnboarding(true);
     }
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    const allowed = [
+      "overview",
+      "schemes",
+      "applications",
+      "analytics",
+      "users",
+      "settings",
+    ];
+    if (tab && allowed.includes(tab) && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
+
+  const setTab = (tab: string) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(location.search);
+    params.set("tab", tab);
+    navigate({ pathname: "/admin-dashboard", search: `?${params.toString()}` });
+  };
+
   const handleOnboardingComplete = () => {
-    localStorage.setItem('ydf_onboarding_admin', 'true');
+    localStorage.setItem("ydf_onboarding_admin", "true");
     setShowOnboarding(false);
   };
 
   const handleOnboardingSkip = () => {
-    localStorage.setItem('ydf_onboarding_admin', 'skipped');
+    localStorage.setItem("ydf_onboarding_admin", "skipped");
     setShowOnboarding(false);
   };
 
@@ -78,44 +104,105 @@ const AdminDashboard = () => {
     },
   ];
 
-  const schemes = [
-    {
-      id: 1,
-      name: "Merit Excellence Scholarship",
-      status: "Active",
-      applications: 156,
-      budget: "₹50,00,000",
-      deadline: "2024-03-15",
-      category: "Academic",
-    },
-    {
-      id: 2,
-      name: "Rural Development Grant",
-      status: "Active",
-      applications: 89,
-      budget: "₹25,00,000",
-      deadline: "2024-03-22",
-      category: "Rural",
-    },
-    {
-      id: 3,
-      name: "Technical Innovation Fund",
-      status: "Draft",
-      applications: 0,
-      budget: "₹75,00,000",
-      deadline: "2024-03-30",
-      category: "Technology",
-    },
-    {
-      id: 4,
-      name: "Women Empowerment Scholarship",
-      status: "Closed",
-      applications: 234,
-      budget: "₹40,00,000",
-      deadline: "2024-02-28",
-      category: "Gender",
-    },
-  ];
+  const [schemes, setSchemes] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<any>({
+    title: "",
+    description: "",
+    amount: "",
+    currency: "INR",
+    eligibilityCriteria: [],
+    requiredDocuments: [],
+    applicationDeadline: "",
+    selectionDeadline: "",
+    maxApplications: "",
+    status: "active",
+  });
+
+  useEffect(() => {
+    fetchSchemes();
+  }, []);
+
+  const fetchSchemes = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.listScholarships({ status: "all", limit: 100 });
+      if (res.success) setSchemes(res.data);
+    } catch (e) {}
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      title: "",
+      description: "",
+      amount: "",
+      currency: "INR",
+      eligibilityCriteria: [],
+      requiredDocuments: [],
+      applicationDeadline: "",
+      selectionDeadline: "",
+      maxApplications: "",
+      status: "active",
+    });
+    setShowForm(true);
+  };
+
+  const openEdit = (s: any) => {
+    setEditing(s);
+    setForm({
+      ...s,
+      applicationDeadline: s.applicationDeadline
+        ? new Date(s.applicationDeadline).toISOString().slice(0, 16)
+        : "",
+      selectionDeadline: s.selectionDeadline
+        ? new Date(s.selectionDeadline).toISOString().slice(0, 16)
+        : "",
+      eligibilityCriteria: Array.isArray(s.eligibilityCriteria)
+        ? s.eligibilityCriteria
+        : [],
+      requiredDocuments: Array.isArray(s.requiredDocuments)
+        ? s.requiredDocuments
+        : [],
+    });
+    setShowForm(true);
+  };
+
+  const submitForm = async () => {
+    const api = (await import("../services/api")).default;
+    const payload = {
+      ...form,
+      amount: String(form.amount),
+      eligibilityCriteria:
+        typeof form.eligibilityCriteria === "string"
+          ? form.eligibilityCriteria
+              .split(",")
+              .map((x: string) => x.trim())
+              .filter(Boolean)
+          : form.eligibilityCriteria,
+      requiredDocuments:
+        typeof form.requiredDocuments === "string"
+          ? form.requiredDocuments
+              .split(",")
+              .map((x: string) => x.trim())
+              .filter(Boolean)
+          : form.requiredDocuments,
+      applicationDeadline: form.applicationDeadline
+        ? new Date(form.applicationDeadline).toISOString()
+        : undefined,
+      selectionDeadline: form.selectionDeadline
+        ? new Date(form.selectionDeadline).toISOString()
+        : undefined,
+      maxApplications: form.maxApplications
+        ? Number(form.maxApplications)
+        : undefined,
+    };
+    if (editing) await api.updateScholarship(editing.id, payload);
+    else await api.createScholarship(payload);
+    setShowForm(false);
+    await fetchSchemes();
+  };
 
   const recentApplications = [
     {
@@ -286,7 +373,10 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900">
           Scholarship Schemes
         </h2>
-        <button className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+        <button
+          onClick={openCreate}
+          className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
+        >
           <Plus className="h-4 w-4" />
           <span>Create Scheme</span>
         </button>
@@ -336,48 +426,67 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-ydf-light-gray">
-              {schemes.map((scheme) => (
-                <tr key={scheme.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{scheme.name}</p>
-                      <p className="text-sm text-gray-600">{scheme.category}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(scheme.status)}`}
-                    >
-                      {scheme.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.applications}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.budget}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.deadline}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <Eye className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <Edit className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <Copy className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <MoreVertical className="h-4 w-4 text-gray-600" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {schemes
+                .filter((s) =>
+                  (s.title || s.name || "")
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase()),
+                )
+                .map((scheme) => (
+                  <tr key={scheme.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {scheme.title || scheme.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {(scheme.tags && Array.isArray(scheme.tags)
+                            ? scheme.tags.join(", ")
+                            : scheme.category) || "General"}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(scheme.status)}`}
+                      >
+                        {scheme.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {scheme.applications}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {scheme.amount
+                        ? `₹${scheme.amount}`
+                        : scheme.budget || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {scheme.applicationDeadline
+                        ? new Date(scheme.applicationDeadline).toLocaleString()
+                        : scheme.deadline || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <Eye className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => openEdit(scheme)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Edit className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <Copy className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <MoreVertical className="h-4 w-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -466,7 +575,7 @@ const AdminDashboard = () => {
       )}
       <div className="min-h-screen bg-gray-50">
         <RoleBasedNavigation />
-        
+
         {/* Header */}
         <div className="bg-white shadow-sm border-b border-ydf-light-gray">
           <div className="px-6 py-4">
@@ -476,7 +585,8 @@ const AdminDashboard = () => {
                   Admin Dashboard
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Welcome back, {user?.firstName}! Manage scholarships and applications
+                  Welcome back, {user?.firstName}! Manage scholarships and
+                  applications
                 </p>
               </div>
               <div className="flex items-center space-x-2">
@@ -491,41 +601,164 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <div className="w-64 bg-white shadow-sm border-r border-ydf-light-gray min-h-screen">
-          <nav className="p-4 space-y-2">
-            {[
-              { id: "overview", label: "Overview", icon: BarChart3 },
-              { id: "schemes", label: "Manage Schemes", icon: FileText },
-              { id: "applications", label: "View Applications", icon: Users },
-              { id: "analytics", label: "Analytics", icon: TrendingUp },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-ydf-deep-blue text-white"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <tab.icon className="h-5 w-5" />
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+        <div className="flex">
+          {/* Sidebar Navigation */}
+          <div className="w-64 bg-white shadow-sm border-r border-ydf-light-gray min-h-screen">
+            <nav className="p-4 space-y-2">
+              {[
+                { id: "overview", label: "Overview", icon: BarChart3 },
+                { id: "schemes", label: "Manage Schemes", icon: FileText },
+                { id: "applications", label: "View Applications", icon: Users },
+                { id: "analytics", label: "Analytics", icon: TrendingUp },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setTab(tab.id)}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                    activeTab === tab.id
+                      ? "bg-ydf-deep-blue text-white"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <tab.icon className="h-5 w-5" />
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          {activeTab === "overview" && renderOverview()}
-          {activeTab === "schemes" && renderSchemes()}
-          {activeTab === "applications" && renderOverview()}
-          {activeTab === "analytics" && renderAnalytics()}
+          {/* Main Content */}
+          <div className="flex-1 p-6">
+            {activeTab === "overview" && renderOverview()}
+            {activeTab === "schemes" && renderSchemes()}
+            {activeTab === "applications" && renderOverview()}
+            {activeTab === "analytics" && renderAnalytics()}
+          </div>
         </div>
       </div>
-      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4">
+            <h3 className="text-lg font-semibold">
+              {editing ? "Edit Scholarship" : "Create Scholarship"}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">Title</label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">Description</label>
+                <textarea
+                  className="w-full border rounded px-3 py-2"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Amount (INR)</label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">
+                  Max Applications
+                </label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={form.maxApplications}
+                  onChange={(e) =>
+                    setForm({ ...form, maxApplications: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">
+                  Application Deadline
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.applicationDeadline}
+                  onChange={(e) =>
+                    setForm({ ...form, applicationDeadline: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">
+                  Selection Deadline
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.selectionDeadline}
+                  onChange={(e) =>
+                    setForm({ ...form, selectionDeadline: e.target.value })
+                  }
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">
+                  Eligibility (comma separated)
+                </label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={
+                    Array.isArray(form.eligibilityCriteria)
+                      ? form.eligibilityCriteria.join(", ")
+                      : form.eligibilityCriteria
+                  }
+                  onChange={(e) =>
+                    setForm({ ...form, eligibilityCriteria: e.target.value })
+                  }
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-600">
+                  Required Documents (comma separated)
+                </label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={
+                    Array.isArray(form.requiredDocuments)
+                      ? form.requiredDocuments.join(", ")
+                      : form.requiredDocuments
+                  }
+                  onChange={(e) =>
+                    setForm({ ...form, requiredDocuments: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitForm}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white"
+              >
+                {editing ? "Save Changes" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

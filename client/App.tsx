@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -15,6 +15,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReviewerDashboard from "./pages/ReviewerDashboard";
 import DonorDashboard from "./pages/DonorDashboard";
+import SurveyorDashboard from "./pages/SurveyorDashboard";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import Scholarships from "./pages/Scholarships";
@@ -43,96 +44,148 @@ function App() {
               <Routes>
                 <Route path="/" element={<Homepage />} />
                 <Route path="/auth" element={<Auth />} />
-               <Route path="/index" element={<Homepage />} />
-               <Route path="/home" element={<Homepage />} />
-                <Route 
-                  path="/student-dashboard" 
+                <Route path="/index" element={<Homepage />} />
+                <Route path="/home" element={<Homepage />} />
+                <Route
+                  path="/student-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['student']}>
+                    <ProtectedRoute allowedRoles={["student"]}>
                       <StudentDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/admin-dashboard" 
+                <Route
+                  path="/admin-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={["admin"]}>
                       <AdminDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/reviewer-dashboard" 
+                <Route
+                  path="/reviewer-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['reviewer']}>
+                    <ProtectedRoute allowedRoles={["reviewer"]}>
                       <ReviewerDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/donor-dashboard" 
+                <Route
+                  path="/donor-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['donor']}>
+                    <ProtectedRoute allowedRoles={["donor"]}>
                       <DonorDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/scholarships" 
+                <Route
+                  path="/scholarships"
                   element={
-                    <ProtectedRoute allowedRoles={['student']}>
+                    <ProtectedRoute allowedRoles={["student"]}>
                       <Scholarships />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/support" 
+                <Route
+                  path="/support"
                   element={
-                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor']}>
+                    <ProtectedRoute
+                      allowedRoles={[
+                        "student",
+                        "admin",
+                        "reviewer",
+                        "donor",
+                        "surveyor",
+                      ]}
+                    >
                       <Support />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/progress" 
+                <Route
+                  path="/progress"
                   element={
-                    <ProtectedRoute allowedRoles={['student']}>
+                    <ProtectedRoute allowedRoles={["student"]}>
                       <Progress />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/profile" 
+                <Route
+                  path="/profile"
                   element={
-                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor']}>
+                    <ProtectedRoute
+                      allowedRoles={[
+                        "student",
+                        "admin",
+                        "reviewer",
+                        "donor",
+                        "surveyor",
+                      ]}
+                    >
                       <Profile />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                {/* Legacy routes for backward compatibility */}
-                <Route 
+                {/* Legacy routes for backward compatibility and redirects */}
+                <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={["admin"]}>
                       <AdminDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
+                <Route
+                  path="/admin/schemes"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=schemes" replace />
+                  }
+                />
+                <Route
+                  path="/admin/applications"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=applications" replace />
+                  }
+                />
+                <Route
+                  path="/admin/analytics"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=analytics" replace />
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={<Navigate to="/admin-dashboard?tab=users" replace />}
+                />
+                <Route
+                  path="/admin/settings"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=settings" replace />
+                  }
+                />
+                <Route
                   path="/reviewer"
                   element={
-                    <ProtectedRoute allowedRoles={['reviewer']}>
+                    <ProtectedRoute allowedRoles={["reviewer"]}>
                       <ReviewerDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
+                <Route
                   path="/donor"
                   element={
-                    <ProtectedRoute allowedRoles={['donor']}>
+                    <ProtectedRoute allowedRoles={["donor"]}>
                       <DonorDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
+                />
+                <Route
+                  path="/surveyor-dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={["surveyor"]}>
+                      <SurveyorDashboard />
+                    </ProtectedRoute>
+                  }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

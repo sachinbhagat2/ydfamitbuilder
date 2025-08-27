@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import apiService from '../services/api';
-import { User, CreateUserInput } from '../../shared/types/database';
-import { toast } from '../components/ui/use-toast';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import apiService from "../services/api";
+import { User, CreateUserInput } from "../../shared/types/database";
+import { toast } from "../components/ui/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -16,7 +16,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,16 +28,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem('ydf_token');
-        const storedUser = localStorage.getItem('ydf_user');
+        const token = localStorage.getItem("ydf_token");
+        const storedUser = localStorage.getItem("ydf_user");
 
         if (token && storedUser) {
           // Verify token with server
           try {
             const response = await apiService.verifyToken();
             if (response.success && response.data) {
-              setUser(response.data);
+              const parsed = JSON.parse(storedUser);
+              const merged = { ...parsed, ...response.data };
+              setUser(merged);
               setIsAuthenticated(true);
+              // persist merged so names/phone are preserved
+              localStorage.setItem("ydf_user", JSON.stringify(merged));
             } else {
               // Token invalid, clear auth data
               apiService.clearAuth();
@@ -46,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error("Auth initialization error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -59,17 +65,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       const response = await apiService.login({ email, password });
-      
+
       if (response.success && response.data) {
         setUser(response.data.user);
         setIsAuthenticated(true);
-        
+
+        // Verify token to ensure fresh role data
+        try {
+          const verified = await apiService.verifyToken();
+          if (verified.success && verified.data) {
+            const merged: any = { ...response.data.user, ...verified.data };
+            setUser(merged);
+            toast({
+              title: "Login Successful",
+              description: `Welcome back, ${merged.firstName || response.data.user.firstName}!`,
+            });
+            redirectToDashboard(merged);
+            return true;
+          }
+        } catch {}
+
         toast({
           title: "Login Successful",
           description: `Welcome back, ${response.data.user.firstName}!`,
         });
-
-        // Redirect to appropriate dashboard
         redirectToDashboard(response.data.user);
         return true;
       } else {
@@ -81,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       toast({
         title: "Login Error",
         description: error instanceof Error ? error.message : "Login failed",
@@ -97,11 +116,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       const response = await apiService.register(userData);
-      
+
       if (response.success && response.data) {
         setUser(response.data.user);
         setIsAuthenticated(true);
-        
+
         toast({
           title: "Registration Successful",
           description: `Welcome to Youth Dreamers Foundation, ${response.data.user.firstName}!`,
@@ -119,10 +138,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       toast({
         title: "Registration Error",
-        description: error instanceof Error ? error.message : "Registration failed",
+        description:
+          error instanceof Error ? error.message : "Registration failed",
         variant: "destructive",
       });
       return false;
@@ -136,15 +156,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       apiService.clearAuth();
       setUser(null);
       setIsAuthenticated(false);
-      
+
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out",
       });
-      
-      navigate('/');
+
+      navigate("/");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -153,20 +173,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!targetUser) return;
 
     switch (targetUser.userType) {
-      case 'student':
-        navigate('/student-dashboard');
+      case "student":
+        navigate("/student-dashboard");
         break;
-      case 'admin':
-        navigate('/admin-dashboard');
+      case "admin":
+        navigate("/admin-dashboard");
         break;
-      case 'reviewer':
-        navigate('/reviewer-dashboard');
+      case "reviewer":
+        navigate("/reviewer-dashboard");
         break;
-      case 'donor':
-        navigate('/donor-dashboard');
+      case "donor":
+        navigate("/donor-dashboard");
+        break;
+      case "surveyor":
+        navigate("/surveyor-dashboard");
         break;
       default:
-        navigate('/student-dashboard');
+        navigate("/student-dashboard");
     }
   };
 
@@ -180,17 +203,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     redirectToDashboard,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

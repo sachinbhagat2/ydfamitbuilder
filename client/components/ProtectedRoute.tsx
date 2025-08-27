@@ -1,11 +1,17 @@
-import { useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Shield, AlertCircle, LogIn } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription } from './ui/alert';
+import React, { useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Shield, AlertCircle, LogIn } from "lucide-react";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Alert, AlertDescription } from "./ui/alert";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -37,7 +43,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
           <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading...</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Loading...
+          </h2>
           <p className="text-gray-600">Verifying your authentication</p>
         </motion.div>
       </div>
@@ -71,16 +79,16 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
                 </AlertDescription>
               </Alert>
               <div className="flex flex-col space-y-2">
-                <Button 
-                  onClick={() => navigate('/auth')}
+                <Button
+                  onClick={() => navigate("/auth")}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   Sign In
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate("/")}
                   className="w-full"
                 >
                   Back to Home
@@ -116,21 +124,21 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
               <Alert className="border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-700">
-                  This page is restricted to: {allowedRoles.join(', ')} users.
+                  This page is restricted to: {allowedRoles.join(", ")} users.
                   <br />
                   Your account type: <strong>{user.userType}</strong>
                 </AlertDescription>
               </Alert>
               <div className="flex flex-col space-y-2">
-                <Button 
+                <Button
                   onClick={() => redirectToDashboard()}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   Go to My Dashboard
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate("/")}
                   className="w-full"
                 >
                   Back to Home
