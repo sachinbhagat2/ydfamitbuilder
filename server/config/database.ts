@@ -96,6 +96,27 @@ class InMemoryStore {
       profileData: { department: "Field Verification" },
     },
   ];
+
+  public scholarships: any[] = [
+    {
+      id: 1,
+      title: "Merit Excellence Scholarship",
+      description: "Supporting academically excellent students",
+      amount: "50000",
+      currency: "INR",
+      eligibilityCriteria: ["CGPA above 8.5", "Income < 5L"],
+      requiredDocuments: ["Transcripts", "Income certificate"],
+      applicationDeadline: new Date(Date.now() + 1000*60*60*24*30),
+      selectionDeadline: null,
+      maxApplications: 1000,
+      currentApplications: 0,
+      status: "active",
+      createdBy: 2,
+      tags: ["Academic", "Merit"],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
 }
 
 const memory = new InMemoryStore();
