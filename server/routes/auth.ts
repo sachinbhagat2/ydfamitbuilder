@@ -52,6 +52,15 @@ router.post('/create-default-users', async (req, res) => {
         phone: '+91 9876543213',
         userType: 'donor' as const,
         profileData: { organization: 'Demo Foundation' }
+      },
+      {
+        email: 'surveyor@ydf.org',
+        password: 'Surveyor123!',
+        firstName: 'Demo',
+        lastName: 'Surveyor',
+        phone: '+91 9876543214',
+        userType: 'surveyor' as const,
+        profileData: { department: 'Field Verification' }
       }
     ];
 
