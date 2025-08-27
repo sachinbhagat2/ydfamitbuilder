@@ -94,7 +94,7 @@ export const pool = !USE_MOCK
   : null as unknown as mysql.Pool;
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
-export const mysql as any = {
+export const mysqlCompat = {
   getConnection: async () => {
     if (USE_MOCK || !pool) {
       return {
@@ -102,11 +102,11 @@ export const mysql as any = {
         ping: async () => true,
         end: async () => {},
         release: () => {}
-      };
+      } as any;
     }
     return pool.getConnection();
   }
-};
+} as any;
 
 // Helper to ensure tables exist in MySQL
 async function ensureUsersTable() {
