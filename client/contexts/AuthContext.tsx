@@ -36,8 +36,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             const response = await apiService.verifyToken();
             if (response.success && response.data) {
-              setUser(response.data);
+              const parsed = JSON.parse(storedUser);
+              const merged = { ...parsed, ...response.data };
+              setUser(merged);
               setIsAuthenticated(true);
+              // persist merged so names/phone are preserved
+              localStorage.setItem("ydf_user", JSON.stringify(merged));
             } else {
               // Token invalid, clear auth data
               apiService.clearAuth();
