@@ -451,6 +451,7 @@ export async function initializeDatabase() {
       return { success: true };
     }
     await ensureUsersTable();
+    await ensureScholarshipsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);
