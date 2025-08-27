@@ -168,6 +168,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       case "donor":
         navigate("/donor-dashboard");
         break;
+      case "surveyor":
+        navigate("/surveyor-dashboard");
+        break;
       default:
         navigate("/student-dashboard");
     }

@@ -5,7 +5,7 @@ export interface User {
   firstName: string;
   lastName: string;
   phone?: string;
-  userType: 'student' | 'admin' | 'reviewer' | 'donor';
+  userType: 'student' | 'admin' | 'reviewer' | 'donor' | 'surveyor';
   isActive: boolean;
   emailVerified: boolean;
   createdAt: Date;
@@ -19,7 +19,7 @@ export interface CreateUserInput {
   firstName: string;
   lastName: string;
   phone?: string;
-  userType: 'student' | 'admin' | 'reviewer' | 'donor';
+  userType: 'student' | 'admin' | 'reviewer' | 'donor' | 'surveyor';
   profileData?: any;
 }
 
@@ -250,7 +250,7 @@ export interface QueryParams {
 }
 
 export interface UserQueryParams extends QueryParams {
-  userType?: 'student' | 'admin' | 'reviewer' | 'donor';
+  userType?: 'student' | 'admin' | 'reviewer' | 'donor' | 'surveyor';
   isActive?: boolean;
 }
 

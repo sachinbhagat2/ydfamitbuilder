@@ -133,6 +133,22 @@ class ApiService {
     return result;
   }
 
+  // Surveys (surveyor staff module)
+  async getMyVerifications() {
+    const response = await fetch(`${API_BASE_URL}/surveys/my`, { method: 'GET', headers: this.getAuthHeaders() });
+    return this.handleResponse(response);
+  }
+
+  async startVerification(payload: { applicationId: number; type: 'home' | 'document'; lat?: number; lng?: number; notes?: string; }) {
+    const response = await fetch(`${API_BASE_URL}/surveys/start`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    return this.handleResponse(response);
+  }
+
+  async completeVerification(payload: { verificationId: number; lat?: number; lng?: number; notes?: string; }) {
+    const response = await fetch(`${API_BASE_URL}/surveys/complete`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    return this.handleResponse(response);
+  }
+
   // Utility methods
   isAuthenticated(): boolean {
     const token = localStorage.getItem('ydf_token');

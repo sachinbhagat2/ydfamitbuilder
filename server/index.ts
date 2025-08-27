@@ -16,6 +16,7 @@ import { handleDemo } from "./routes/demo";
 import testRoutes from "./routes/test";
 import authRoutes from "./routes/auth";
 import scholarshipRoutes from "./routes/scholarships";
+import surveysRoutes from "./routes/surveys";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +63,7 @@ app.get("/api/ping", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/scholarships", scholarshipRoutes);
 app.use("/api/test", testRoutes);
+app.use("/api/surveys", surveysRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -188,6 +190,7 @@ async function startServer() {
       console.log("   Admin: admin@ydf.org / Admin123!");
       console.log("   Reviewer: reviewer@ydf.org / Reviewer123!");
       console.log("   Donor: donor@ydf.org / Donor123!");
+      console.log("   Surveyor: surveyor@ydf.org / Surveyor123!");
     });
   } catch (error) {
     console.error("Failed to start server:", error);

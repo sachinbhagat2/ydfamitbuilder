@@ -59,6 +59,7 @@ router.post("/setup-database", async (req, res) => {
           password: "Reviewer123!",
         },
         { role: "Donor", email: "donor@ydf.org", password: "Donor123!" },
+        { role: "Surveyor", email: "surveyor@ydf.org", password: "Surveyor123!" },
       ],
     });
   } catch (error) {

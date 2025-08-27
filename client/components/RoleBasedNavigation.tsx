@@ -78,6 +78,11 @@ const RoleBasedNavigation = () => {
             icon: Search,
           },
         ];
+      case "surveyor":
+        return [
+          { path: "/surveyor-dashboard", label: "Dashboard", icon: Home },
+          { path: "/surveyor-dashboard", label: "My Verifications", icon: FileText },
+        ];
       default:
         return [];
     }
