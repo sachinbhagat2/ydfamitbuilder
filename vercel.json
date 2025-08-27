@@ -3,10 +3,13 @@
   "outputDirectory": "dist/spa",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
     }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server/$1.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
