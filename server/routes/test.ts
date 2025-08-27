@@ -66,8 +66,8 @@ router.post('/setup-database', async (req, res) => {
 // Check if tables exist
 router.get('/check-tables', async (req, res) => {
   try {
-    const { mysql } = await import('../config/database');
-    const connection = await mysql.getConnection();
+    const { mysqlCompat } = await import('../config/database');
+    const connection = await mysqlCompat.getConnection();
     
     // Get list of tables
     const [tables] = await connection.execute('SHOW TABLES');
