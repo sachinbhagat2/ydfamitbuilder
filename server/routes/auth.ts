@@ -136,7 +136,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Validate user type
-    const validUserTypes = ['student', 'admin', 'reviewer', 'donor'];
+    const validUserTypes = ['student', 'admin', 'reviewer', 'donor', 'surveyor'];
     if (!validUserTypes.includes(userType)) {
       return res.status(400).json({
         success: false,
