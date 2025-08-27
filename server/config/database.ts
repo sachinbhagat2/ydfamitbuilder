@@ -153,14 +153,21 @@ async function ensureUsersTable() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   try {
-    const [cols]: any = await pool.execute("SHOW COLUMNS FROM users LIKE 'userType'");
+    const [cols]: any = await pool.execute(
+      "SHOW COLUMNS FROM users LIKE 'userType'",
+    );
     const col = (cols as any[])[0];
-    const typeStr = (col && col.Type) || (col && col['Type']);
+    const typeStr = (col && col.Type) || (col && col["Type"]);
     if (typeStr && !String(typeStr).includes("surveyor")) {
-      await pool.execute(`ALTER TABLE users MODIFY COLUMN userType ENUM('student','admin','reviewer','donor','surveyor') NOT NULL`);
+      await pool.execute(
+        `ALTER TABLE users MODIFY COLUMN userType ENUM('student','admin','reviewer','donor','surveyor') NOT NULL`,
+      );
     }
   } catch (e) {
-    console.warn('Could not verify/alter users.userType enum:', e instanceof Error ? e.message : e);
+    console.warn(
+      "Could not verify/alter users.userType enum:",
+      e instanceof Error ? e.message : e,
+    );
   }
 }
 
@@ -418,7 +425,8 @@ export async function createDefaultUsers() {
         const toUpdate: any = {};
         if (existing.userType !== u.userType) toUpdate.userType = u.userType;
         if (existing.isActive !== u.isActive) toUpdate.isActive = u.isActive;
-        if (existing.emailVerified !== u.emailVerified) toUpdate.emailVerified = u.emailVerified;
+        if (existing.emailVerified !== u.emailVerified)
+          toUpdate.emailVerified = u.emailVerified;
         if (Object.keys(toUpdate).length) {
           await mockDatabase.updateUser(existing.id, toUpdate);
         }

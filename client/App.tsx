@@ -44,101 +44,117 @@ function App() {
               <Routes>
                 <Route path="/" element={<Homepage />} />
                 <Route path="/auth" element={<Auth />} />
-               <Route path="/index" element={<Homepage />} />
-               <Route path="/home" element={<Homepage />} />
-                <Route 
-                  path="/student-dashboard" 
+                <Route path="/index" element={<Homepage />} />
+                <Route path="/home" element={<Homepage />} />
+                <Route
+                  path="/student-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['student']}>
+                    <ProtectedRoute allowedRoles={["student"]}>
                       <StudentDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/admin-dashboard" 
+                <Route
+                  path="/admin-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={["admin"]}>
                       <AdminDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/reviewer-dashboard" 
+                <Route
+                  path="/reviewer-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['reviewer']}>
+                    <ProtectedRoute allowedRoles={["reviewer"]}>
                       <ReviewerDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/donor-dashboard" 
+                <Route
+                  path="/donor-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['donor']}>
+                    <ProtectedRoute allowedRoles={["donor"]}>
                       <DonorDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/scholarships" 
+                <Route
+                  path="/scholarships"
                   element={
-                    <ProtectedRoute allowedRoles={['student']}>
+                    <ProtectedRoute allowedRoles={["student"]}>
                       <Scholarships />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
+                <Route
                   path="/support"
                   element={
-                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor', 'surveyor']}>
+                    <ProtectedRoute
+                      allowedRoles={[
+                        "student",
+                        "admin",
+                        "reviewer",
+                        "donor",
+                        "surveyor",
+                      ]}
+                    >
                       <Support />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/progress" 
+                <Route
+                  path="/progress"
                   element={
-                    <ProtectedRoute allowedRoles={['student']}>
+                    <ProtectedRoute allowedRoles={["student"]}>
                       <Progress />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
+                <Route
                   path="/profile"
                   element={
-                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor', 'surveyor']}>
+                    <ProtectedRoute
+                      allowedRoles={[
+                        "student",
+                        "admin",
+                        "reviewer",
+                        "donor",
+                        "surveyor",
+                      ]}
+                    >
                       <Profile />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
                 {/* Legacy routes for backward compatibility */}
-                <Route 
+                <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={["admin"]}>
                       <AdminDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
+                <Route
                   path="/reviewer"
                   element={
-                    <ProtectedRoute allowedRoles={['reviewer']}>
+                    <ProtectedRoute allowedRoles={["reviewer"]}>
                       <ReviewerDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
+                <Route
                   path="/donor"
                   element={
-                    <ProtectedRoute allowedRoles={['donor']}>
+                    <ProtectedRoute allowedRoles={["donor"]}>
                       <DonorDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
                 <Route
                   path="/surveyor-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={['surveyor']}>
+                    <ProtectedRoute allowedRoles={["surveyor"]}>
                       <SurveyorDashboard />
                     </ProtectedRoute>
                   }

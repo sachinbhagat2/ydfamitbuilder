@@ -81,7 +81,11 @@ const RoleBasedNavigation = () => {
       case "surveyor":
         return [
           { path: "/surveyor-dashboard", label: "Dashboard", icon: Home },
-          { path: "/surveyor-dashboard", label: "My Verifications", icon: FileText },
+          {
+            path: "/surveyor-dashboard",
+            label: "My Verifications",
+            icon: FileText,
+          },
         ];
       default:
         return [];
@@ -145,7 +149,10 @@ const RoleBasedNavigation = () => {
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-600 text-white">
-                      {((user.firstName?.[0] || user.email?.[0] || 'U') + (user.lastName?.[0] || '')).toUpperCase()}
+                      {(
+                        (user.firstName?.[0] || user.email?.[0] || "U") +
+                        (user.lastName?.[0] || "")
+                      ).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

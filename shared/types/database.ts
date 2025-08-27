@@ -5,7 +5,7 @@ export interface User {
   firstName: string;
   lastName: string;
   phone?: string;
-  userType: 'student' | 'admin' | 'reviewer' | 'donor' | 'surveyor';
+  userType: "student" | "admin" | "reviewer" | "donor" | "surveyor";
   isActive: boolean;
   emailVerified: boolean;
   createdAt: Date;
@@ -19,7 +19,7 @@ export interface CreateUserInput {
   firstName: string;
   lastName: string;
   phone?: string;
-  userType: 'student' | 'admin' | 'reviewer' | 'donor' | 'surveyor';
+  userType: "student" | "admin" | "reviewer" | "donor" | "surveyor";
   profileData?: any;
 }
 
@@ -29,7 +29,7 @@ export interface LoginInput {
 }
 
 export interface AuthResponse {
-  user: Omit<User, 'password'>;
+  user: Omit<User, "password">;
   token: string;
   expiresIn: string;
 }
@@ -47,7 +47,7 @@ export interface Scholarship {
   selectionDeadline?: Date;
   maxApplications?: number;
   currentApplications: number;
-  status: 'active' | 'inactive' | 'closed';
+  status: "active" | "inactive" | "closed";
   createdBy?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -72,7 +72,7 @@ export interface Application {
   id: number;
   studentId: number;
   scholarshipId: number;
-  status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'waitlisted';
+  status: "submitted" | "under_review" | "approved" | "rejected" | "waitlisted";
   applicationData: any;
   documents?: any;
   score?: string;
@@ -90,7 +90,7 @@ export interface CreateApplicationInput {
 }
 
 export interface UpdateApplicationStatusInput {
-  status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'waitlisted';
+  status: "submitted" | "under_review" | "approved" | "rejected" | "waitlisted";
   score?: string;
   reviewNotes?: string;
   reviewedBy?: number;
@@ -104,7 +104,7 @@ export interface Review {
   criteria: any;
   overallScore: string;
   comments?: string;
-  recommendation: 'approve' | 'reject' | 'conditionally_approve';
+  recommendation: "approve" | "reject" | "conditionally_approve";
   isComplete: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -115,7 +115,7 @@ export interface CreateReviewInput {
   criteria: any;
   overallScore: string;
   comments?: string;
-  recommendation: 'approve' | 'reject' | 'conditionally_approve';
+  recommendation: "approve" | "reject" | "conditionally_approve";
 }
 
 // Notification types
@@ -124,7 +124,7 @@ export interface Notification {
   userId: number;
   title: string;
   message: string;
-  type: 'application' | 'deadline' | 'announcement' | 'message';
+  type: "application" | "deadline" | "announcement" | "message";
   isRead: boolean;
   relatedId?: number;
   relatedType?: string;
@@ -135,7 +135,7 @@ export interface CreateNotificationInput {
   userId: number;
   title: string;
   message: string;
-  type: 'application' | 'deadline' | 'announcement' | 'message';
+  type: "application" | "deadline" | "announcement" | "message";
   relatedId?: number;
   relatedType?: string;
 }
@@ -172,10 +172,10 @@ export interface Announcement {
   id: number;
   title: string;
   content: string;
-  type: 'general' | 'deadline' | 'result' | 'maintenance';
+  type: "general" | "deadline" | "result" | "maintenance";
   targetAudience?: any;
   isActive: boolean;
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority: "low" | "normal" | "high" | "urgent";
   validFrom: Date;
   validTo?: Date;
   createdBy?: number;
@@ -186,9 +186,9 @@ export interface Announcement {
 export interface CreateAnnouncementInput {
   title: string;
   content: string;
-  type?: 'general' | 'deadline' | 'result' | 'maintenance';
+  type?: "general" | "deadline" | "result" | "maintenance";
   targetAudience?: any;
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  priority?: "low" | "normal" | "high" | "urgent";
   validFrom?: Date;
   validTo?: Date;
 }
@@ -202,8 +202,8 @@ export interface Contribution {
   currency: string;
   paymentMethod?: string;
   paymentId?: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  contributionType: 'one_time' | 'recurring';
+  status: "pending" | "completed" | "failed" | "refunded";
+  contributionType: "one_time" | "recurring";
   notes?: string;
   createdAt: Date;
   completedAt?: Date;
@@ -215,7 +215,7 @@ export interface CreateContributionInput {
   amount: string;
   currency?: string;
   paymentMethod?: string;
-  contributionType?: 'one_time' | 'recurring';
+  contributionType?: "one_time" | "recurring";
   notes?: string;
 }
 
@@ -244,25 +244,30 @@ export interface QueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   search?: string;
   filter?: any;
 }
 
 export interface UserQueryParams extends QueryParams {
-  userType?: 'student' | 'admin' | 'reviewer' | 'donor' | 'surveyor';
+  userType?: "student" | "admin" | "reviewer" | "donor" | "surveyor";
   isActive?: boolean;
 }
 
 export interface ScholarshipQueryParams extends QueryParams {
-  status?: 'active' | 'inactive' | 'closed';
+  status?: "active" | "inactive" | "closed";
   category?: string;
   minAmount?: number;
   maxAmount?: number;
 }
 
 export interface ApplicationQueryParams extends QueryParams {
-  status?: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'waitlisted';
+  status?:
+    | "submitted"
+    | "under_review"
+    | "approved"
+    | "rejected"
+    | "waitlisted";
   studentId?: number;
   scholarshipId?: number;
   reviewerId?: number;
