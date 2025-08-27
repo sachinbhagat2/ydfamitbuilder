@@ -33,7 +33,9 @@ class ApiService {
   ): Promise<ApiResponse<AuthResponse>> {
     const payload = {
       ...userData,
-      email: String(userData.email || "").trim().toLowerCase(),
+      email: String(userData.email || "")
+        .trim()
+        .toLowerCase(),
     };
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
@@ -55,7 +57,9 @@ class ApiService {
   async login(loginData: LoginInput): Promise<ApiResponse<AuthResponse>> {
     const payload = {
       ...loginData,
-      email: String(loginData.email || "").trim().toLowerCase(),
+      email: String(loginData.email || "")
+        .trim()
+        .toLowerCase(),
     };
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
@@ -121,24 +125,41 @@ class ApiService {
 
   // Scholarship endpoints
   async listScholarships(params?: Record<string, any>) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
-    const res = await fetch(`${API_BASE_URL}/scholarships${qs}`, { headers: this.getAuthHeaders() });
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/scholarships${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async getScholarship(id: number) {
-    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, { headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async createScholarship(payload: any) {
-    const res = await fetch(`${API_BASE_URL}/scholarships`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    const res = await fetch(`${API_BASE_URL}/scholarships`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
     return this.handleResponse(res);
   }
   async updateScholarship(id: number, payload: any) {
-    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, { method: 'PUT', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
     return this.handleResponse(res);
   }
   async deleteScholarship(id: number) {
-    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
 

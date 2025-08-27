@@ -273,11 +273,14 @@ async function ensureScholarshipsTable() {
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
-    const normalized = String(email || "").trim().toLowerCase();
+    const normalized = String(email || "")
+      .trim()
+      .toLowerCase();
     if (USE_MOCK || !pool) {
       return (
-        memory.users.find((u) => String(u.email || "").toLowerCase() === normalized) ||
-        null
+        memory.users.find(
+          (u) => String(u.email || "").toLowerCase() === normalized,
+        ) || null
       );
     }
     const [rows] = await pool.execute(
