@@ -125,7 +125,7 @@ router.post("/create-default-users", async (req, res) => {
 router.post("/register", async (req, res) => {
   try {
     const {
-      email,
+      email: inputEmail,
       password,
       firstName,
       lastName,
@@ -133,6 +133,10 @@ router.post("/register", async (req, res) => {
       userType,
       profileData,
     }: CreateUserInput = req.body;
+
+    const email = String(inputEmail || "")
+      .trim()
+      .toLowerCase();
 
     // Validate required fields
     if (!email || !password || !firstName || !lastName || !userType) {
@@ -228,7 +232,10 @@ router.post("/register", async (req, res) => {
 // Login user
 router.post("/login", async (req, res) => {
   try {
-    const { email, password }: LoginInput = req.body;
+    const { email: inputEmail, password }: LoginInput = req.body;
+    const email = String(inputEmail || "")
+      .trim()
+      .toLowerCase();
 
     // Validate required fields
     if (!email || !password) {

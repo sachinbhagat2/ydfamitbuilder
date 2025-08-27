@@ -273,12 +273,19 @@ async function ensureScholarshipsTable() {
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
+    const normalized = String(email || "")
+      .trim()
+      .toLowerCase();
     if (USE_MOCK || !pool) {
-      return memory.users.find((u) => u.email === email) || null;
+      return (
+        memory.users.find(
+          (u) => String(u.email || "").toLowerCase() === normalized,
+        ) || null
+      );
     }
     const [rows] = await pool.execute(
-      "SELECT * FROM users WHERE email = ? LIMIT 1",
-      [email],
+      "SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
+      [normalized],
     );
     return (rows as any[])[0] || null;
   }
