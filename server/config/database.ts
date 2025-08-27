@@ -144,7 +144,7 @@ async function ensureUsersTable() {
       firstName VARCHAR(100) NOT NULL,
       lastName VARCHAR(100) NOT NULL,
       phone VARCHAR(50),
-      userType ENUM('student','admin','reviewer','donor') NOT NULL,
+      userType ENUM('student','admin','reviewer','donor','surveyor') NOT NULL,
       isActive TINYINT(1) NOT NULL DEFAULT 1,
       emailVerified TINYINT(1) NOT NULL DEFAULT 0,
       profileData JSON NULL,
