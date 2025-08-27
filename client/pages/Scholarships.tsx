@@ -30,6 +30,17 @@ const Scholarships = () => {
   const [selectedDeadline, setSelectedDeadline] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
+  const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const api = (await import('../services/api')).default;
+        const res = await api.listScholarships({ status: 'active', limit: 100 });
+        if (res.success) setRemoteScholarships(res.data);
+      } catch {}
+    })();
+  }, []);
 
   const scholarships = [
     {
