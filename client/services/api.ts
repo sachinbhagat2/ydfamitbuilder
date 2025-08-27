@@ -115,6 +115,29 @@ class ApiService {
     return result;
   }
 
+  // Scholarship endpoints
+  async listScholarships(params?: Record<string, any>) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/scholarships${qs}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async getScholarship(id: number) {
+    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async createScholarship(payload: any) {
+    const res = await fetch(`${API_BASE_URL}/scholarships`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    return this.handleResponse(res);
+  }
+  async updateScholarship(id: number, payload: any) {
+    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, { method: 'PUT', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    return this.handleResponse(res);
+  }
+  async deleteScholarship(id: number) {
+    const res = await fetch(`${API_BASE_URL}/scholarships/${id}`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+
   async verifyToken(): Promise<ApiResponse<User>> {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: "GET",
