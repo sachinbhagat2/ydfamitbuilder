@@ -401,8 +401,8 @@ const AdminDashboard = () => {
                 <tr key={scheme.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-900">{scheme.name}</p>
-                      <p className="text-sm text-gray-600">{scheme.category}</p>
+                      <p className="font-medium text-gray-900">{scheme.title || scheme.name}</p>
+                      <p className="text-sm text-gray-600">{(scheme.tags && Array.isArray(scheme.tags) ? scheme.tags.join(', ') : scheme.category) || 'General'}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
