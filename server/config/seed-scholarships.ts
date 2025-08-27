@@ -1,4 +1,4 @@
-import { createScholarship, pool } from './database';
+import { mockDatabase, pool } from './database';
 
 export async function createDefaultScholarships() {
   try {
