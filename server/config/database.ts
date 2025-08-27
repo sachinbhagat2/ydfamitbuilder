@@ -379,6 +379,17 @@ export async function createDefaultUsers() {
         isActive: true,
         emailVerified: true,
       },
+      {
+        email: "surveyor@ydf.org",
+        password: "Surveyor123!",
+        firstName: "Demo",
+        lastName: "Surveyor",
+        phone: "+91 9876543214",
+        userType: "surveyor",
+        profileData: { department: "Field Verification" },
+        isActive: true,
+        emailVerified: true,
+      },
     ];
 
     if (USE_MOCK || !pool) {
