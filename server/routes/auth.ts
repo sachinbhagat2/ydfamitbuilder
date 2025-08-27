@@ -67,13 +67,9 @@ router.post('/create-default-users', async (req, res) => {
     const createdUsers = [];
     
     for (const userData of defaultUsers) {
-      // Check if user already exists in mock database
       const existingUser = await mockDatabase.findUserByEmail(userData.email);
-      
       if (!existingUser) {
-        // Hash password and create user
         const hashedPassword = await hashPassword(userData.password);
-        
         const newUser = await mockDatabase.createUser({
           email: userData.email,
           password: hashedPassword,
@@ -85,18 +81,16 @@ router.post('/create-default-users', async (req, res) => {
           isActive: true,
           emailVerified: true
         });
-        
-        createdUsers.push({
-          ...userData,
-          id: newUser.id,
-          password: userData.password // Return plain password for credentials
-        });
+        createdUsers.push({ ...userData, id: newUser.id, password: userData.password });
       } else {
-        createdUsers.push({
-          ...userData,
-          id: existingUser.id,
-          exists: true
-        });
+        const toUpdate: any = {};
+        if (existingUser.userType !== userData.userType) toUpdate.userType = userData.userType;
+        if (existingUser.isActive !== true) toUpdate.isActive = true;
+        if (existingUser.emailVerified !== true) toUpdate.emailVerified = true;
+        if (Object.keys(toUpdate).length) {
+          await mockDatabase.updateUser(existingUser.id, toUpdate);
+        }
+        createdUsers.push({ ...userData, id: existingUser.id, exists: true });
       }
     }
 
