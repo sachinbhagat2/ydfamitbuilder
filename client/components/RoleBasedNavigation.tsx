@@ -145,8 +145,7 @@ const RoleBasedNavigation = () => {
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-600 text-white">
-                      {user.firstName[0]}
-                      {user.lastName[0]}
+                      {((user.firstName?.[0] || user.email?.[0] || 'U') + (user.lastName?.[0] || '')).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
