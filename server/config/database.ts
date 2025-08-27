@@ -89,8 +89,8 @@ export const pool = !USE_MOCK
       connectionLimit: 10,
       queueLimit: 0,
       connectTimeout: 30000,
-      ssl: { rejectUnauthorized: false }
-    })
+      ...(String(process.env.DB_SSL || '').toLowerCase() === 'true' ? { ssl: { rejectUnauthorized: false } } : {})
+    } as any)
   : null as unknown as mysql.Pool;
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
