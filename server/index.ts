@@ -160,6 +160,9 @@ async function startServer() {
     // Create default users
     await createDefaultUsers();
 
+    // Seed default scholarships into DB (no-op for mock)
+    await createDefaultScholarships();
+
     // Detect and log egress IP for DB allowlisting
     try {
       const resp = await fetch("https://api.ipify.org?format=json");
