@@ -192,6 +192,30 @@ async function ensureUsersTable() {
   }
 }
 
+async function ensureScholarshipsTable() {
+  if (USE_MOCK || !pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS scholarships (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      currency VARCHAR(10) DEFAULT 'INR',
+      eligibilityCriteria JSON NOT NULL,
+      requiredDocuments JSON NOT NULL,
+      applicationDeadline DATETIME NOT NULL,
+      selectionDeadline DATETIME NULL,
+      maxApplications INT NULL,
+      currentApplications INT DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'active',
+      createdBy INT NULL,
+      tags JSON NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
