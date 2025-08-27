@@ -202,7 +202,9 @@ async function startServer() {
   }
 }
 
-startServer();
+if (!process.env.NETLIFY && !process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME && process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
 export function createServer() {
   return app;
