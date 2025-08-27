@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -126,7 +126,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                {/* Legacy routes for backward compatibility */}
+                {/* Legacy routes for backward compatibility and redirects */}
                 <Route
                   path="/admin"
                   element={
@@ -135,6 +135,11 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/admin/schemes" element={<Navigate to="/admin-dashboard?tab=schemes" replace />} />
+                <Route path="/admin/applications" element={<Navigate to="/admin-dashboard?tab=applications" replace />} />
+                <Route path="/admin/analytics" element={<Navigate to="/admin-dashboard?tab=analytics" replace />} />
+                <Route path="/admin/users" element={<Navigate to="/admin-dashboard?tab=users" replace />} />
+                <Route path="/admin/settings" element={<Navigate to="/admin-dashboard?tab=settings" replace />} />
                 <Route
                   path="/reviewer"
                   element={
