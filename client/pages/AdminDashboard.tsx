@@ -27,6 +27,8 @@ import {
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("schemes");
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -37,6 +39,22 @@ const AdminDashboard = () => {
       setShowOnboarding(true);
     }
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    const allowed = ["overview","schemes","applications","analytics","users","settings"];
+    if (tab && allowed.includes(tab) && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
+
+  const setTab = (tab: string) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(location.search);
+    params.set("tab", tab);
+    navigate({ pathname: "/admin-dashboard", search: `?${params.toString()}` });
+  };
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("ydf_onboarding_admin", "true");
@@ -566,7 +584,7 @@ const AdminDashboard = () => {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setTab(tab.id)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
                     activeTab === tab.id
                       ? "bg-ydf-deep-blue text-white"
