@@ -426,7 +426,7 @@ const AdminDashboard = () => {
                       <button className="p-1 hover:bg-gray-200 rounded">
                         <Eye className="h-4 w-4 text-gray-600" />
                       </button>
-                      <button className="p-1 hover:bg-gray-200 rounded">
+                      <button onClick={()=> openEdit(scheme)} className="p-1 hover:bg-gray-200 rounded">
                         <Edit className="h-4 w-4 text-gray-600" />
                       </button>
                       <button className="p-1 hover:bg-gray-200 rounded">
