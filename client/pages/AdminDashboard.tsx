@@ -347,7 +347,7 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900">
           Scholarship Schemes
         </h2>
-        <button className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+        <button onClick={openCreate} className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
           <Plus className="h-4 w-4" />
           <span>Create Scheme</span>
         </button>
