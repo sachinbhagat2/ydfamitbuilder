@@ -50,7 +50,7 @@ export async function createDefaultScholarships() {
     for (const s of defaults) {
       const [rows]: any = await pool.execute('SELECT id FROM scholarships WHERE title = ? LIMIT 1', [s.title]);
       if (!rows[0]) {
-        await createScholarship(s, 2);
+        await mockDatabase.createScholarship(s, 2);
       }
     }
     return { success: true } as const;
