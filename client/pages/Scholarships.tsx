@@ -42,7 +42,7 @@ const Scholarships = () => {
     })();
   }, []);
 
-  const scholarships = [
+  const fallbackScholarships = [
     {
       id: 1,
       name: "Merit Excellence Scholarship",
