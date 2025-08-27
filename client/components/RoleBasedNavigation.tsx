@@ -113,7 +113,7 @@ const RoleBasedNavigation = () => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
-                  key={item.path}
+                  key={`${item.path}-${item.label}`}
                   to={item.path}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                     isActive
