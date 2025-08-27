@@ -15,6 +15,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ReviewerDashboard from "./pages/ReviewerDashboard";
 import DonorDashboard from "./pages/DonorDashboard";
+import SurveyorDashboard from "./pages/SurveyorDashboard";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import Scholarships from "./pages/Scholarships";
@@ -86,9 +87,9 @@ function App() {
                   } 
                 />
                 <Route 
-                  path="/support" 
+                  path="/support"
                   element={
-                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor']}>
+                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor', 'surveyor']}>
                       <Support />
                     </ProtectedRoute>
                   } 
@@ -102,9 +103,9 @@ function App() {
                   } 
                 />
                 <Route 
-                  path="/profile" 
+                  path="/profile"
                   element={
-                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor']}>
+                    <ProtectedRoute allowedRoles={['student', 'admin', 'reviewer', 'donor', 'surveyor']}>
                       <Profile />
                     </ProtectedRoute>
                   } 
@@ -133,6 +134,14 @@ function App() {
                       <DonorDashboard />
                     </ProtectedRoute>
                   } 
+                />
+                <Route
+                  path="/surveyor-dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['surveyor']}>
+                      <SurveyorDashboard />
+                    </ProtectedRoute>
+                  }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
