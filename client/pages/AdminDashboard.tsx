@@ -43,7 +43,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    const allowed = ["overview","schemes","applications","analytics","users","settings"];
+    const allowed = [
+      "overview",
+      "schemes",
+      "applications",
+      "analytics",
+      "users",
+      "settings",
+    ];
     if (tab && allowed.includes(tab) && tab !== activeTab) {
       setActiveTab(tab);
     }
@@ -366,7 +373,10 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900">
           Scholarship Schemes
         </h2>
-        <button onClick={openCreate} className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+        <button
+          onClick={openCreate}
+          className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
+        >
           <Plus className="h-4 w-4" />
           <span>Create Scheme</span>
         </button>
@@ -416,48 +426,67 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-ydf-light-gray">
-              {schemes.filter(s=> (s.title || s.name || '').toLowerCase().includes(searchQuery.toLowerCase())).map((scheme) => (
-                <tr key={scheme.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{scheme.title || scheme.name}</p>
-                      <p className="text-sm text-gray-600">{(scheme.tags && Array.isArray(scheme.tags) ? scheme.tags.join(', ') : scheme.category) || 'General'}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(scheme.status)}`}
-                    >
-                      {scheme.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.applications}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.amount ? `₹${scheme.amount}` : scheme.budget || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.applicationDeadline ? new Date(scheme.applicationDeadline).toLocaleString() : scheme.deadline || '-'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <Eye className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button onClick={()=> openEdit(scheme)} className="p-1 hover:bg-gray-200 rounded">
-                        <Edit className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <Copy className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button className="p-1 hover:bg-gray-200 rounded">
-                        <MoreVertical className="h-4 w-4 text-gray-600" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {schemes
+                .filter((s) =>
+                  (s.title || s.name || "")
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase()),
+                )
+                .map((scheme) => (
+                  <tr key={scheme.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {scheme.title || scheme.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {(scheme.tags && Array.isArray(scheme.tags)
+                            ? scheme.tags.join(", ")
+                            : scheme.category) || "General"}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(scheme.status)}`}
+                      >
+                        {scheme.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {scheme.applications}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {scheme.amount
+                        ? `₹${scheme.amount}`
+                        : scheme.budget || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {scheme.applicationDeadline
+                        ? new Date(scheme.applicationDeadline).toLocaleString()
+                        : scheme.deadline || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <Eye className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => openEdit(scheme)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Edit className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <Copy className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button className="p-1 hover:bg-gray-200 rounded">
+                          <MoreVertical className="h-4 w-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -611,44 +640,121 @@ const AdminDashboard = () => {
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4">
-            <h3 className="text-lg font-semibold">{editing ? 'Edit Scholarship' : 'Create Scholarship'}</h3>
+            <h3 className="text-lg font-semibold">
+              {editing ? "Edit Scholarship" : "Create Scholarship"}
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">Title</label>
-                <input className="w-full border rounded px-3 py-2" value={form.title} onChange={e=> setForm({...form, title: e.target.value})} />
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">Description</label>
-                <textarea className="w-full border rounded px-3 py-2" rows={3} value={form.description} onChange={e=> setForm({...form, description: e.target.value})} />
+                <textarea
+                  className="w-full border rounded px-3 py-2"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <label className="text-sm text-gray-600">Amount (INR)</label>
-                <input className="w-full border rounded px-3 py-2" value={form.amount} onChange={e=> setForm({...form, amount: e.target.value})} />
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                />
               </div>
               <div>
-                <label className="text-sm text-gray-600">Max Applications</label>
-                <input className="w-full border rounded px-3 py-2" value={form.maxApplications} onChange={e=> setForm({...form, maxApplications: e.target.value})} />
+                <label className="text-sm text-gray-600">
+                  Max Applications
+                </label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={form.maxApplications}
+                  onChange={(e) =>
+                    setForm({ ...form, maxApplications: e.target.value })
+                  }
+                />
               </div>
               <div>
-                <label className="text-sm text-gray-600">Application Deadline</label>
-                <input type="datetime-local" className="w-full border rounded px-3 py-2" value={form.applicationDeadline} onChange={e=> setForm({...form, applicationDeadline: e.target.value})} />
+                <label className="text-sm text-gray-600">
+                  Application Deadline
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.applicationDeadline}
+                  onChange={(e) =>
+                    setForm({ ...form, applicationDeadline: e.target.value })
+                  }
+                />
               </div>
               <div>
-                <label className="text-sm text-gray-600">Selection Deadline</label>
-                <input type="datetime-local" className="w-full border rounded px-3 py-2" value={form.selectionDeadline} onChange={e=> setForm({...form, selectionDeadline: e.target.value})} />
+                <label className="text-sm text-gray-600">
+                  Selection Deadline
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.selectionDeadline}
+                  onChange={(e) =>
+                    setForm({ ...form, selectionDeadline: e.target.value })
+                  }
+                />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-sm text-gray-600">Eligibility (comma separated)</label>
-                <input className="w-full border rounded px-3 py-2" value={Array.isArray(form.eligibilityCriteria)? form.eligibilityCriteria.join(', '): form.eligibilityCriteria} onChange={e=> setForm({...form, eligibilityCriteria: e.target.value})} />
+                <label className="text-sm text-gray-600">
+                  Eligibility (comma separated)
+                </label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={
+                    Array.isArray(form.eligibilityCriteria)
+                      ? form.eligibilityCriteria.join(", ")
+                      : form.eligibilityCriteria
+                  }
+                  onChange={(e) =>
+                    setForm({ ...form, eligibilityCriteria: e.target.value })
+                  }
+                />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-sm text-gray-600">Required Documents (comma separated)</label>
-                <input className="w-full border rounded px-3 py-2" value={Array.isArray(form.requiredDocuments)? form.requiredDocuments.join(', '): form.requiredDocuments} onChange={e=> setForm({...form, requiredDocuments: e.target.value})} />
+                <label className="text-sm text-gray-600">
+                  Required Documents (comma separated)
+                </label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  value={
+                    Array.isArray(form.requiredDocuments)
+                      ? form.requiredDocuments.join(", ")
+                      : form.requiredDocuments
+                  }
+                  onChange={(e) =>
+                    setForm({ ...form, requiredDocuments: e.target.value })
+                  }
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={()=> setShowForm(false)} className="px-4 py-2 rounded border">Cancel</button>
-              <button onClick={submitForm} className="px-4 py-2 rounded bg-ydf-deep-blue text-white">{editing ? 'Save Changes' : 'Create'}</button>
+              <button
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitForm}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white"
+              >
+                {editing ? "Save Changes" : "Create"}
+              </button>
             </div>
           </div>
         </div>

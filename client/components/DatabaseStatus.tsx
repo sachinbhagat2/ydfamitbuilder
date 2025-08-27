@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Database, ExternalLink } from 'lucide-react';
-import { Alert, AlertDescription } from './ui/alert';
-import { Button } from './ui/button';
+import { useState, useEffect } from "react";
+import { AlertCircle, CheckCircle, Database, ExternalLink } from "lucide-react";
+import { Alert, AlertDescription } from "./ui/alert";
+import { Button } from "./ui/button";
 
 const DatabaseStatus = () => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
@@ -11,11 +11,15 @@ const DatabaseStatus = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch('/api/test/connection');
+        const response = await fetch("/api/test/connection");
         const ok = response.ok;
         let result: any = {};
-        try { result = await response.json(); } catch {}
-        const dbOk = result?.results?.database?.status === 'connected' || result?.success === true;
+        try {
+          result = await response.json();
+        } catch {}
+        const dbOk =
+          result?.results?.database?.status === "connected" ||
+          result?.success === true;
         setIsConnected(ok); // API reachable -> app usable
         setDbConnected(dbOk);
       } catch (error) {
@@ -58,7 +62,8 @@ const DatabaseStatus = () => {
         <Database className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-700">
           Running with mock database. You can still sign in using demo accounts:
-          admin@ydf.org, student@ydf.org, reviewer@ydf.org, donor@ydf.org, surveyor@ydf.org
+          admin@ydf.org, student@ydf.org, reviewer@ydf.org, donor@ydf.org,
+          surveyor@ydf.org
         </AlertDescription>
       </Alert>
     );
@@ -70,12 +75,14 @@ const DatabaseStatus = () => {
       <AlertDescription className="text-orange-700">
         <div className="space-y-3">
           <p className="font-medium">⚠️ API not reachable</p>
-          <p className="text-sm">Please refresh the page or try again shortly.</p>
+          <p className="text-sm">
+            Please refresh the page or try again shortly.
+          </p>
           <div className="flex items-center space-x-2 mt-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open('/docs/MYSQL_SETUP.md', '_blank')}
+              onClick={() => window.open("/docs/MYSQL_SETUP.md", "_blank")}
               className="text-orange-700 border-orange-300 hover:bg-orange-100"
             >
               <ExternalLink className="h-3 w-3 mr-1" />

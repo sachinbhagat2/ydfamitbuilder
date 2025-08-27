@@ -135,11 +135,34 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/admin/schemes" element={<Navigate to="/admin-dashboard?tab=schemes" replace />} />
-                <Route path="/admin/applications" element={<Navigate to="/admin-dashboard?tab=applications" replace />} />
-                <Route path="/admin/analytics" element={<Navigate to="/admin-dashboard?tab=analytics" replace />} />
-                <Route path="/admin/users" element={<Navigate to="/admin-dashboard?tab=users" replace />} />
-                <Route path="/admin/settings" element={<Navigate to="/admin-dashboard?tab=settings" replace />} />
+                <Route
+                  path="/admin/schemes"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=schemes" replace />
+                  }
+                />
+                <Route
+                  path="/admin/applications"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=applications" replace />
+                  }
+                />
+                <Route
+                  path="/admin/analytics"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=analytics" replace />
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={<Navigate to="/admin-dashboard?tab=users" replace />}
+                />
+                <Route
+                  path="/admin/settings"
+                  element={
+                    <Navigate to="/admin-dashboard?tab=settings" replace />
+                  }
+                />
                 <Route
                   path="/reviewer"
                   element={

@@ -43,15 +43,27 @@ const RoleBasedNavigation = () => {
       case "admin":
         return [
           { path: "/admin-dashboard", label: "Dashboard", icon: Home },
-          { path: "/admin-dashboard?tab=schemes", label: "Manage Schemes", icon: Award },
+          {
+            path: "/admin-dashboard?tab=schemes",
+            label: "Manage Schemes",
+            icon: Award,
+          },
           {
             path: "/admin-dashboard?tab=applications",
             label: "Applications",
             icon: FileText,
           },
-          { path: "/admin-dashboard?tab=analytics", label: "Analytics", icon: BarChart3 },
+          {
+            path: "/admin-dashboard?tab=analytics",
+            label: "Analytics",
+            icon: BarChart3,
+          },
           { path: "/admin-dashboard?tab=users", label: "Users", icon: Users },
-          { path: "/admin-dashboard?tab=settings", label: "Settings", icon: Settings },
+          {
+            path: "/admin-dashboard?tab=settings",
+            label: "Settings",
+            icon: Settings,
+          },
         ];
       case "reviewer":
         return [
