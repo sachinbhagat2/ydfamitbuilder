@@ -135,7 +135,19 @@ async function startServer() {
     
     // Create default users
     await createDefaultUsers();
-    
+
+    // Detect and log egress IP for DB allowlisting
+    try {
+      const resp = await fetch('https://api.ipify.org?format=json');
+      const data = await resp.json();
+      if (data && data.ip) {
+        console.log(`🌐 Server egress IP: ${data.ip}`);
+        console.log('   Allowlist this IP in your MySQL host firewall');
+      }
+    } catch (e) {
+      console.warn('⚠️ Could not detect egress IP automatically. Use /api/test/egress-ip endpoint.');
+    }
+
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Youth Dreamers Foundation Server running on port ${PORT}`);
