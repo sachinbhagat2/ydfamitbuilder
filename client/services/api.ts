@@ -31,10 +31,14 @@ class ApiService {
   async register(
     userData: CreateUserInput,
   ): Promise<ApiResponse<AuthResponse>> {
+    const payload = {
+      ...userData,
+      email: String(userData.email || "").trim().toLowerCase(),
+    };
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: this.getAuthHeaders(),
-      body: JSON.stringify(userData),
+      body: JSON.stringify(payload),
     });
 
     const result = await this.handleResponse<AuthResponse>(response);
@@ -49,10 +53,14 @@ class ApiService {
   }
 
   async login(loginData: LoginInput): Promise<ApiResponse<AuthResponse>> {
+    const payload = {
+      ...loginData,
+      email: String(loginData.email || "").trim().toLowerCase(),
+    };
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: this.getAuthHeaders(),
-      body: JSON.stringify(loginData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -60,7 +68,7 @@ class ApiService {
       throw new Error(errorData.error || "Login failed");
     }
 
-    const result = await response.json();
+    const result: ApiResponse<AuthResponse> = await response.json();
 
     // Store token and user data on successful login
     if (result.success && result.data) {
@@ -72,21 +80,17 @@ class ApiService {
   }
 
   async logout(): Promise<ApiResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-    });
-
-    // Clear local storage regardless of response
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Registration failed");
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+      });
+      const result = await this.handleResponse(response);
+      return result;
+    } finally {
+      // Always clear local auth on logout
+      this.clearAuth();
     }
-
-    const result = await response.json();
-    localStorage.removeItem("ydf_user");
-
-    return this.handleResponse(response);
   }
 
   async getProfile(): Promise<ApiResponse<User>> {
