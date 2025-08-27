@@ -416,10 +416,10 @@ const AdminDashboard = () => {
                     {scheme.applications}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.budget}
+                    {scheme.amount ? `₹${scheme.amount}` : scheme.budget || '-'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    {scheme.deadline}
+                    {scheme.applicationDeadline ? new Date(scheme.applicationDeadline).toLocaleString() : scheme.deadline || '-'}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
