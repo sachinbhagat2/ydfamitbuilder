@@ -253,4 +253,15 @@ router.get('/env', (req, res) => {
   });
 });
 
+// Egress IP check
+router.get('/egress-ip', async (req, res) => {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    res.json({ success: true, ip: data?.ip || null });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Failed to detect egress IP' });
+  }
+});
+
 export default router;
