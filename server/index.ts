@@ -19,8 +19,7 @@ import scholarshipRoutes from "./routes/scholarships";
 import surveysRoutes from "./routes/surveys";
 import createDefaultScholarships from "./config/seed-scholarships";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const IS_SERVERLESS = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,8 +38,10 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
+// Serve static files in production when not running in serverless
+if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const staticPath = path.join(__dirname, "../spa");
   app.use(express.static(staticPath));
 }
@@ -99,19 +100,21 @@ app.use("/api/*", (req, res) => {
   });
 });
 
-// Serve React app for all non-API routes
+// Serve React app for all non-API routes when not running in serverless
 app.get("*", (req, res) => {
   // In development, let Vite handle the routing
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
     const staticPath = path.join(__dirname, "../spa");
     res.sendFile(path.join(staticPath, "index.html"));
   } else {
-    // In development, don't handle frontend routes - let Vite proxy handle them
+    // In development or serverless, don't handle frontend routes here
     res.status(404).json({
       success: false,
-      error: "Frontend route - should be handled by Vite dev server",
+      error: "Frontend route - should be handled by the SPA host/dev server",
       message:
-        "This route should be accessed through the Vite dev server on port 5173",
+        "This route should be accessed through the Vite dev server (dev) or the Netlify static host (prod)",
       path: req.path,
       method: req.method,
     });
@@ -202,12 +205,7 @@ async function startServer() {
   }
 }
 
-if (
-  !process.env.NETLIFY &&
-  !process.env.VERCEL &&
-  !process.env.AWS_LAMBDA_FUNCTION_NAME &&
-  process.env.NODE_ENV !== "test"
-) {
+if (!IS_SERVERLESS && process.env.NODE_ENV !== "test") {
   startServer();
 }
 
