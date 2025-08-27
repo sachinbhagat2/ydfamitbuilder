@@ -78,44 +78,105 @@ const AdminDashboard = () => {
     },
   ];
 
-  const schemes = [
-    {
-      id: 1,
-      name: "Merit Excellence Scholarship",
-      status: "Active",
-      applications: 156,
-      budget: "₹50,00,000",
-      deadline: "2024-03-15",
-      category: "Academic",
-    },
-    {
-      id: 2,
-      name: "Rural Development Grant",
-      status: "Active",
-      applications: 89,
-      budget: "₹25,00,000",
-      deadline: "2024-03-22",
-      category: "Rural",
-    },
-    {
-      id: 3,
-      name: "Technical Innovation Fund",
-      status: "Draft",
-      applications: 0,
-      budget: "₹75,00,000",
-      deadline: "2024-03-30",
-      category: "Technology",
-    },
-    {
-      id: 4,
-      name: "Women Empowerment Scholarship",
-      status: "Closed",
-      applications: 234,
-      budget: "₹40,00,000",
-      deadline: "2024-02-28",
-      category: "Gender",
-    },
-  ];
+  const [schemes, setSchemes] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<any>({
+    title: "",
+    description: "",
+    amount: "",
+    currency: "INR",
+    eligibilityCriteria: [],
+    requiredDocuments: [],
+    applicationDeadline: "",
+    selectionDeadline: "",
+    maxApplications: "",
+    status: "active",
+  });
+
+  useEffect(() => {
+    fetchSchemes();
+  }, []);
+
+  const fetchSchemes = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.listScholarships({ status: "all", limit: 100 });
+      if (res.success) setSchemes(res.data);
+    } catch (e) {}
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      title: "",
+      description: "",
+      amount: "",
+      currency: "INR",
+      eligibilityCriteria: [],
+      requiredDocuments: [],
+      applicationDeadline: "",
+      selectionDeadline: "",
+      maxApplications: "",
+      status: "active",
+    });
+    setShowForm(true);
+  };
+
+  const openEdit = (s: any) => {
+    setEditing(s);
+    setForm({
+      ...s,
+      applicationDeadline: s.applicationDeadline
+        ? new Date(s.applicationDeadline).toISOString().slice(0, 16)
+        : "",
+      selectionDeadline: s.selectionDeadline
+        ? new Date(s.selectionDeadline).toISOString().slice(0, 16)
+        : "",
+      eligibilityCriteria: Array.isArray(s.eligibilityCriteria)
+        ? s.eligibilityCriteria
+        : [],
+      requiredDocuments: Array.isArray(s.requiredDocuments)
+        ? s.requiredDocuments
+        : [],
+    });
+    setShowForm(true);
+  };
+
+  const submitForm = async () => {
+    const api = (await import("../services/api")).default;
+    const payload = {
+      ...form,
+      amount: String(form.amount),
+      eligibilityCriteria:
+        typeof form.eligibilityCriteria === "string"
+          ? form.eligibilityCriteria
+              .split(",")
+              .map((x: string) => x.trim())
+              .filter(Boolean)
+          : form.eligibilityCriteria,
+      requiredDocuments:
+        typeof form.requiredDocuments === "string"
+          ? form.requiredDocuments
+              .split(",")
+              .map((x: string) => x.trim())
+              .filter(Boolean)
+          : form.requiredDocuments,
+      applicationDeadline: form.applicationDeadline
+        ? new Date(form.applicationDeadline).toISOString()
+        : undefined,
+      selectionDeadline: form.selectionDeadline
+        ? new Date(form.selectionDeadline).toISOString()
+        : undefined,
+      maxApplications: form.maxApplications
+        ? Number(form.maxApplications)
+        : undefined,
+    };
+    if (editing) await api.updateScholarship(editing.id, payload);
+    else await api.createScholarship(payload);
+    setShowForm(false);
+    await fetchSchemes();
+  };
 
   const recentApplications = [
     {
