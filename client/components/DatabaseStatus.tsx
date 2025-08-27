@@ -5,16 +5,22 @@ import { Button } from './ui/button';
 
 const DatabaseStatus = () => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const response = await fetch('/api/test/connection');
-        const result = await response.json();
-        setIsConnected(result.success);
+        const ok = response.ok;
+        let result: any = {};
+        try { result = await response.json(); } catch {}
+        const dbOk = result?.results?.database?.status === 'connected' || result?.success === true;
+        setIsConnected(ok); // API reachable -> app usable
+        setDbConnected(dbOk);
       } catch (error) {
         setIsConnected(false);
+        setDbConnected(false);
       } finally {
         setIsLoading(false);
       }
