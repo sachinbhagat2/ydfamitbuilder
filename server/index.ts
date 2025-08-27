@@ -17,6 +17,7 @@ import testRoutes from "./routes/test";
 import authRoutes from "./routes/auth";
 import scholarshipRoutes from "./routes/scholarships";
 import surveysRoutes from "./routes/surveys";
+import createDefaultScholarships from "./config/seed-scholarships";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
