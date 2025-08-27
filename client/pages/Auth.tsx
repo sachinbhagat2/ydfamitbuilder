@@ -352,6 +352,7 @@ export default function Auth() {
                       <option value="admin">Admin</option>
                       <option value="reviewer">Reviewer</option>
                       <option value="donor">Donor</option>
+                      <option value="surveyor">Surveyor</option>
                     </select>
                   </div>
                 </>
