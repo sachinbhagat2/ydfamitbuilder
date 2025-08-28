@@ -349,6 +349,13 @@ class DatabaseAdapter {
         ) || null
       );
     }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1',
+        [normalized],
+      );
+      return (result.rows as any[])[0] || null;
+    }
     const [rows] = await pool.execute(
       "SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
       [normalized],
