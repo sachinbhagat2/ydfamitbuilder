@@ -101,44 +101,13 @@ app.use("/api/*", (req, res) => {
 
 // Serve React app for all non-API routes
 app.get("*", (req, res) => {
-  // In development, let Vite handle the routing
   if (process.env.NODE_ENV === "production") {
     const staticPath = path.join(__dirname, "../spa");
     res.sendFile(path.join(staticPath, "index.html"));
   } else {
-    // In development, redirect to Vite dev server or serve a simple message
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({
-        success: false,
-        error: "API endpoint not found",
-        path: req.path,
-      });
-    }
-    
-    // In development, serve a simple HTML page that loads the React app
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Youth Dreamers Foundation</title>
-          <script type="module">
-            // Redirect to Vite dev server
-            window.location.href = 'http://localhost:5173' + window.location.pathname + window.location.search;
-          </script>
-        </head>
-        <body>
-          <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui;">
-            <div style="text-align: center;">
-              <h1>Youth Dreamers Foundation</h1>
-              <p>Redirecting to development server...</p>
-              <p><a href="http://localhost:5173${req.path}">Click here if not redirected automatically</a></p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
+    // In development, serve the index.html from the project root
+    const indexPath = path.join(__dirname, "../index.html");
+    res.sendFile(indexPath);
   }
 });
 
