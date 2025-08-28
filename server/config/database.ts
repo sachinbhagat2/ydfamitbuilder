@@ -574,6 +574,27 @@ class DatabaseAdapter {
       return rec;
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO scholarships (title, description, amount, currency, "eligibilityCriteria", "requiredDocuments", "applicationDeadline", "selectionDeadline", "maxApplications", "currentApplications", status, "createdBy", tags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *',
+        [
+          input.title,
+          input.description,
+          input.amount,
+          input.currency || 'INR',
+          JSON.stringify(input.eligibilityCriteria),
+          JSON.stringify(input.requiredDocuments),
+          input.applicationDeadline,
+          input.selectionDeadline ?? null,
+          input.maxApplications ?? null,
+          0,
+          input.status || 'active',
+          createdBy ?? null,
+          input.tags ? JSON.stringify(input.tags) : null,
+        ],
+      );
+      return (result.rows as any[])[0];
+    }
     const fields = [
       "title",
       "description",
