@@ -13,15 +13,19 @@ const DB_PASSWORD = process.env.DB_PASSWORD || "";
 const DB_NAME = (process.env.DB_NAME || "").trim();
 
 const hasCreds = DB_HOST && DB_USER && DB_PASSWORD && DB_NAME;
-const PG_URL = (process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || "").trim();
+const PG_URL = (
+  process.env.DATABASE_URL ||
+  process.env.SUPABASE_DB_URL ||
+  ""
+).trim();
 const USE_PG = !!PG_URL;
 const MODE: "postgres" | "mysql" | "mock" = useMockExplicit
   ? "mock"
   : USE_PG
-  ? "postgres"
-  : hasCreds
-  ? "mysql"
-  : "mock";
+    ? "postgres"
+    : hasCreds
+      ? "mysql"
+      : "mock";
 const USE_MOCK = MODE === "mock";
 
 // In-memory fallback store
@@ -186,40 +190,47 @@ class InMemoryStore {
 const memory = new InMemoryStore();
 
 // MySQL pool
-export const pool = MODE === "mysql"
-  ? (mysql.createPool({
-      host: DB_HOST,
-      port: DB_PORT,
-      user: DB_USER,
-      password: DB_PASSWORD,
-      database: DB_NAME,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 30000,
-      ...(String(process.env.DB_SSL || "").toLowerCase() === "true"
-        ? { ssl: { rejectUnauthorized: false } }
-        : {}),
-    }) as any)
-  : ((null as unknown) as mysql.Pool);
+export const pool =
+  MODE === "mysql"
+    ? (mysql.createPool({
+        host: DB_HOST,
+        port: DB_PORT,
+        user: DB_USER,
+        password: DB_PASSWORD,
+        database: DB_NAME,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        connectTimeout: 30000,
+        ...(String(process.env.DB_SSL || "").toLowerCase() === "true"
+          ? { ssl: { rejectUnauthorized: false } }
+          : {}),
+      }) as any)
+    : (null as unknown as mysql.Pool);
 
-export const pgPool = MODE === "postgres"
-  ? new PgPool((() => {
-      try {
-        const u = new URL(PG_URL);
-        return {
-          host: u.hostname,
-          port: u.port ? parseInt(u.port, 10) : 5432,
-          user: decodeURIComponent(u.username),
-          password: decodeURIComponent(u.password),
-          database: u.pathname.replace(/^\//, ""),
-          ssl: { require: true, rejectUnauthorized: false },
-        } as any;
-      } catch {
-        return { connectionString: PG_URL, ssl: { require: true, rejectUnauthorized: false } } as any;
-      }
-    })())
-  : ((null as unknown) as PgPool);
+export const pgPool =
+  MODE === "postgres"
+    ? new PgPool(
+        (() => {
+          try {
+            const u = new URL(PG_URL);
+            return {
+              host: u.hostname,
+              port: u.port ? parseInt(u.port, 10) : 5432,
+              user: decodeURIComponent(u.username),
+              password: decodeURIComponent(u.password),
+              database: u.pathname.replace(/^\//, ""),
+              ssl: { require: true, rejectUnauthorized: false },
+            } as any;
+          } catch {
+            return {
+              connectionString: PG_URL,
+              ssl: { require: true, rejectUnauthorized: false },
+            } as any;
+          }
+        })(),
+      )
+    : (null as unknown as PgPool);
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
 export const mysqlCompat = {
@@ -363,7 +374,7 @@ class DatabaseAdapter {
     }
     if (MODE === "postgres" && pgPool) {
       const result = await pgPool.query(
-        'SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1',
+        "SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
         [normalized],
       );
       return (result.rows as any[])[0] || null;
@@ -381,7 +392,7 @@ class DatabaseAdapter {
     }
     if (MODE === "postgres" && pgPool) {
       const result = await pgPool.query(
-        'SELECT * FROM users WHERE id = $1 LIMIT 1',
+        "SELECT * FROM users WHERE id = $1 LIMIT 1",
         [id],
       );
       return (result.rows as any[])[0] || null;
@@ -466,11 +477,11 @@ class DatabaseAdapter {
     }
     if (MODE === "postgres" && pgPool) {
       const map: Record<string, string> = {
-        email: 'email',
-        password: 'password',
+        email: "email",
+        password: "password",
         firstName: '"firstName"',
         lastName: '"lastName"',
-        phone: 'phone',
+        phone: "phone",
         userType: '"userType"',
         isActive: '"isActive"',
         emailVerified: '"emailVerified"',
@@ -482,14 +493,17 @@ class DatabaseAdapter {
       for (const [k, v] of Object.entries(userData)) {
         if (map[k]) {
           sets.push(`${map[k]} = $${i++}`);
-          vals.push(k === 'profileData' && v != null ? JSON.stringify(v) : v);
+          vals.push(k === "profileData" && v != null ? JSON.stringify(v) : v);
         }
       }
       if (!sets.length) {
-        const result = await pgPool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+        const result = await pgPool.query(
+          "SELECT * FROM users WHERE id = $1 LIMIT 1",
+          [id],
+        );
         return (result.rows as any[])[0] || null;
       }
-      const sql = `UPDATE users SET ${sets.join(', ')}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      const sql = `UPDATE users SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
       vals.push(id);
       const result = await pgPool.query(sql, vals);
       return (result.rows as any[])[0] || null;
@@ -542,7 +556,9 @@ class DatabaseAdapter {
     }
     await ensureScholarshipsTable();
     if (MODE === "postgres" && pgPool) {
-      const result = await pgPool.query('SELECT * FROM scholarships ORDER BY "createdAt" DESC');
+      const result = await pgPool.query(
+        'SELECT * FROM scholarships ORDER BY "createdAt" DESC',
+      );
       return result.rows as any[];
     }
     const [rows] = await pool.execute(
@@ -557,7 +573,10 @@ class DatabaseAdapter {
     }
     await ensureScholarshipsTable();
     if (MODE === "postgres" && pgPool) {
-      const result = await pgPool.query('SELECT * FROM scholarships WHERE id = $1 LIMIT 1', [id]);
+      const result = await pgPool.query(
+        "SELECT * FROM scholarships WHERE id = $1 LIMIT 1",
+        [id],
+      );
       return (result.rows as any[])[0] || null;
     }
     const [rows] = await pool.execute(
@@ -593,14 +612,14 @@ class DatabaseAdapter {
           input.title,
           input.description,
           input.amount,
-          input.currency || 'INR',
+          input.currency || "INR",
           JSON.stringify(input.eligibilityCriteria),
           JSON.stringify(input.requiredDocuments),
           input.applicationDeadline,
           input.selectionDeadline ?? null,
           input.maxApplications ?? null,
           0,
-          input.status || 'active',
+          input.status || "active",
           createdBy ?? null,
           input.tags ? JSON.stringify(input.tags) : null,
         ],
@@ -663,18 +682,18 @@ class DatabaseAdapter {
     await ensureScholarshipsTable();
     if (MODE === "postgres" && pgPool) {
       const map: Record<string, string> = {
-        title: 'title',
-        description: 'description',
-        amount: 'amount',
-        currency: 'currency',
+        title: "title",
+        description: "description",
+        amount: "amount",
+        currency: "currency",
         eligibilityCriteria: '"eligibilityCriteria"',
         requiredDocuments: '"requiredDocuments"',
         applicationDeadline: '"applicationDeadline"',
         selectionDeadline: '"selectionDeadline"',
         maxApplications: '"maxApplications"',
         currentApplications: '"currentApplications"',
-        status: 'status',
-        tags: 'tags',
+        status: "status",
+        tags: "tags",
       };
       const sets: string[] = [];
       const vals: any[] = [];
@@ -682,11 +701,18 @@ class DatabaseAdapter {
       for (const [k, v] of Object.entries(data)) {
         if (map[k]) {
           sets.push(`${map[k]} = $${i++}`);
-          vals.push((k === 'eligibilityCriteria' || k === 'requiredDocuments' || k === 'tags') && v != null ? JSON.stringify(v) : v);
+          vals.push(
+            (k === "eligibilityCriteria" ||
+              k === "requiredDocuments" ||
+              k === "tags") &&
+              v != null
+              ? JSON.stringify(v)
+              : v,
+          );
         }
       }
       if (!sets.length) return this.getScholarshipById(id);
-      const sql = `UPDATE scholarships SET ${sets.join(', ')}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      const sql = `UPDATE scholarships SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
       vals.push(id);
       const result = await pgPool.query(sql, vals);
       return (result.rows as any[])[0];
@@ -743,7 +769,7 @@ class DatabaseAdapter {
     }
     await ensureScholarshipsTable();
     if (MODE === "postgres" && pgPool) {
-      await pgPool.query('DELETE FROM scholarships WHERE id = $1', [id]);
+      await pgPool.query("DELETE FROM scholarships WHERE id = $1", [id]);
       return true;
     }
     await pool.execute("DELETE FROM scholarships WHERE id = ?", [id]);
@@ -770,7 +796,7 @@ export async function testConnection() {
       };
     }
     if (MODE === "postgres" && pgPool) {
-      const result = await pgPool.query('SELECT version() as version');
+      const result = await pgPool.query("SELECT version() as version");
       return {
         success: true,
         data: [
