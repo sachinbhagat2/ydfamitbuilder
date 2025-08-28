@@ -206,7 +206,7 @@ export const pool = MODE === "mysql"
 export const pgPool = MODE === "postgres"
   ? new PgPool({
       connectionString: PG_URL,
-      ssl: { rejectUnauthorized: false },
+      ssl: { require: true, rejectUnauthorized: false },
     })
   : ((null as unknown) as PgPool);
 
