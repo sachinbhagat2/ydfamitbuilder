@@ -452,6 +452,36 @@ class DatabaseAdapter {
       };
       return memory.users[idx];
     }
+    if (MODE === "postgres" && pgPool) {
+      const map: Record<string, string> = {
+        email: 'email',
+        password: 'password',
+        firstName: '"firstName"',
+        lastName: '"lastName"',
+        phone: 'phone',
+        userType: '"userType"',
+        isActive: '"isActive"',
+        emailVerified: '"emailVerified"',
+        profileData: '"profileData"',
+      };
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let i = 1;
+      for (const [k, v] of Object.entries(userData)) {
+        if (map[k]) {
+          sets.push(`${map[k]} = $${i++}`);
+          vals.push(k === 'profileData' && v != null ? JSON.stringify(v) : v);
+        }
+      }
+      if (!sets.length) {
+        const result = await pgPool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+        return (result.rows as any[])[0] || null;
+      }
+      const sql = `UPDATE users SET ${sets.join(', ')}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      vals.push(id);
+      const result = await pgPool.query(sql, vals);
+      return (result.rows as any[])[0] || null;
+    }
     const columns: string[] = [];
     const values: any[] = [];
     for (const [key, val] of Object.entries(userData)) {
