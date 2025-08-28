@@ -204,10 +204,21 @@ export const pool = MODE === "mysql"
   : ((null as unknown) as mysql.Pool);
 
 export const pgPool = MODE === "postgres"
-  ? new PgPool({
-      connectionString: PG_URL,
-      ssl: { require: true, rejectUnauthorized: false },
-    })
+  ? new PgPool((() => {
+      try {
+        const u = new URL(PG_URL);
+        return {
+          host: u.hostname,
+          port: u.port ? parseInt(u.port, 10) : 5432,
+          user: decodeURIComponent(u.username),
+          password: decodeURIComponent(u.password),
+          database: u.pathname.replace(/^\//, ""),
+          ssl: { require: true, rejectUnauthorized: false },
+        } as any;
+      } catch {
+        return { connectionString: PG_URL, ssl: { require: true, rejectUnauthorized: false } } as any;
+      }
+    })())
   : ((null as unknown) as PgPool);
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
