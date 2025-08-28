@@ -213,7 +213,8 @@ export const pgPool = MODE === "postgres"
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
 export const mysqlCompat = {
   getConnection: async () => {
-    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+    // Only provide a real connection in MySQL mode
+    if (MODE !== "mysql" || !pool) {
       return {
         execute: async (_q: string, _p?: any[]) => [[]],
         ping: async () => true,
