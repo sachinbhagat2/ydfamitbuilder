@@ -749,12 +749,26 @@ export async function testConnection() {
         success: true,
         data: [
           {
-            version: "Mock MySQL 8.0.0",
+            version: "Mock DB",
             current_time: new Date().toISOString(),
-            database_name: DB_NAME || "in-memory",
+            database_name: PG_URL || DB_NAME || "in-memory",
           },
         ],
         message: "Mock database connection successful",
+      };
+    }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query('SELECT version() as version');
+      return {
+        success: true,
+        data: [
+          {
+            version: (result.rows as any[])[0].version,
+            current_time: new Date().toISOString(),
+            database_name: PG_URL,
+          },
+        ],
+        message: "Database connection successful",
       };
     }
     const conn = await pool.getConnection();
