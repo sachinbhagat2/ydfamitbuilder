@@ -367,6 +367,13 @@ class DatabaseAdapter {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.users.find((u) => u.id === id) || null;
     }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'SELECT * FROM users WHERE id = $1 LIMIT 1',
+        [id],
+      );
+      return (result.rows as any[])[0] || null;
+    }
     const [rows] = await pool.execute(
       "SELECT * FROM users WHERE id = ? LIMIT 1",
       [id],
