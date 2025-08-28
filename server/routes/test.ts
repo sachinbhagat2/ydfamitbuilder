@@ -200,7 +200,7 @@ router.get("/connection", async (req, res) => {
     const dbResult = await testConnection();
     const connectionTime = Date.now() - startTime;
 
-    testResults.database.status = "connected";
+    testResults.database.status = dbResult.success ? "connected" : "failed";
     testResults.database.connectionTime = `${connectionTime}ms`;
 
     if (
@@ -212,34 +212,21 @@ router.get("/connection", async (req, res) => {
     }
 
     res.json({
-      success: true,
-      message: "All systems operational",
+      success: dbResult.success,
+      message: dbResult.success ? "All systems operational" : "Database connection failed",
       results: testResults,
+      error: dbResult.success ? undefined : dbResult.error || undefined,
     });
   } catch (error) {
     testResults.database.status = "failed";
     testResults.database.error =
       error instanceof Error ? error.message : "Unknown error";
 
-    res.status(500).json({
+    // Always return 200 with success: false so frontend sees API as reachable
+    res.json({
       success: false,
       message: "Database connection failed",
       results: testResults,
-      troubleshooting: {
-        possibleCauses: [
-          "Database server is down",
-          "Incorrect credentials",
-          "Network connectivity issues",
-          "Firewall blocking connection",
-          "SSL/TLS configuration issues",
-        ],
-        nextSteps: [
-          "Verify database credentials",
-          "Check if sparsindia.com is accessible",
-          "Ensure MySQL service is running",
-          "Check firewall settings",
-        ],
-      },
     });
   }
 });
