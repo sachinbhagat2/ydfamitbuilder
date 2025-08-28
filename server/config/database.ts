@@ -392,6 +392,23 @@ class DatabaseAdapter {
       memory.users.push(newUser);
       return newUser;
     }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO users (email, password, "firstName", "lastName", phone, "userType", "isActive", "emailVerified", "profileData") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
+        [
+          userData.email,
+          userData.password,
+          userData.firstName,
+          userData.lastName,
+          userData.phone ?? null,
+          userData.userType,
+          userData.isActive ? true : false,
+          userData.emailVerified ? true : false,
+          userData.profileData ? JSON.stringify(userData.profileData) : null,
+        ],
+      );
+      return (result.rows as any[])[0];
+    }
     const fields = [
       "email",
       "password",
