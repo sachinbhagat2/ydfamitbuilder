@@ -82,11 +82,11 @@ const DatabaseStatus = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open("/docs/MYSQL_SETUP.md", "_blank")}
+              onClick={() => window.open("/api/test/connection", "_blank")}
               className="text-orange-700 border-orange-300 hover:bg-orange-100"
             >
               <ExternalLink className="h-3 w-3 mr-1" />
-              MySQL Setup Guide
+              API Status
             </Button>
           </div>
         </div>
