@@ -343,6 +343,12 @@ const AdminDashboard = () => {
           ].map((action, index) => (
             <button
               key={action.label}
+              onClick={() => {
+                if (action.label === "Create Scheme") {
+                  setTab("schemes");
+                  openCreate();
+                }
+              }}
               className={`${action.color} text-white p-4 rounded-lg flex flex-col items-center space-y-2 hover:opacity-90 transition-opacity`}
             >
               <action.icon className="h-6 w-6" />
