@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import { Pool as PgPool } from "pg";
 import { hashPassword } from "../utils/auth";
 
 // Determine whether to use mock DB (default false if full credentials are provided)
@@ -12,7 +13,16 @@ const DB_PASSWORD = process.env.DB_PASSWORD || "";
 const DB_NAME = (process.env.DB_NAME || "").trim();
 
 const hasCreds = DB_HOST && DB_USER && DB_PASSWORD && DB_NAME;
-const USE_MOCK = useMockExplicit || !hasCreds;
+const PG_URL = (process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || "").trim();
+const USE_PG = !!PG_URL;
+const MODE: "postgres" | "mysql" | "mock" = useMockExplicit
+  ? "mock"
+  : USE_PG
+  ? "postgres"
+  : hasCreds
+  ? "mysql"
+  : "mock";
+const USE_MOCK = MODE === "mock";
 
 // In-memory fallback store
 class InMemoryStore {
@@ -176,8 +186,8 @@ class InMemoryStore {
 const memory = new InMemoryStore();
 
 // MySQL pool
-export const pool = !USE_MOCK
-  ? mysql.createPool({
+export const pool = MODE === "mysql"
+  ? (mysql.createPool({
       host: DB_HOST,
       port: DB_PORT,
       user: DB_USER,
@@ -190,8 +200,15 @@ export const pool = !USE_MOCK
       ...(String(process.env.DB_SSL || "").toLowerCase() === "true"
         ? { ssl: { rejectUnauthorized: false } }
         : {}),
-    } as any)
-  : (null as unknown as mysql.Pool);
+    }) as any)
+  : ((null as unknown) as mysql.Pool);
+
+export const pgPool = MODE === "postgres"
+  ? new PgPool({
+      connectionString: PG_URL,
+      ssl: { rejectUnauthorized: false },
+    })
+  : ((null as unknown) as PgPool);
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
 export const mysqlCompat = {
@@ -210,7 +227,32 @@ export const mysqlCompat = {
 
 // Helper to ensure tables exist in MySQL
 async function ensureUsersTable() {
-  if (USE_MOCK || !pool) return;
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='user_type') THEN
+        CREATE TYPE user_type AS ENUM ('student','admin','reviewer','donor','surveyor');
+      END IF; END $$;
+    `);
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id BIGSERIAL PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        "firstName" TEXT NOT NULL,
+        "lastName" TEXT NOT NULL,
+        phone TEXT,
+        "userType" user_type NOT NULL,
+        "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
+        "emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
+        "profileData" JSONB,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -247,7 +289,31 @@ async function ensureUsersTable() {
 }
 
 async function ensureScholarshipsTable() {
-  if (USE_MOCK || !pool) return;
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS scholarships (
+        id BIGSERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        amount NUMERIC(10,2) NOT NULL,
+        currency TEXT DEFAULT 'INR',
+        "eligibilityCriteria" JSONB NOT NULL,
+        "requiredDocuments" JSONB NOT NULL,
+        "applicationDeadline" TIMESTAMPTZ NOT NULL,
+        "selectionDeadline" TIMESTAMPTZ NULL,
+        "maxApplications" INT NULL,
+        "currentApplications" INT DEFAULT 0,
+        status TEXT DEFAULT 'active',
+        "createdBy" BIGINT NULL,
+        tags JSONB NULL,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS scholarships (
       id INT AUTO_INCREMENT PRIMARY KEY,
