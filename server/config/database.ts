@@ -359,6 +359,47 @@ async function ensureScholarshipsTable() {
   `);
 }
 
+async function ensureApplicationsTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS applications (
+        id BIGSERIAL PRIMARY KEY,
+        scholarshipId BIGINT NOT NULL,
+        studentId BIGINT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'submitted',
+        score INT,
+        amountAwarded NUMERIC(10,2),
+        assignedReviewerId BIGINT,
+        formData JSONB,
+        documents JSONB,
+        submittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      scholarshipId INT NOT NULL,
+      studentId INT NOT NULL,
+      status ENUM('draft','submitted','under_review','approved','rejected') NOT NULL DEFAULT 'submitted',
+      score INT NULL,
+      amountAwarded DECIMAL(10,2) NULL,
+      assignedReviewerId INT NULL,
+      formData JSON NULL,
+      documents JSON NULL,
+      submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_app_scholarship (scholarshipId),
+      INDEX idx_app_student (studentId),
+      INDEX idx_app_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
@@ -840,11 +881,13 @@ export async function initializeDatabase() {
     if (MODE === "postgres" && pgPool) {
       await ensureUsersTable();
       await ensureScholarshipsTable();
+      await ensureApplicationsTable();
       return { success: true };
     }
     if (!pool) return { success: true };
     await ensureUsersTable();
     await ensureScholarshipsTable();
+    await ensureApplicationsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);
