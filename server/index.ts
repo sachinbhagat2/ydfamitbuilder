@@ -115,52 +115,8 @@ app.get("*", (req, res) => {
       });
     }
     
-    // For non-API routes in development, provide helpful information
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Youth Dreamers Foundation - Development</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-            .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .logo { text-align: center; margin-bottom: 30px; }
-            .logo img { height: 60px; }
-            h1 { color: #0057A3; text-align: center; }
-            .info { background: #e3f2fd; padding: 20px; border-radius: 6px; margin: 20px 0; }
-            .button { display: inline-block; background: #0057A3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
-            .button:hover { background: #004080; }
-            .status { color: #4caf50; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="logo">
-              <img src="https://cdn.builder.io/api/v1/image/assets%2F3b1b952ac06b422687ab6f8265e647a7%2F209099442e6c42e883b3d324b2f06354?format=webp&width=800" alt="Youth Dreamers Foundation" />
-            </div>
-            <h1>Youth Dreamers Foundation</h1>
-            <div class="info">
-              <p><span class="status">✅ Backend Server Running</span> - Port 3000</p>
-              <p>For the full application experience, please access:</p>
-              <p><strong>Frontend Development Server:</strong></p>
-              <a href="http://localhost:5173" class="button">Open Application (Port 5173)</a>
-            </div>
-            <div class="info">
-              <p><strong>Available API Endpoints:</strong></p>
-              <ul>
-                <li><a href="/api/ping">/api/ping</a> - Server status</li>
-                <li><a href="/api/demo">/api/demo</a> - Demo endpoint</li>
-                <li><a href="/api/test/connection">/api/test/connection</a> - Database test</li>
-                <li><a href="/health">/health</a> - Health check</li>
-              </ul>
-            </div>
-            <p style="text-align: center; color: #666; margin-top: 30px;">
-              <small>Development Mode - Backend Server</small>
-            </p>
-          </div>
-        </body>
-      </html>
-    `);
+    // In development, redirect to Vite dev server
+    res.redirect('http://localhost:5173' + req.path);
   }
 });
 
