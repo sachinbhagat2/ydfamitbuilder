@@ -730,6 +730,10 @@ class DatabaseAdapter {
       return true;
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      await pgPool.query('DELETE FROM scholarships WHERE id = $1', [id]);
+      return true;
+    }
     await pool.execute("DELETE FROM scholarships WHERE id = ?", [id]);
     return true;
   }
