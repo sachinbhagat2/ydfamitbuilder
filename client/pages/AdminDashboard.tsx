@@ -687,7 +687,7 @@ const AdminDashboard = () => {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-semibold">
               {editing ? "Edit Scholarship" : "Create Scholarship"}
             </h3>
