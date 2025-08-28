@@ -796,9 +796,15 @@ export async function testConnection() {
 
 export async function initializeDatabase() {
   try {
-    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+    if (USE_MOCK) {
       return { success: true };
     }
+    if (MODE === "postgres" && pgPool) {
+      await ensureUsersTable();
+      await ensureScholarshipsTable();
+      return { success: true };
+    }
+    if (!pool) return { success: true };
     await ensureUsersTable();
     await ensureScholarshipsTable();
     return { success: true };
