@@ -649,6 +649,36 @@ class DatabaseAdapter {
       return memory.scholarships[idx];
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const map: Record<string, string> = {
+        title: 'title',
+        description: 'description',
+        amount: 'amount',
+        currency: 'currency',
+        eligibilityCriteria: '"eligibilityCriteria"',
+        requiredDocuments: '"requiredDocuments"',
+        applicationDeadline: '"applicationDeadline"',
+        selectionDeadline: '"selectionDeadline"',
+        maxApplications: '"maxApplications"',
+        currentApplications: '"currentApplications"',
+        status: 'status',
+        tags: 'tags',
+      };
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let i = 1;
+      for (const [k, v] of Object.entries(data)) {
+        if (map[k]) {
+          sets.push(`${map[k]} = $${i++}`);
+          vals.push((k === 'eligibilityCriteria' || k === 'requiredDocuments' || k === 'tags') && v != null ? JSON.stringify(v) : v);
+        }
+      }
+      if (!sets.length) return this.getScholarshipById(id);
+      const sql = `UPDATE scholarships SET ${sets.join(', ')}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      vals.push(id);
+      const result = await pgPool.query(sql, vals);
+      return (result.rows as any[])[0];
+    }
     const cols: string[] = [];
     const vals: any[] = [];
     for (const [k, v] of Object.entries(data)) {
