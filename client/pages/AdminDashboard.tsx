@@ -23,6 +23,7 @@ import {
   TrendingUp,
   DollarSign,
   Calendar,
+  Trash,
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -197,10 +198,45 @@ const AdminDashboard = () => {
       maxApplications: form.maxApplications
         ? Number(form.maxApplications)
         : undefined,
+      status: form.status || "active",
     };
     if (editing) await api.updateScholarship(editing.id, payload);
     else await api.createScholarship(payload);
     setShowForm(false);
+    await fetchSchemes();
+  };
+
+  const deleteScheme = async (id: number) => {
+    if (!window.confirm("Delete this scheme? This action cannot be undone.")) return;
+    const api = (await import("../services/api")).default;
+    await api.deleteScholarship(id);
+    await fetchSchemes();
+  };
+
+  const copyScheme = async (s: any) => {
+    const api = (await import("../services/api")).default;
+    const payload = {
+      title: `Copy of ${s.title || s.name}`,
+      description: s.description || "",
+      amount: String(s.amount || "0"),
+      currency: s.currency || "INR",
+      eligibilityCriteria: Array.isArray(s.eligibilityCriteria)
+        ? s.eligibilityCriteria
+        : [],
+      requiredDocuments: Array.isArray(s.requiredDocuments)
+        ? s.requiredDocuments
+        : [],
+      applicationDeadline: s.applicationDeadline
+        ? new Date(s.applicationDeadline).toISOString()
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      selectionDeadline: s.selectionDeadline
+        ? new Date(s.selectionDeadline).toISOString()
+        : undefined,
+      maxApplications: s.maxApplications ?? null,
+      tags: Array.isArray(s.tags) ? s.tags : undefined,
+      status: s.status || "active",
+    };
+    await api.createScholarship(payload);
     await fetchSchemes();
   };
 
@@ -242,10 +278,13 @@ const AdminDashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
+      case "active":
         return "bg-green-100 text-green-800";
       case "Draft":
+      case "inactive":
         return "bg-gray-100 text-gray-800";
       case "Closed":
+      case "closed":
         return "bg-red-100 text-red-800";
       case "Under Review":
         return "bg-yellow-100 text-yellow-800";
@@ -454,7 +493,7 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {scheme.applications}
+                      {scheme.currentApplications ?? scheme.applications ?? 0}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {scheme.amount
@@ -477,8 +516,11 @@ const AdminDashboard = () => {
                         >
                           <Edit className="h-4 w-4 text-gray-600" />
                         </button>
-                        <button className="p-1 hover:bg-gray-200 rounded">
+                        <button onClick={() => copyScheme(scheme)} className="p-1 hover:bg-gray-200 rounded">
                           <Copy className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button onClick={() => deleteScheme(scheme.id)} className="p-1 hover:bg-red-100 rounded">
+                          <Trash className="h-4 w-4 text-red-600" />
                         </button>
                         <button className="p-1 hover:bg-gray-200 rounded">
                           <MoreVertical className="h-4 w-4 text-gray-600" />
@@ -708,6 +750,18 @@ const AdminDashboard = () => {
                     setForm({ ...form, selectionDeadline: e.target.value })
                   }
                 />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Status</label>
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                >
+                  <option value="active">active</option>
+                  <option value="inactive">inactive</option>
+                  <option value="closed">closed</option>
+                </select>
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">
