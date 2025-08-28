@@ -544,6 +544,10 @@ class DatabaseAdapter {
       return memory.scholarships.find((s: any) => s.id === id) || null;
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query('SELECT * FROM scholarships WHERE id = $1 LIMIT 1', [id]);
+      return (result.rows as any[])[0] || null;
+    }
     const [rows] = await pool.execute(
       "SELECT * FROM scholarships WHERE id = ? LIMIT 1",
       [id],
