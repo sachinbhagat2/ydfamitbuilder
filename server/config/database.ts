@@ -210,6 +210,7 @@ export const pool =
 
 export const pgPool =
   MODE === "postgres"
+<<<<<<< HEAD
     ? new PgPool(
         (() => {
           try {
@@ -230,6 +231,12 @@ export const pgPool =
           }
         })(),
       )
+=======
+    ? new PgPool({
+        connectionString: PG_URL,
+        ssl: { require: true, rejectUnauthorized: false },
+      })
+>>>>>>> refs/remotes/origin/ai_main_90c97b327b3e
     : (null as unknown as PgPool);
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export

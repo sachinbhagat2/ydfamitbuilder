@@ -12,7 +12,6 @@ const DatabaseStatus = () => {
     const checkConnection = async () => {
       try {
         const response = await fetch("/api/test/connection");
-        const ok = response.ok;
         let result: any = {};
         try {
           result = await response.json();
@@ -20,12 +19,13 @@ const DatabaseStatus = () => {
         const dbOk =
           result?.results?.database?.status === "connected" ||
           result?.success === true;
-        setIsConnected(ok); // API reachable -> app usable
-        setDbConnected(dbOk);
-      } catch (error) {
-        // Fall back to mock mode when API check fails
+        // Consider any HTTP response as API reachable (even 4xx/5xx)
         setIsConnected(true);
-        setDbConnected(false);
+        setDbConnected(!!dbOk);
+      } catch (error) {
+        // Network failure => API unreachable
+        setIsConnected(false);
+        setDbConnected(null);
       } finally {
         setIsLoading(false);
       }

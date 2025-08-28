@@ -213,7 +213,9 @@ router.get("/connection", async (req, res) => {
 
     res.json({
       success: dbResult.success,
-      message: dbResult.success ? "All systems operational" : "Database connection failed",
+      message: dbResult.success
+        ? "All systems operational"
+        : "Database connection failed",
       results: testResults,
       error: dbResult.success ? undefined : dbResult.error || undefined,
     });
