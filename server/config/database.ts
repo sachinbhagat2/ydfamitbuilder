@@ -213,7 +213,7 @@ export const pgPool = MODE === "postgres"
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
 export const mysqlCompat = {
   getConnection: async () => {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return {
         execute: async (_q: string, _p?: any[]) => [[]],
         ping: async () => true,
@@ -342,7 +342,7 @@ class DatabaseAdapter {
     const normalized = String(email || "")
       .trim()
       .toLowerCase();
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return (
         memory.users.find(
           (u) => String(u.email || "").toLowerCase() === normalized,
@@ -357,7 +357,7 @@ class DatabaseAdapter {
   }
 
   async findUserById(id: number) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.users.find((u) => u.id === id) || null;
     }
     const [rows] = await pool.execute(
@@ -368,7 +368,7 @@ class DatabaseAdapter {
   }
 
   async createUser(userData: any) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const newUser = {
         ...userData,
         id: memory.users.length + 1,
@@ -411,7 +411,7 @@ class DatabaseAdapter {
   }
 
   async updateUser(id: number, userData: any) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.users.findIndex((u) => u.id === id);
       if (idx === -1) return null;
       memory.users[idx] = {
@@ -462,7 +462,7 @@ class DatabaseAdapter {
 
   // Scholarships CRUD
   async getAllScholarships() {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.scholarships.sort(
         (a: any, b: any) => (b.createdAt as any) - (a.createdAt as any),
       );
@@ -475,7 +475,7 @@ class DatabaseAdapter {
   }
 
   async getScholarshipById(id: number) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.scholarships.find((s: any) => s.id === id) || null;
     }
     await ensureScholarshipsTable();
@@ -488,7 +488,7 @@ class DatabaseAdapter {
 
   async createScholarship(input: any, createdBy?: number) {
     const now = new Date();
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const nextId = memory.scholarships.length
         ? Math.max(...memory.scholarships.map((s: any) => s.id)) + 1
         : 1;
@@ -548,7 +548,7 @@ class DatabaseAdapter {
   }
 
   async updateScholarship(id: number, data: any) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.scholarships.findIndex((s: any) => s.id === id);
       if (idx === -1) return null;
       memory.scholarships[idx] = {
@@ -603,7 +603,7 @@ class DatabaseAdapter {
   }
 
   async deleteScholarship(id: number) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.scholarships.findIndex((s: any) => s.id === id);
       if (idx === -1) return false;
       memory.scholarships.splice(idx, 1);
@@ -620,7 +620,7 @@ export const mockDatabase = new DatabaseAdapter();
 // Public API for server/index.ts and routes/test.ts
 export async function testConnection() {
   try {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return {
         success: true,
         data: [
@@ -658,7 +658,7 @@ export async function testConnection() {
 
 export async function initializeDatabase() {
   try {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return { success: true };
     }
     await ensureUsersTable();
@@ -736,7 +736,7 @@ export async function createDefaultUsers() {
       },
     ];
 
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       for (const u of defaults) {
         const existing = memory.users.find((x) => x.email === u.email);
         const hashed = await hashPassword(u.password);
