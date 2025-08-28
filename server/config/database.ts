@@ -529,6 +529,10 @@ class DatabaseAdapter {
       );
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query('SELECT * FROM scholarships ORDER BY "createdAt" DESC');
+      return result.rows as any[];
+    }
     const [rows] = await pool.execute(
       "SELECT * FROM scholarships ORDER BY createdAt DESC",
     );
