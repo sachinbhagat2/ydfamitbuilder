@@ -1123,7 +1123,7 @@ const AdminDashboard = () => {
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 {a.studentName || `#${a.studentId}`}
                               </td>
-                                  <td className="px-6 py-3">
+                              <td className="px-6 py-3">
                                 <span
                                   className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
                                 >
@@ -1245,12 +1245,24 @@ const AdminDashboard = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-ydf-light-gray">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ID
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Name
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Role
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Joined
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ydf-light-gray">
@@ -1268,24 +1280,36 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         )}
-                        {!usersLoading && users.map((u: any) => (
-                          <tr key={u.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-3 text-sm text-gray-900">{u.id}</td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {(u.firstName || "") + (u.lastName ? ` ${u.lastName}` : "")}
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">{u.email}</td>
-                            <td className="px-6 py-3 text-sm text-gray-900 capitalize">{u.userType}</td>
-                            <td className="px-6 py-3 text-sm">
-                              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                {u.isActive ? "active" : "inactive"}
-                              </span>
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {u.createdAt ? new Date(u.createdAt).toLocaleString() : ""}
-                            </td>
-                          </tr>
-                        ))}
+                        {!usersLoading &&
+                          users.map((u: any) => (
+                            <tr key={u.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {u.id}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {(u.firstName || "") +
+                                  (u.lastName ? ` ${u.lastName}` : "")}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {u.email}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900 capitalize">
+                                {u.userType}
+                              </td>
+                              <td className="px-6 py-3 text-sm">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                                >
+                                  {u.isActive ? "active" : "inactive"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {u.createdAt
+                                  ? new Date(u.createdAt).toLocaleString()
+                                  : ""}
+                              </td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>
