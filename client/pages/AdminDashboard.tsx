@@ -129,6 +129,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchSchemes();
+    fetchOverviewData();
   }, []);
 
   const fetchSchemes = async () => {
@@ -136,6 +137,32 @@ const AdminDashboard = () => {
       const api = (await import("../services/api")).default;
       const res = await api.listScholarships({ status: "all", limit: 100 });
       if (res.success) setSchemes(res.data);
+    } catch (e) {}
+  };
+
+  const fetchOverviewData = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const [statsRes, recentRes] = await Promise.all([
+        api.getApplicationStats(),
+        api.getRecentApplications(5),
+      ]);
+      if (statsRes.success) setAppStats(statsRes.data);
+      if (recentRes.success) setRecentApps(recentRes.data || []);
+    } catch (e) {}
+  };
+
+  const fetchApplications = async (page = 1, status = appStatusFilter) => {
+    try {
+      const api = (await import("../services/api")).default;
+      const params: any = { page, limit: 10 };
+      if (status && status !== 'all') params.status = status;
+      const res = await api.listApplications(params);
+      if (res.success) {
+        setApplications(res.data);
+        setAppPage(page);
+        setAppTotal(res.pagination?.total || 0);
+      }
     } catch (e) {}
   };
 
@@ -246,40 +273,14 @@ const AdminDashboard = () => {
     await fetchSchemes();
   };
 
-  const recentApplications = [
-    {
-      id: 1,
-      applicant: "Priya Sharma",
-      scheme: "Merit Excellence",
-      status: "Under Review",
-      submittedDate: "2024-01-15",
-      score: 85,
-    },
-    {
-      id: 2,
-      applicant: "Rahul Kumar",
-      scheme: "Rural Development",
-      status: "Approved",
-      submittedDate: "2024-01-14",
-      score: 92,
-    },
-    {
-      id: 3,
-      applicant: "Anjali Patel",
-      scheme: "Women Empowerment",
-      status: "Pending Documents",
-      submittedDate: "2024-01-13",
-      score: 78,
-    },
-    {
-      id: 4,
-      applicant: "Arjun Singh",
-      scheme: "Merit Excellence",
-      status: "Interview Scheduled",
-      submittedDate: "2024-01-12",
-      score: 88,
-    },
-  ];
+  const recentApplications = recentApps.length ? recentApps.map((a:any) => ({
+    id: a.id,
+    applicant: `Student #${a.studentId}`,
+    scheme: `Scheme #${a.scholarshipId}`,
+    status: a.status,
+    submittedDate: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : '',
+    score: a.score ?? '-',
+  })) : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -719,7 +720,57 @@ const AdminDashboard = () => {
           <div className="flex-1 p-6">
             {activeTab === "overview" && renderOverview()}
             {activeTab === "schemes" && renderSchemes()}
-            {activeTab === "applications" && renderOverview()}
+            {activeTab === "applications" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Applications</h2>
+                  <div className="flex items-center gap-2">
+                    <select className="border rounded px-2 py-1" value={appStatusFilter} onChange={(e)=>{ setAppStatusFilter(e.target.value); fetchApplications(1, e.target.value); }}>
+                      <option value="all">All</option>
+                      <option value="submitted">submitted</option>
+                      <option value="under_review">under_review</option>
+                      <option value="approved">approved</option>
+                      <option value="rejected">rejected</option>
+                      <option value="waitlisted">waitlisted</option>
+                    </select>
+                    <button onClick={()=>fetchApplications(1, appStatusFilter)} className="px-3 py-2 bg-ydf-deep-blue text-white rounded">Refresh</button>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-ydf-light-gray">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholarship</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ydf-light-gray">
+                        {applications.map((a)=> (
+                          <tr key={a.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm text-gray-900">{a.id}</td>
+                            <td className="px-6 py-3 text-sm text-gray-900">#{a.scholarshipId}</td>
+                            <td className="px-6 py-3 text-sm text-gray-900">#{a.studentId}</td>
+                            <td className="px-6 py-3"><span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}>{a.status}</span></td>
+                            <td className="px-6 py-3 text-sm text-gray-900">{a.submittedAt ? new Date(a.submittedAt).toLocaleString() : ''}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Page {appPage} • Total {appTotal}</span>
+                  <div className="flex gap-2">
+                    <button disabled={appPage<=1} onClick={()=>fetchApplications(appPage-1)} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
+                    <button disabled={applications.length<10} onClick={()=>fetchApplications(appPage+1)} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                  </div>
+                </div>
+              </div>
+            )}
             {activeTab === "analytics" && renderAnalytics()}
           </div>
         </div>
