@@ -447,29 +447,34 @@ const Progress = () => {
                         onClick={() => {
                           const raw = apps.find((a) => a.id === application.id);
                           const sch = schMap.get(Number(raw?.scholarshipId));
-                          const payload = {
-                            application: raw,
-                            scholarship: sch,
-                          };
-                          const blob = new Blob(
-                            [JSON.stringify(payload, null, 2)],
-                            {
-                              type: "application/json",
-                            },
-                          );
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `application-${application.id}.json`;
-                          document.body.appendChild(a);
-                          a.click();
-                          a.remove();
-                          URL.revokeObjectURL(url);
+                          const w = window.open('', '_blank');
+                          if (!w) return;
+                          const html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Application #${application.id}</title>
+                          <style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 8px}h2{font-size:16px;margin:16px 0 8px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left}small{color:#666}</style></head><body>
+                          <h1>Application #${application.id}</h1>
+                          <small>Generated on ${new Date().toLocaleString()}</small>
+                          <h2>Scholarship</h2>
+                          <table><tr><th>Name</th><td>${application.scholarship}</td></tr>
+                          <tr><th>Amount</th><td>${application.amount}</td></tr>
+                          <tr><th>Deadline</th><td>${application.deadline}</td></tr>
+                          <tr><th>Category</th><td>${application.category}</td></tr></table>
+                          <h2>Status</h2>
+                          <table><tr><th>Status</th><td>${application.status}</td></tr>
+                          <tr><th>Applied</th><td>${application.appliedDate}</td></tr>
+                          <tr><th>Next Step</th><td>${application.nextStep}</td></tr>
+                          </table>
+                          <h2>Details</h2>
+                          <pre style=\"white-space:pre-wrap;background:#f7f7f7;padding:12px;border:1px solid #eee;border-radius:6px;\">${JSON.stringify({ application: raw, scholarship: sch }, null, 2)}</pre>
+                          <script>window.onload=()=>{setTimeout(()=>{window.print();}, 100);}</script>
+                          </body></html>`;
+                          w.document.open();
+                          w.document.write(html);
+                          w.document.close();
                         }}
                         className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
                       >
                         <Download className="h-4 w-4" />
-                        <span>Download</span>
+                        <span>Download PDF</span>
                       </button>
                       <Link
                         to="/support"
