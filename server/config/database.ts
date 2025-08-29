@@ -1350,12 +1350,14 @@ export async function initializeDatabase() {
       await ensureUsersTable();
       await ensureScholarshipsTable();
       await ensureApplicationsTable();
+      await ensureAnnouncementsTable();
       return { success: true };
     }
     if (!pool) return { success: true };
     await ensureUsersTable();
     await ensureScholarshipsTable();
     await ensureApplicationsTable();
+    await ensureAnnouncementsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);
