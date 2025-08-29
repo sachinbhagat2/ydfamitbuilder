@@ -673,4 +673,43 @@ router.get(
   },
 );
 
+// Admin: update user active status
+router.patch(
+  "/users/:id",
+  authenticateToken,
+  authorize("admin"),
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { isActive } = req.body || {};
+      if (!Number.isFinite(id)) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid user id" });
+      }
+      if (typeof isActive !== "boolean") {
+        return res
+          .status(400)
+          .json({ success: false, error: "isActive boolean is required" });
+      }
+      const updated = await (mockDatabase as any).updateUser(id, {
+        isActive,
+        updatedAt: new Date(),
+      });
+      if (!updated) {
+        return res
+          .status(404)
+          .json({ success: false, error: "User not found" });
+      }
+      const { password: _pw, ...userWithoutPassword } = updated;
+      return res.json({ success: true, data: userWithoutPassword });
+    } catch (error) {
+      console.error("Update user status error:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Internal server error" });
+    }
+  },
+);
+
 export default router;

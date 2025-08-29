@@ -54,6 +54,12 @@ const AdminDashboard = () => {
   >("submittedAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Users tab state
+  const [users, setUsers] = useState<any[]>([]);
+  const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
+  const [userSearch, setUserSearch] = useState("");
+  const [usersLoading, setUsersLoading] = useState(false);
+
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
     if (!hasSeenOnboarding) {
@@ -68,8 +74,8 @@ const AdminDashboard = () => {
       "overview",
       "schemes",
       "applications",
-      "analytics",
       "users",
+      "analytics",
       "settings",
     ];
     if (tab && allowed.includes(tab) && tab !== activeTab) {
@@ -158,6 +164,8 @@ const AdminDashboard = () => {
     if (tab === "applications") {
       fetchApplications(1, appStatusFilter);
       fetchReviewers();
+    } else if (tab === "users") {
+      fetchUsers(1, userRoleFilter, userSearch);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -204,6 +212,25 @@ const AdminDashboard = () => {
       const res = await api.listUsers({ userType: "reviewer", limit: 100 });
       if (res.success) setReviewers(res.data || []);
     } catch (e) {}
+  };
+
+  const fetchUsers = async (
+    page = 1,
+    role = userRoleFilter,
+    search = userSearch,
+  ) => {
+    try {
+      setUsersLoading(true);
+      const api = (await import("../services/api")).default;
+      const params: any = { page, limit: 200 };
+      if (role && role !== "all") params.userType = role;
+      if (search && search.trim()) params.search = search.trim();
+      const res = await api.listUsers(params);
+      if (res.success) setUsers(res.data || []);
+    } catch (e) {
+    } finally {
+      setUsersLoading(false);
+    }
   };
 
   const reviewerName = (id?: number | null) => {
@@ -939,6 +966,7 @@ const AdminDashboard = () => {
                 { id: "overview", label: "Overview", icon: BarChart3 },
                 { id: "schemes", label: "Manage Schemes", icon: FileText },
                 { id: "applications", label: "View Applications", icon: Users },
+                { id: "users", label: "Users", icon: Users },
                 { id: "analytics", label: "Analytics", icon: TrendingUp },
               ].map((tab) => (
                 <button
@@ -1096,23 +1124,11 @@ const AdminDashboard = () => {
                                 {a.studentName || `#${a.studentId}`}
                               </td>
                               <td className="px-6 py-3">
-                                <select
-                                  className={`px-2 py-1 border rounded text-xs ${getStatusColor(a.status)}`}
-                                  value={a.status}
-                                  onChange={(e) =>
-                                    updateApplication(a.id, {
-                                      status: e.target.value,
-                                    })
-                                  }
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
                                 >
-                                  <option value="submitted">submitted</option>
-                                  <option value="under_review">
-                                    under_review
-                                  </option>
-                                  <option value="approved">approved</option>
-                                  <option value="rejected">rejected</option>
-                                  <option value="waitlisted">waitlisted</option>
-                                </select>
+                                  {a.status}
+                                </span>
                               </td>
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 {a.submittedAt
@@ -1181,6 +1197,146 @@ const AdminDashboard = () => {
               </div>
             )}
             {activeTab === "analytics" && renderAnalytics()}
+            {activeTab === "users" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Users</h2>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="border rounded px-2 py-1"
+                      value={userRoleFilter}
+                      onChange={(e) => {
+                        setUserRoleFilter(e.target.value);
+                        fetchUsers(1, e.target.value, userSearch);
+                      }}
+                    >
+                      <option value="all">All roles</option>
+                      <option value="student">student</option>
+                      <option value="admin">admin</option>
+                      <option value="reviewer">reviewer</option>
+                      <option value="donor">donor</option>
+                      <option value="surveyor">surveyor</option>
+                    </select>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search by name, email, or role"
+                        className="pl-10 pr-4 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
+                        value={userSearch}
+                        onChange={(e) => {
+                          setUserSearch(e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") fetchUsers(1);
+                        }}
+                      />
+                    </div>
+                    <button
+                      onClick={() => fetchUsers(1)}
+                      className="px-3 py-2 bg-ydf-deep-blue text-white rounded"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-ydf-light-gray">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ID
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Name
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Role
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Joined
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ydf-light-gray">
+                        {usersLoading && (
+                          <tr>
+                            <td colSpan={7} className="px-6 py-4 text-gray-600">
+                              Loading...
+                            </td>
+                          </tr>
+                        )}
+                        {!usersLoading && users.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-6 py-4 text-gray-600">
+                              No users found
+                            </td>
+                          </tr>
+                        )}
+                        {!usersLoading &&
+                          users.map((u: any) => (
+                            <tr key={u.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {u.id}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {(u.firstName || "") +
+                                  (u.lastName ? ` ${u.lastName}` : "")}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {u.email}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900 capitalize">
+                                {u.userType}
+                              </td>
+                              <td className="px-6 py-3 text-sm">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                                >
+                                  {u.isActive ? "active" : "inactive"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {u.createdAt
+                                  ? new Date(u.createdAt).toLocaleString()
+                                  : ""}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                <button
+                                  onClick={async () => {
+                                    const api = (
+                                      await import("../services/api")
+                                    ).default;
+                                    const next = !u.isActive;
+                                    const res = await api.updateUser(u.id, {
+                                      isActive: next,
+                                    });
+                                    if (res.success)
+                                      fetchUsers(1, userRoleFilter, userSearch);
+                                  }}
+                                  className={`px-3 py-1 rounded ${u.isActive ? "bg-red-600 text-white" : "bg-green-600 text-white"}`}
+                                >
+                                  {u.isActive ? "Deactivate" : "Activate"}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
