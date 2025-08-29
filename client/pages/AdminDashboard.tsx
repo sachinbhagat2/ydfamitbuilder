@@ -580,13 +580,33 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900">
           Scholarship Schemes
         </h2>
-        <button
-          onClick={openCreate}
-          className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create Scheme</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              const api = (await import("../services/api")).default;
+              const blob = await api.exportScholarshipsCSV();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "scholarships.csv";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
+          >
+            <Download className="h-4 w-4" />
+            <span>Export Schemes</span>
+          </button>
+          <button
+            onClick={openCreate}
+            className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Scheme</span>
+          </button>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -695,6 +715,24 @@ const AdminDashboard = () => {
                           className="p-1 hover:bg-red-100 rounded"
                         >
                           <Trash className="h-4 w-4 text-red-600" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const api = (await import("../services/api")).default;
+                            const blob = await api.exportApplicationsCSV({ scholarshipId: scheme.id });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            const name = (scheme.title || scheme.name || `scheme-${scheme.id}`).toString().replace(/[^a-z0-9-_]+/gi, "-");
+                            a.download = `applications_${name}.csv`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Download className="h-4 w-4 text-gray-600" />
                         </button>
                         <button className="p-1 hover:bg-gray-200 rounded">
                           <MoreVertical className="h-4 w-4 text-gray-600" />
