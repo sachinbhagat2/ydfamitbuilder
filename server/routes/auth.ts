@@ -640,4 +640,33 @@ router.get("/verify", authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Admin: list users (filter by userType)
+router.get(
+  "/users",
+  authenticateToken,
+  authorize("admin"),
+  async (req, res) => {
+    try {
+      const { userType, search, isActive, page = 1, limit = 100 } =
+        req.query as any;
+      const result = await (mockDatabase as any).listUsers({
+        userType,
+        search,
+        isActive:
+          typeof isActive === "string"
+            ? isActive.toLowerCase() === "true"
+            : undefined,
+        page: Number(page),
+        limit: Number(limit),
+      });
+      return res.json({ success: true, data: result });
+    } catch (error) {
+      console.error("List users error:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Internal server error" });
+    }
+  },
+);
+
 export default router;
