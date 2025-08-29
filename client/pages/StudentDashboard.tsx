@@ -24,7 +24,7 @@ const StudentDashboard = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [myStats, setMyStats] = useState<any>(null);
   const [myApps, setMyApps] = useState<any[]>([]);
-  const [activeScholarships, setActiveScholarships] = useState<any[]>([]);
+  const [allScholarships, setAllScholarships] = useState<any[]>([]);
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_student");
@@ -39,12 +39,12 @@ const StudentDashboard = () => {
       const api = (await import("../services/api")).default;
       const [statsRes, appsRes, schRes] = await Promise.all([
         api.getMyApplicationStats(),
-        api.listMyApplications({ page: 1, limit: 10 }),
-        api.listScholarships({ status: "active", limit: 5 }),
+        api.listMyApplications({ page: 1, limit: 50 }),
+        api.listScholarships({ status: "all", limit: 1000 }),
       ]);
       if (statsRes.success) setMyStats(statsRes.data);
       if (appsRes.success) setMyApps(appsRes.data || []);
-      if (schRes.success) setActiveScholarships(schRes.data || []);
+      if (schRes.success) setAllScholarships(schRes.data || []);
     } catch (e) {}
   };
 
@@ -58,18 +58,23 @@ const StudentDashboard = () => {
     setShowOnboarding(false);
   };
 
-  const appliedSet = new Set(myApps.map((a: any) => a.scholarshipId));
-  const scholarships = activeScholarships.slice(0, 3).map((s: any) => ({
-    id: s.id,
-    name: s.title,
-    amount: `₹${s.amount}`,
-    deadline: s.applicationDeadline
+  const schMap = new Map<number, any>(
+    allScholarships.map((s: any) => [Number(s.id), s]),
+  );
+  const scholarships = myApps.slice(0, 3).map((a: any) => {
+    const s = schMap.get(Number(a.scholarshipId));
+    const name = s ? s.title : `Scholarship #${a.scholarshipId}`;
+    const amount = s ? `₹${Number(s.amount || 0)}` : "₹0";
+    const deadline = s?.applicationDeadline
       ? new Date(s.applicationDeadline).toLocaleDateString()
-      : "-",
-    status: appliedSet.has(s.id) ? "Applied" : "Eligible",
-    category: Array.isArray(s.tags) ? s.tags.join(", ") : "General",
-    color: appliedSet.has(s.id) ? "bg-ydf-deep-blue" : "bg-ydf-teal-green",
-  }));
+      : "-";
+    const status = String(a.status || "submitted")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+    const category = Array.isArray(s?.tags) ? s.tags.join(", ") : "General";
+    const color = status === "Approved" ? "bg-green-500" : "bg-ydf-deep-blue";
+    return { id: Number(a.scholarshipId), name, amount, deadline, status, category, color };
+  });
 
   const announcements = [
     {
@@ -189,8 +194,8 @@ const StudentDashboard = () => {
                   <p className="text-2xl font-bold text-gray-900">
                     {(() => {
                       const map = new Map(
-                        activeScholarships.map((s: any) => [
-                          s.id,
+                        allScholarships.map((s: any) => [
+                          Number(s.id),
                           Number(s.amount || 0),
                         ]),
                       );
@@ -235,7 +240,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* Active Scholarships */}
+          {/* Your Scholarships (Applied) */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
