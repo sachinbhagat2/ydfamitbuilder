@@ -22,14 +22,31 @@ const StudentDashboard = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [myStats, setMyStats] = useState<any>(null);
+  const [myApps, setMyApps] = useState<any[]>([]);
+  const [activeScholarships, setActiveScholarships] = useState<any[]>([]);
 
   useEffect(() => {
-    // Check if user is new (hasn't seen onboarding)
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_student");
     if (!hasSeenOnboarding) {
       setShowOnboarding(true);
     }
+    fetchDashboard();
   }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const [statsRes, appsRes, schRes] = await Promise.all([
+        api.getMyApplicationStats(),
+        api.listMyApplications({ page: 1, limit: 10 }),
+        api.listScholarships({ status: "active", limit: 5 }),
+      ]);
+      if (statsRes.success) setMyStats(statsRes.data);
+      if (appsRes.success) setMyApps(appsRes.data || []);
+      if (schRes.success) setActiveScholarships(schRes.data || []);
+    } catch (e) {}
+  };
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("ydf_onboarding_student", "true");
@@ -41,35 +58,18 @@ const StudentDashboard = () => {
     setShowOnboarding(false);
   };
 
-  const scholarships = [
-    {
-      id: 1,
-      name: "Merit Excellence Scholarship",
-      amount: "₹50,000",
-      deadline: "15 Mar 2024",
-      status: "Applied",
-      category: "Academic",
-      color: "bg-ydf-deep-blue",
-    },
-    {
-      id: 2,
-      name: "Rural Development Grant",
-      amount: "₹25,000",
-      deadline: "22 Mar 2024",
-      status: "Eligible",
-      category: "Rural",
-      color: "bg-ydf-teal-green",
-    },
-    {
-      id: 3,
-      name: "Technical Innovation Fund",
-      amount: "₹75,000",
-      deadline: "30 Mar 2024",
-      status: "Under Review",
-      category: "Technology",
-      color: "bg-purple-600",
-    },
-  ];
+  const appliedSet = new Set(myApps.map((a: any) => a.scholarshipId));
+  const scholarships = activeScholarships.slice(0, 3).map((s: any) => ({
+    id: s.id,
+    name: s.title,
+    amount: `₹${s.amount}`,
+    deadline: s.applicationDeadline
+      ? new Date(s.applicationDeadline).toLocaleDateString()
+      : "-",
+    status: appliedSet.has(s.id) ? "Applied" : "Eligible",
+    category: Array.isArray(s.tags) ? s.tags.join(", ") : "General",
+    color: appliedSet.has(s.id) ? "bg-ydf-deep-blue" : "bg-ydf-teal-green",
+  }));
 
   const announcements = [
     {
@@ -167,7 +167,9 @@ const StudentDashboard = () => {
                   <GraduationCap className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {(myStats?.submitted || 0) + (myStats?.under_review || 0)}
+                  </p>
                   <p className="text-sm text-gray-600">Active Applications</p>
                 </div>
               </div>
@@ -184,7 +186,22 @@ const StudentDashboard = () => {
                   <DollarSign className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">₹2.5L</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {(() => {
+                      const map = new Map(
+                        activeScholarships.map((s: any) => [
+                          s.id,
+                          Number(s.amount || 0),
+                        ]),
+                      );
+                      const sum = myApps.reduce(
+                        (acc: any, a: any) =>
+                          acc + (map.get(a.scholarshipId) || 0),
+                        0,
+                      );
+                      return `₹${sum.toLocaleString("en-IN")}`;
+                    })()}
+                  </p>
                   <p className="text-sm text-gray-600">Total Applied</p>
                 </div>
               </div>
@@ -240,42 +257,47 @@ const StudentDashboard = () => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${scholarship.color}`}
-                        ></div>
-                        <h3 className="font-medium text-gray-900">
-                          {scholarship.name}
-                        </h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-1">
-                          <DollarSign className="h-4 w-4" />
-                          <span>{scholarship.amount}</span>
+                  <Link
+                    to={`/scholarships/${scholarship.id}`}
+                    className="block"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${scholarship.color}`}
+                          ></div>
+                          <h3 className="font-medium text-gray-900">
+                            {scholarship.name}
+                          </h3>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{scholarship.deadline}</span>
+                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <DollarSign className="h-4 w-4" />
+                            <span>{scholarship.amount}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{scholarship.deadline}</span>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              scholarship.status === "Applied"
+                                ? "bg-blue-100 text-blue-800"
+                                : scholarship.status === "Eligible"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {scholarship.status}
+                          </span>
                         </div>
                       </div>
-                      <div className="mt-2">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            scholarship.status === "Applied"
-                              ? "bg-blue-100 text-blue-800"
-                              : scholarship.status === "Eligible"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {scholarship.status}
-                        </span>
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>

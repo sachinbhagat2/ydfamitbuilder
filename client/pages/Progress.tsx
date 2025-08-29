@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -16,206 +16,106 @@ import {
   Eye,
   Download,
   MessageCircle,
-  Paperclip,
   MapPin,
-  Phone,
-  Mail,
 } from "lucide-react";
 
 const Progress = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [apps, setApps] = useState<any[]>([]);
+  const [schMap, setSchMap] = useState<Map<number, any>>(new Map());
+  const [loading, setLoading] = useState(true);
 
-  const applications = [
-    {
-      id: 1,
-      scholarship: "Merit Excellence Scholarship",
-      amount: "₹50,000",
-      appliedDate: "2024-01-15",
-      status: "Under Review",
-      progress: 60,
-      nextStep: "Document Verification",
-      deadline: "2024-03-15",
-      category: "Academic",
-      reviewerComments:
-        "Good academic performance. Pending income verification.",
-      timeline: [
-        {
-          step: "Application Submitted",
-          date: "2024-01-15",
-          completed: true,
-          description: "Your application has been successfully submitted.",
-        },
-        {
-          step: "Initial Review",
-          date: "2024-01-18",
-          completed: true,
-          description: "Application passed initial eligibility screening.",
-        },
-        {
-          step: "Document Verification",
-          date: "In Progress",
-          completed: false,
-          description: "Documents are being verified by our team.",
-        },
-        {
-          step: "Interview",
-          date: "Pending",
-          completed: false,
-          description:
-            "Interview will be scheduled after document verification.",
-        },
-        {
-          step: "Final Decision",
-          date: "Pending",
-          completed: false,
-          description: "Final approval and disbursement process.",
-        },
-      ],
-    },
-    {
-      id: 2,
-      scholarship: "Rural Development Grant",
-      amount: "₹25,000",
-      appliedDate: "2024-01-12",
-      status: "Interview Scheduled",
-      progress: 80,
-      nextStep: "Attend Interview",
-      deadline: "2024-03-22",
-      category: "Rural",
-      reviewerComments: "Strong application. Interview scheduled for 25th Jan.",
-      interviewDetails: {
-        date: "2024-01-25",
-        time: "10:00 AM",
-        venue: "Online (Zoom)",
-        interviewer: "Dr. Priya Sharma",
-        instructions:
-          "Please join 5 minutes early and keep your documents ready.",
-      },
-      timeline: [
-        {
-          step: "Application Submitted",
-          date: "2024-01-12",
-          completed: true,
-          description: "Your application has been successfully submitted.",
-        },
-        {
-          step: "Initial Review",
-          date: "2024-01-14",
-          completed: true,
-          description: "Application passed initial eligibility screening.",
-        },
-        {
-          step: "Document Verification",
-          date: "2024-01-16",
-          completed: true,
-          description: "All documents verified successfully.",
-        },
-        {
-          step: "Interview",
-          date: "2024-01-25",
-          completed: false,
-          description: "Interview scheduled for 25th January at 10:00 AM.",
-        },
-        {
-          step: "Final Decision",
-          date: "Pending",
-          completed: false,
-          description: "Final approval and disbursement process.",
-        },
-      ],
-    },
-    {
-      id: 3,
-      scholarship: "Women Empowerment Scholarship",
-      amount: "₹40,000",
-      appliedDate: "2024-01-10",
-      status: "Approved",
-      progress: 100,
-      nextStep: "Fund Disbursement",
-      deadline: "2024-02-28",
-      category: "Gender",
-      reviewerComments:
-        "Excellent application. Approved for full scholarship amount.",
-      disbursementDetails: {
-        amount: "₹40,000",
-        accountNumber: "****7892",
-        bankName: "State Bank of India",
-        expectedDate: "2024-01-30",
-      },
-      timeline: [
-        {
-          step: "Application Submitted",
-          date: "2024-01-10",
-          completed: true,
-          description: "Your application has been successfully submitted.",
-        },
-        {
-          step: "Initial Review",
-          date: "2024-01-11",
-          completed: true,
-          description: "Application passed initial eligibility screening.",
-        },
-        {
-          step: "Document Verification",
-          date: "2024-01-13",
-          completed: true,
-          description: "All documents verified successfully.",
-        },
-        {
-          step: "Interview",
-          date: "2024-01-16",
-          completed: true,
-          description: "Interview completed successfully.",
-        },
-        {
-          step: "Final Decision",
-          date: "2024-01-20",
-          completed: true,
-          description: "Application approved. Fund disbursement in progress.",
-        },
-      ],
-    },
-    {
-      id: 4,
-      scholarship: "Technical Innovation Fund",
-      amount: "₹75,000",
-      appliedDate: "2024-01-08",
-      status: "Rejected",
-      progress: 40,
-      nextStep: "Application Closed",
-      deadline: "2024-03-30",
-      category: "Technology",
-      reviewerComments:
-        "Project proposal lacks innovation. Eligibility criteria not met.",
-      timeline: [
-        {
-          step: "Application Submitted",
-          date: "2024-01-08",
-          completed: true,
-          description: "Your application has been successfully submitted.",
-        },
-        {
-          step: "Initial Review",
-          date: "2024-01-10",
-          completed: true,
-          description: "Application passed initial eligibility screening.",
-        },
-        {
-          step: "Technical Review",
-          date: "2024-01-15",
-          completed: true,
-          description: "Technical committee reviewed the project proposal.",
-        },
-        {
-          step: "Final Decision",
-          date: "2024-01-18",
-          completed: true,
-          description: "Application rejected due to eligibility criteria.",
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    (async () => {
+      try {
+        const api = (await import("../services/api")).default;
+        const [appsRes, schRes] = await Promise.all([
+          api.listMyApplications({ limit: 100 }),
+          api.listScholarships({ status: "active", limit: 200 }),
+        ]);
+        if (appsRes.success) setApps(appsRes.data || []);
+        if (schRes.success) {
+          const m = new Map<number, any>();
+          (schRes.data || []).forEach((s: any) => m.set(Number(s.id), s));
+          setSchMap(m);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const applications = useMemo(() => {
+    return (apps || []).map((a: any) => {
+      const s = schMap.get(Number(a.scholarshipId));
+      const amount = s
+        ? `₹${Number(s.amount || 0).toLocaleString("en-IN")}`
+        : "₹0";
+      const deadline =
+        s && s.applicationDeadline
+          ? new Date(s.applicationDeadline).toISOString().slice(0, 10)
+          : "-";
+      const name = s ? s.title : `Scholarship #${a.scholarshipId}`;
+      const statusRaw = String(a.status || "Submitted");
+      const statusLc = statusRaw.toLowerCase().replace(/_/g, " ");
+      const progress =
+        statusLc === "approved"
+          ? 100
+          : statusLc.includes("under review")
+            ? 60
+            : statusLc === "rejected"
+              ? 40
+              : 50;
+      const nextStep = statusLc.includes("under review")
+        ? "Document Verification"
+        : statusLc === "approved"
+          ? "Fund Disbursement"
+          : statusLc === "rejected"
+            ? "Application Closed"
+            : "Initial Review";
+      return {
+        id: a.id,
+        scholarship: name,
+        amount,
+        appliedDate: a.submittedAt
+          ? new Date(a.submittedAt).toISOString().slice(0, 10)
+          : "-",
+        status: statusLc.replace(/\b\w/g, (l) => l.toUpperCase()),
+        progress,
+        nextStep,
+        deadline,
+        category: (Array.isArray(s?.tags) && s.tags[0]) || "General",
+        reviewerComments: (a as any).reviewerComments,
+        disbursementDetails: a.amountAwarded
+          ? {
+              amount: `₹${Number(a.amountAwarded).toLocaleString("en-IN")}`,
+              accountNumber: "****",
+              bankName: "-",
+              expectedDate: "-",
+            }
+          : undefined,
+        timeline: [
+          {
+            step: "Application Submitted",
+            date: a.submittedAt
+              ? new Date(a.submittedAt).toISOString().slice(0, 10)
+              : "-",
+            completed: true,
+            description: "Your application has been successfully submitted.",
+          },
+          {
+            step: "Initial Review",
+            date: "In Progress",
+            completed: ["under review", "approved", "rejected"].includes(
+              statusLc,
+            ),
+            description: "Application eligibility screening.",
+          },
+        ],
+      };
+    });
+  }, [apps, schMap]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -266,32 +166,44 @@ const Progress = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const stats = [
-    {
-      title: "Total Applications",
-      value: applications.length,
-      icon: FileText,
-      color: "bg-blue-500",
-    },
-    {
-      title: "Under Review",
-      value: applications.filter((app) => app.status === "Under Review").length,
-      icon: Clock,
-      color: "bg-yellow-500",
-    },
-    {
-      title: "Approved",
-      value: applications.filter((app) => app.status === "Approved").length,
-      icon: CheckCircle,
-      color: "bg-green-500",
-    },
-    {
-      title: "Total Amount Applied",
-      value: "₹1,90,000",
-      icon: DollarSign,
-      color: "bg-purple-500",
-    },
-  ];
+  const stats = useMemo(() => {
+    const total = applications.length;
+    const under =
+      applications.filter((a) => a.status === "Under Review").length || 0;
+    const approved =
+      applications.filter((a) => a.status === "Approved").length || 0;
+    const totalAmount = applications.reduce(
+      (acc, a) =>
+        acc + (parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0),
+      0,
+    );
+    return [
+      {
+        title: "Total Applications",
+        value: total,
+        icon: FileText,
+        color: "bg-blue-500",
+      },
+      {
+        title: "Under Review",
+        value: under,
+        icon: Clock,
+        color: "bg-yellow-500",
+      },
+      {
+        title: "Approved",
+        value: approved,
+        icon: CheckCircle,
+        color: "bg-green-500",
+      },
+      {
+        title: "Total Amount Applied",
+        value: `₹${totalAmount.toLocaleString("en-IN")}`,
+        icon: DollarSign,
+        color: "bg-purple-500",
+      },
+    ];
+  }, [applications]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -363,7 +275,6 @@ const Progress = () => {
               {[
                 { id: "all", label: "All" },
                 { id: "under-review", label: "Under Review" },
-                { id: "interview-scheduled", label: "Interview" },
                 { id: "approved", label: "Approved" },
                 { id: "rejected", label: "Rejected" },
               ].map((filter) => (
@@ -384,235 +295,167 @@ const Progress = () => {
         </div>
 
         {/* Applications List */}
-        <div className="space-y-6">
-          {filteredApplications.map((application, index) => (
-            <motion.div
-              key={application.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden"
-            >
-              {/* Application Header */}
-              <div className="p-6 border-b border-ydf-light-gray">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {application.scholarship}
-                      </h3>
-                      <span
-                        className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}
-                      >
-                        {getStatusIcon(application.status)}
-                        <span>{application.status}</span>
-                      </span>
+        {loading && <div className="text-gray-600">Loading...</div>}
+        {!loading && (
+          <div className="space-y-6">
+            {filteredApplications.map((application, index) => (
+              <motion.div
+                key={application.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden"
+              >
+                {/* Application Header */}
+                <div className="p-6 border-b border-ydf-light-gray">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {application.scholarship}
+                        </h3>
+                        <span
+                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}
+                        >
+                          {getStatusIcon(application.status)}
+                          <span>{application.status}</span>
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <DollarSign className="h-4 w-4" />
+                          <span>Amount: {application.amount}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>Applied: {application.appliedDate}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="h-4 w-4" />
+                          <span>Deadline: {application.deadline}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Category: </span>
+                          {application.category}
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span>Amount: {application.amount}</span>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-ydf-deep-blue">
+                        {application.progress}%
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Applied: {application.appliedDate}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
-                        <span>Deadline: {application.deadline}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Category: </span>
-                        {application.category}
-                      </div>
+                      <div className="text-sm text-gray-600">Progress</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-ydf-deep-blue">
-                      {application.progress}%
-                    </div>
-                    <div className="text-sm text-gray-600">Progress</div>
-                  </div>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                    <span>Application Progress</span>
-                    <span>Next: {application.nextStep}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${getProgressColor(application.progress)}`}
-                      style={{ width: `${application.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Timeline */}
-              <div className="p-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">
-                  Application Timeline
-                </h4>
-                <div className="space-y-4">
-                  {application.timeline.map((step, stepIndex) => (
-                    <div key={stepIndex} className="flex items-start space-x-4">
+                  {/* Progress Bar */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                      <span>Application Progress</span>
+                      <span>Next: {application.nextStep}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          step.completed
-                            ? "bg-green-500 text-white"
-                            : "bg-gray-200 text-gray-600"
-                        }`}
-                      >
-                        {step.completed ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h5
-                            className={`font-medium ${
-                              step.completed ? "text-gray-900" : "text-gray-600"
+                        className={`h-2 rounded-full ${getProgressColor(application.progress)}`}
+                        style={{ width: `${application.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div className="p-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                    Application Timeline
+                  </h4>
+                  <div className="space-y-4">
+                    {application.timeline.map(
+                      (step: any, stepIndex: number) => (
+                        <div
+                          key={stepIndex}
+                          className="flex items-start space-x-4"
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              step.completed
+                                ? "bg-green-500 text-white"
+                                : "bg-gray-200 text-gray-600"
                             }`}
                           >
-                            {step.step}
-                          </h5>
-                          <span className="text-sm text-gray-500">
-                            {step.date}
-                          </span>
+                            {step.completed ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : (
+                              <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h5
+                                className={`font-medium ${
+                                  step.completed
+                                    ? "text-gray-900"
+                                    : "text-gray-600"
+                                }`}
+                              >
+                                {step.step}
+                              </h5>
+                              <span className="text-sm text-gray-500">
+                                {step.date}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {step.description}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {step.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                      ),
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Special Information */}
-              {application.status === "Interview Scheduled" &&
-                application.interviewDetails && (
-                  <div className="bg-blue-50 border-t border-blue-200 p-6">
-                    <h4 className="text-lg font-medium text-blue-900 mb-3">
-                      Interview Details
+                {/* Reviewer Comments */}
+                {application.reviewerComments && (
+                  <div className="bg-gray-50 border-t border-gray-200 p-6">
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">
+                      Reviewer Comments
                     </h4>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                          <span>
-                            <strong>Date:</strong>{" "}
-                            {application.interviewDetails.date}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-blue-600" />
-                          <span>
-                            <strong>Time:</strong>{" "}
-                            {application.interviewDetails.time}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="h-4 w-4 text-blue-600" />
-                          <span>
-                            <strong>Venue:</strong>{" "}
-                            {application.interviewDetails.venue}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <User className="h-4 w-4 text-blue-600" />
-                          <span>
-                            <strong>Interviewer:</strong>{" "}
-                            {application.interviewDetails.interviewer}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 p-3 bg-blue-100 rounded-lg">
-                      <p className="text-sm text-blue-800">
-                        <strong>Instructions:</strong>{" "}
-                        {application.interviewDetails.instructions}
-                      </p>
-                    </div>
+                    <p className="text-sm text-gray-700">
+                      {application.reviewerComments}
+                    </p>
                   </div>
                 )}
 
-              {application.status === "Approved" &&
-                application.disbursementDetails && (
-                  <div className="bg-green-50 border-t border-green-200 p-6">
-                    <h4 className="text-lg font-medium text-green-900 mb-3">
-                      Disbursement Information
-                    </h4>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Amount:</strong>{" "}
-                          {application.disbursementDetails.amount}
-                        </div>
-                        <div>
-                          <strong>Bank Account:</strong>{" "}
-                          {application.disbursementDetails.accountNumber}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Bank Name:</strong>{" "}
-                          {application.disbursementDetails.bankName}
-                        </div>
-                        <div>
-                          <strong>Expected Date:</strong>{" "}
-                          {application.disbursementDetails.expectedDate}
-                        </div>
-                      </div>
+                {/* Action Buttons */}
+                <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <span>Application ID: #{application.id}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                        <Eye className="h-4 w-4" />
+                        <span>View Details</span>
+                      </button>
+                      <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                        <Download className="h-4 w-4" />
+                        <span>Download</span>
+                      </button>
+                      <Link
+                        to="/support"
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Contact Support</span>
+                      </Link>
                     </div>
                   </div>
-                )}
-
-              {/* Reviewer Comments */}
-              {application.reviewerComments && (
-                <div className="bg-gray-50 border-t border-gray-200 p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">
-                    Reviewer Comments
-                  </h4>
-                  <p className="text-sm text-gray-700">
-                    {application.reviewerComments}
-                  </p>
                 </div>
-              )}
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-              {/* Action Buttons */}
-              <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <span>Application ID: #{application.id}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
-                      <Eye className="h-4 w-4" />
-                      <span>View Details</span>
-                    </button>
-                    <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
-                      <Download className="h-4 w-4" />
-                      <span>Download</span>
-                    </button>
-                    <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>Contact Support</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {filteredApplications.length === 0 && (
+        {!loading && filteredApplications.length === 0 && (
           <div className="text-center py-12">
             <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">

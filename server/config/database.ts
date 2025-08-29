@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import { Pool as PgPool } from "pg";
 import { hashPassword } from "../utils/auth";
 
 // Determine whether to use mock DB (default false if full credentials are provided)
@@ -12,7 +13,20 @@ const DB_PASSWORD = process.env.DB_PASSWORD || "";
 const DB_NAME = (process.env.DB_NAME || "").trim();
 
 const hasCreds = DB_HOST && DB_USER && DB_PASSWORD && DB_NAME;
-const USE_MOCK = useMockExplicit || !hasCreds;
+const PG_URL = (
+  process.env.DATABASE_URL ||
+  process.env.SUPABASE_DB_URL ||
+  ""
+).trim();
+const USE_PG = !!PG_URL;
+const MODE: "postgres" | "mysql" | "mock" = useMockExplicit
+  ? "mock"
+  : USE_PG
+    ? "postgres"
+    : hasCreds
+      ? "mysql"
+      : "mock";
+const USE_MOCK = MODE === "mock";
 
 // In-memory fallback store
 class InMemoryStore {
@@ -171,32 +185,99 @@ class InMemoryStore {
       updatedAt: new Date(),
     },
   ];
+  public applications: any[] = [
+    {
+      id: 1,
+      scholarshipId: 1,
+      studentId: 1,
+      status: "submitted",
+      score: null,
+      amountAwarded: null,
+      assignedReviewerId: 3,
+      formData: {},
+      documents: [],
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
+    },
+    {
+      id: 2,
+      scholarshipId: 2,
+      studentId: 1,
+      status: "under_review",
+      score: 80,
+      amountAwarded: null,
+      assignedReviewerId: 3,
+      formData: {},
+      documents: [],
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
+    },
+    {
+      id: 3,
+      scholarshipId: 3,
+      studentId: 1,
+      status: "approved",
+      score: 92,
+      amountAwarded: "50000",
+      assignedReviewerId: 3,
+      formData: {},
+      documents: [],
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
+    },
+  ];
 }
 
 const memory = new InMemoryStore();
 
 // MySQL pool
-export const pool = !USE_MOCK
-  ? mysql.createPool({
-      host: DB_HOST,
-      port: DB_PORT,
-      user: DB_USER,
-      password: DB_PASSWORD,
-      database: DB_NAME,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 30000,
-      ...(String(process.env.DB_SSL || "").toLowerCase() === "true"
-        ? { ssl: { rejectUnauthorized: false } }
-        : {}),
-    } as any)
-  : (null as unknown as mysql.Pool);
+export const pool =
+  MODE === "mysql"
+    ? (mysql.createPool({
+        host: DB_HOST,
+        port: DB_PORT,
+        user: DB_USER,
+        password: DB_PASSWORD,
+        database: DB_NAME,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        connectTimeout: 30000,
+        ...(String(process.env.DB_SSL || "").toLowerCase() === "true"
+          ? { ssl: { rejectUnauthorized: false } }
+          : {}),
+      }) as any)
+    : (null as unknown as mysql.Pool);
+
+export const pgPool =
+  MODE === "postgres"
+    ? new PgPool(
+        (() => {
+          try {
+            const u = new URL(PG_URL);
+            return {
+              host: u.hostname,
+              port: u.port ? parseInt(u.port, 10) : 5432,
+              user: decodeURIComponent(u.username),
+              password: decodeURIComponent(u.password),
+              database: u.pathname.replace(/^\//, ""),
+              ssl: { require: true, rejectUnauthorized: false },
+            } as any;
+          } catch {
+            return {
+              connectionString: PG_URL,
+              ssl: { require: true, rejectUnauthorized: false },
+            } as any;
+          }
+        })(),
+      )
+    : (null as unknown as PgPool);
 
 // Provide a compatibility wrapper like previous `mysql.getConnection()` export
 export const mysqlCompat = {
   getConnection: async () => {
-    if (USE_MOCK || !pool) {
+    // Only provide a real connection in MySQL mode
+    if (MODE !== "mysql" || !pool) {
       return {
         execute: async (_q: string, _p?: any[]) => [[]],
         ping: async () => true,
@@ -210,7 +291,32 @@ export const mysqlCompat = {
 
 // Helper to ensure tables exist in MySQL
 async function ensureUsersTable() {
-  if (USE_MOCK || !pool) return;
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='user_type') THEN
+        CREATE TYPE user_type AS ENUM ('student','admin','reviewer','donor','surveyor');
+      END IF; END $$;
+    `);
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id BIGSERIAL PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        "firstName" TEXT NOT NULL,
+        "lastName" TEXT NOT NULL,
+        phone TEXT,
+        "userType" user_type NOT NULL,
+        "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
+        "emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
+        "profileData" JSONB,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -247,7 +353,31 @@ async function ensureUsersTable() {
 }
 
 async function ensureScholarshipsTable() {
-  if (USE_MOCK || !pool) return;
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS scholarships (
+        id BIGSERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        amount NUMERIC(10,2) NOT NULL,
+        currency TEXT DEFAULT 'INR',
+        "eligibilityCriteria" JSONB NOT NULL,
+        "requiredDocuments" JSONB NOT NULL,
+        "applicationDeadline" TIMESTAMPTZ NOT NULL,
+        "selectionDeadline" TIMESTAMPTZ NULL,
+        "maxApplications" INT NULL,
+        "currentApplications" INT DEFAULT 0,
+        status TEXT DEFAULT 'active',
+        "createdBy" BIGINT NULL,
+        tags JSONB NULL,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS scholarships (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -270,18 +400,66 @@ async function ensureScholarshipsTable() {
   `);
 }
 
+async function ensureApplicationsTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS applications (
+        id BIGSERIAL PRIMARY KEY,
+        scholarshipId BIGINT NOT NULL,
+        studentId BIGINT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'submitted',
+        score INT,
+        amountAwarded NUMERIC(10,2),
+        assignedReviewerId BIGINT,
+        formData JSONB,
+        documents JSONB,
+        submittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      scholarshipId INT NOT NULL,
+      studentId INT NOT NULL,
+      status ENUM('draft','submitted','under_review','approved','rejected') NOT NULL DEFAULT 'submitted',
+      score INT NULL,
+      amountAwarded DECIMAL(10,2) NULL,
+      assignedReviewerId INT NULL,
+      formData JSON NULL,
+      documents JSON NULL,
+      submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_app_scholarship (scholarshipId),
+      INDEX idx_app_student (studentId),
+      INDEX idx_app_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
     const normalized = String(email || "")
       .trim()
       .toLowerCase();
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return (
         memory.users.find(
           (u) => String(u.email || "").toLowerCase() === normalized,
         ) || null
       );
+    }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        "SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+        [normalized],
+      );
+      return (result.rows as any[])[0] || null;
     }
     const [rows] = await pool.execute(
       "SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
@@ -291,8 +469,15 @@ class DatabaseAdapter {
   }
 
   async findUserById(id: number) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.users.find((u) => u.id === id) || null;
+    }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        "SELECT * FROM users WHERE id = $1 LIMIT 1",
+        [id],
+      );
+      return (result.rows as any[])[0] || null;
     }
     const [rows] = await pool.execute(
       "SELECT * FROM users WHERE id = ? LIMIT 1",
@@ -302,7 +487,7 @@ class DatabaseAdapter {
   }
 
   async createUser(userData: any) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const newUser = {
         ...userData,
         id: memory.users.length + 1,
@@ -311,6 +496,23 @@ class DatabaseAdapter {
       };
       memory.users.push(newUser);
       return newUser;
+    }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO users (email, password, "firstName", "lastName", phone, "userType", "isActive", "emailVerified", "profileData") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
+        [
+          userData.email,
+          userData.password,
+          userData.firstName,
+          userData.lastName,
+          userData.phone ?? null,
+          userData.userType,
+          userData.isActive ? true : false,
+          userData.emailVerified ? true : false,
+          userData.profileData ? JSON.stringify(userData.profileData) : null,
+        ],
+      );
+      return (result.rows as any[])[0];
     }
     const fields = [
       "email",
@@ -345,7 +547,7 @@ class DatabaseAdapter {
   }
 
   async updateUser(id: number, userData: any) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.users.findIndex((u) => u.id === id);
       if (idx === -1) return null;
       memory.users[idx] = {
@@ -354,6 +556,39 @@ class DatabaseAdapter {
         updatedAt: new Date(),
       };
       return memory.users[idx];
+    }
+    if (MODE === "postgres" && pgPool) {
+      const map: Record<string, string> = {
+        email: "email",
+        password: "password",
+        firstName: '"firstName"',
+        lastName: '"lastName"',
+        phone: "phone",
+        userType: '"userType"',
+        isActive: '"isActive"',
+        emailVerified: '"emailVerified"',
+        profileData: '"profileData"',
+      };
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let i = 1;
+      for (const [k, v] of Object.entries(userData)) {
+        if (map[k]) {
+          sets.push(`${map[k]} = $${i++}`);
+          vals.push(k === "profileData" && v != null ? JSON.stringify(v) : v);
+        }
+      }
+      if (!sets.length) {
+        const result = await pgPool.query(
+          "SELECT * FROM users WHERE id = $1 LIMIT 1",
+          [id],
+        );
+        return (result.rows as any[])[0] || null;
+      }
+      const sql = `UPDATE users SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      vals.push(id);
+      const result = await pgPool.query(sql, vals);
+      return (result.rows as any[])[0] || null;
     }
     const columns: string[] = [];
     const values: any[] = [];
@@ -396,12 +631,18 @@ class DatabaseAdapter {
 
   // Scholarships CRUD
   async getAllScholarships() {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.scholarships.sort(
         (a: any, b: any) => (b.createdAt as any) - (a.createdAt as any),
       );
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'SELECT * FROM scholarships ORDER BY "createdAt" DESC',
+      );
+      return result.rows as any[];
+    }
     const [rows] = await pool.execute(
       "SELECT * FROM scholarships ORDER BY createdAt DESC",
     );
@@ -409,10 +650,17 @@ class DatabaseAdapter {
   }
 
   async getScholarshipById(id: number) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return memory.scholarships.find((s: any) => s.id === id) || null;
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        "SELECT * FROM scholarships WHERE id = $1 LIMIT 1",
+        [id],
+      );
+      return (result.rows as any[])[0] || null;
+    }
     const [rows] = await pool.execute(
       "SELECT * FROM scholarships WHERE id = ? LIMIT 1",
       [id],
@@ -422,7 +670,7 @@ class DatabaseAdapter {
 
   async createScholarship(input: any, createdBy?: number) {
     const now = new Date();
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const nextId = memory.scholarships.length
         ? Math.max(...memory.scholarships.map((s: any) => s.id)) + 1
         : 1;
@@ -439,6 +687,27 @@ class DatabaseAdapter {
       return rec;
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO scholarships (title, description, amount, currency, "eligibilityCriteria", "requiredDocuments", "applicationDeadline", "selectionDeadline", "maxApplications", "currentApplications", status, "createdBy", tags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *',
+        [
+          input.title,
+          input.description,
+          input.amount,
+          input.currency || "INR",
+          JSON.stringify(input.eligibilityCriteria),
+          JSON.stringify(input.requiredDocuments),
+          input.applicationDeadline,
+          input.selectionDeadline ?? null,
+          input.maxApplications ?? null,
+          0,
+          input.status || "active",
+          createdBy ?? null,
+          input.tags ? JSON.stringify(input.tags) : null,
+        ],
+      );
+      return (result.rows as any[])[0];
+    }
     const fields = [
       "title",
       "description",
@@ -482,7 +751,7 @@ class DatabaseAdapter {
   }
 
   async updateScholarship(id: number, data: any) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.scholarships.findIndex((s: any) => s.id === id);
       if (idx === -1) return null;
       memory.scholarships[idx] = {
@@ -493,6 +762,43 @@ class DatabaseAdapter {
       return memory.scholarships[idx];
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      const map: Record<string, string> = {
+        title: "title",
+        description: "description",
+        amount: "amount",
+        currency: "currency",
+        eligibilityCriteria: '"eligibilityCriteria"',
+        requiredDocuments: '"requiredDocuments"',
+        applicationDeadline: '"applicationDeadline"',
+        selectionDeadline: '"selectionDeadline"',
+        maxApplications: '"maxApplications"',
+        currentApplications: '"currentApplications"',
+        status: "status",
+        tags: "tags",
+      };
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let i = 1;
+      for (const [k, v] of Object.entries(data)) {
+        if (map[k]) {
+          sets.push(`${map[k]} = $${i++}`);
+          vals.push(
+            (k === "eligibilityCriteria" ||
+              k === "requiredDocuments" ||
+              k === "tags") &&
+              v != null
+              ? JSON.stringify(v)
+              : v,
+          );
+        }
+      }
+      if (!sets.length) return this.getScholarshipById(id);
+      const sql = `UPDATE scholarships SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      vals.push(id);
+      const result = await pgPool.query(sql, vals);
+      return (result.rows as any[])[0];
+    }
     const cols: string[] = [];
     const vals: any[] = [];
     for (const [k, v] of Object.entries(data)) {
@@ -537,15 +843,308 @@ class DatabaseAdapter {
   }
 
   async deleteScholarship(id: number) {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.scholarships.findIndex((s: any) => s.id === id);
       if (idx === -1) return false;
       memory.scholarships.splice(idx, 1);
       return true;
     }
     await ensureScholarshipsTable();
+    if (MODE === "postgres" && pgPool) {
+      await pgPool.query("DELETE FROM scholarships WHERE id = $1", [id]);
+      return true;
+    }
     await pool.execute("DELETE FROM scholarships WHERE id = ?", [id]);
     return true;
+  }
+
+  // Applications
+  async getApplications(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    studentId?: number;
+    scholarshipId?: number;
+  }) {
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const offset = (page - 1) * limit;
+
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let list = [...memory.applications].sort(
+        (a, b) => (b.submittedAt as any) - (a.submittedAt as any),
+      );
+      if (params.status && params.status !== "all")
+        list = list.filter(
+          (a) =>
+            String(a.status).toLowerCase() ===
+            String(params.status).toLowerCase(),
+        );
+      if (params.studentId)
+        list = list.filter((a) => a.studentId === params.studentId);
+      if (params.scholarshipId)
+        list = list.filter((a) => a.scholarshipId === params.scholarshipId);
+      const pageData = list.slice(offset, offset + limit);
+      return {
+        data: pageData,
+        pagination: {
+          page,
+          limit,
+          total: list.length,
+          totalPages: Math.ceil(list.length / limit),
+        },
+      };
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const where: string[] = [];
+      const vals: any[] = [];
+      if (params.status && params.status !== "all") {
+        where.push("status = $" + (vals.length + 1));
+        vals.push(params.status);
+      }
+      if (params.studentId) {
+        where.push('"studentId" = $' + (vals.length + 1));
+        vals.push(params.studentId);
+      }
+      if (params.scholarshipId) {
+        where.push('"scholarshipId" = $' + (vals.length + 1));
+        vals.push(params.scholarshipId);
+      }
+      const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+      const dataRes = await pgPool.query(
+        `SELECT * FROM applications ${whereSql} ORDER BY "submittedAt" DESC OFFSET $${vals.length + 1} LIMIT $${vals.length + 2}`,
+        [...vals, offset, limit],
+      );
+      const countRes = await pgPool.query(
+        `SELECT COUNT(*)::int as cnt FROM applications ${whereSql}`,
+        vals,
+      );
+      const total = (countRes.rows as any[])[0]?.cnt || 0;
+      return {
+        data: dataRes.rows as any[],
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+    const where: string[] = [];
+    const vals: any[] = [];
+    if (params.status && params.status !== "all") {
+      where.push("status = ?");
+      vals.push(params.status);
+    }
+    if (params.studentId) {
+      where.push("studentId = ?");
+      vals.push(params.studentId);
+    }
+    if (params.scholarshipId) {
+      where.push("scholarshipId = ?");
+      vals.push(params.scholarshipId);
+    }
+    const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+    const [rows] = await pool.execute(
+      `SELECT * FROM applications ${whereSql} ORDER BY submittedAt DESC LIMIT ? OFFSET ?`,
+      [...vals, limit, offset],
+    );
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as cnt FROM applications ${whereSql}`,
+      vals,
+    );
+    const total = (countRows as any[])[0]?.cnt || 0;
+    return {
+      data: rows as any[],
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async getRecentApplications(limit = 5) {
+    const res = await this.getApplications({ page: 1, limit });
+    return res.data;
+  }
+
+  async getApplicationStats() {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const total = memory.applications.length;
+      const by = (st: string) =>
+        memory.applications.filter((a) => a.status === st).length;
+      return {
+        total,
+        submitted: by("submitted"),
+        under_review: by("under_review"),
+        approved: by("approved"),
+        rejected: by("rejected"),
+        waitlisted: by("waitlisted"),
+      };
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const totalRes = await pgPool.query(
+        "SELECT COUNT(*)::int as cnt FROM applications",
+      );
+      const groupRes = await pgPool.query(
+        "SELECT status, COUNT(*)::int as cnt FROM applications GROUP BY status",
+      );
+      const total = (totalRes.rows as any[])[0]?.cnt || 0;
+      const map: any = {
+        total,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+      for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
+      return map;
+    }
+    const [totalRows] = await pool.execute(
+      "SELECT COUNT(*) as cnt FROM applications",
+    );
+    const [groupRows] = await pool.execute(
+      "SELECT status, COUNT(*) as cnt FROM applications GROUP BY status",
+    );
+    const total = (totalRows as any[])[0]?.cnt || 0;
+    const map: any = {
+      total,
+      submitted: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      waitlisted: 0,
+    };
+    for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
+    return map;
+  }
+
+  async getApplicationStatsForStudent(studentId: number) {
+    if (!studentId)
+      return {
+        total: 0,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const arr = memory.applications.filter((a) => a.studentId === studentId);
+      const total = arr.length;
+      const by = (st: string) => arr.filter((a) => a.status === st).length;
+      return {
+        total,
+        submitted: by("submitted"),
+        under_review: by("under_review"),
+        approved: by("approved"),
+        rejected: by("rejected"),
+        waitlisted: by("waitlisted"),
+      };
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const totalRes = await pgPool.query(
+        'SELECT COUNT(*)::int as cnt FROM applications WHERE "studentId" = $1',
+        [studentId],
+      );
+      const groupRes = await pgPool.query(
+        'SELECT status, COUNT(*)::int as cnt FROM applications WHERE "studentId" = $1 GROUP BY status',
+        [studentId],
+      );
+      const total = (totalRes.rows as any[])[0]?.cnt || 0;
+      const map: any = {
+        total,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+      for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
+      return map;
+    }
+    const [totalRows] = await pool.execute(
+      "SELECT COUNT(*) as cnt FROM applications WHERE studentId = ?",
+      [studentId],
+    );
+    const [groupRows] = await pool.execute(
+      "SELECT status, COUNT(*) as cnt FROM applications WHERE studentId = ? GROUP BY status",
+      [studentId],
+    );
+    const total = (totalRows as any[])[0]?.cnt || 0;
+    const map: any = {
+      total,
+      submitted: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      waitlisted: 0,
+    };
+    for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
+    return map;
+  }
+
+  async createApplication(
+    input: { scholarshipId: number; applicationData?: any; documents?: any },
+    studentId?: number,
+  ) {
+    const now = new Date();
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const nextId = memory.applications.length
+        ? Math.max(...memory.applications.map((a) => a.id)) + 1
+        : 1;
+      const rec: any = {
+        id: nextId,
+        scholarshipId: input.scholarshipId,
+        studentId: studentId || 0,
+        status: "submitted",
+        score: null,
+        amountAwarded: null,
+        assignedReviewerId: null,
+        formData: input.applicationData || {},
+        documents: input.documents || [],
+        submittedAt: now,
+        updatedAt: now,
+      };
+      memory.applications.unshift(rec);
+      return rec;
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO applications ("scholarshipId", "studentId", status, score, "amountAwarded", "assignedReviewerId", "formData", documents, "submittedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING *',
+        [
+          input.scholarshipId,
+          studentId || null,
+          "submitted",
+          null,
+          null,
+          null,
+          input.applicationData ? JSON.stringify(input.applicationData) : null,
+          input.documents ? JSON.stringify(input.documents) : null,
+        ],
+      );
+      return (result.rows as any[])[0];
+    }
+    const [result]: any = await pool.execute(
+      "INSERT INTO applications (scholarshipId, studentId, status, score, amountAwarded, assignedReviewerId, formData, documents, submittedAt) VALUES (?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)",
+      [
+        input.scholarshipId,
+        studentId || null,
+        "submitted",
+        null,
+        null,
+        null,
+        input.applicationData ? JSON.stringify(input.applicationData) : null,
+        input.documents ? JSON.stringify(input.documents) : null,
+      ],
+    );
+    const [rows] = await pool.execute(
+      "SELECT * FROM applications WHERE id = ? LIMIT 1",
+      [result.insertId],
+    );
+    return (rows as any[])[0];
   }
 }
 
@@ -554,17 +1153,31 @@ export const mockDatabase = new DatabaseAdapter();
 // Public API for server/index.ts and routes/test.ts
 export async function testConnection() {
   try {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       return {
         success: true,
         data: [
           {
-            version: "Mock MySQL 8.0.0",
+            version: "Mock DB",
             current_time: new Date().toISOString(),
-            database_name: DB_NAME || "in-memory",
+            database_name: PG_URL || DB_NAME || "in-memory",
           },
         ],
         message: "Mock database connection successful",
+      };
+    }
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query("SELECT version() as version");
+      return {
+        success: true,
+        data: [
+          {
+            version: (result.rows as any[])[0].version,
+            current_time: new Date().toISOString(),
+            database_name: PG_URL,
+          },
+        ],
+        message: "Database connection successful",
       };
     }
     const conn = await pool.getConnection();
@@ -592,11 +1205,19 @@ export async function testConnection() {
 
 export async function initializeDatabase() {
   try {
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK) {
       return { success: true };
     }
+    if (MODE === "postgres" && pgPool) {
+      await ensureUsersTable();
+      await ensureScholarshipsTable();
+      await ensureApplicationsTable();
+      return { success: true };
+    }
+    if (!pool) return { success: true };
     await ensureUsersTable();
     await ensureScholarshipsTable();
+    await ensureApplicationsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);
@@ -670,7 +1291,7 @@ export async function createDefaultUsers() {
       },
     ];
 
-    if (USE_MOCK || !pool) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       for (const u of defaults) {
         const existing = memory.users.find((x) => x.email === u.email);
         const hashed = await hashPassword(u.password);

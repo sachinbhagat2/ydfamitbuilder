@@ -163,6 +163,82 @@ class ApiService {
     return this.handleResponse(res);
   }
 
+  // Applications endpoints (admin)
+  async listApplications(params?: Record<string, any>) {
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/applications${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async getApplicationStats() {
+    const res = await fetch(`${API_BASE_URL}/applications/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async getRecentApplications(limit = 5) {
+    const res = await fetch(
+      `${API_BASE_URL}/applications/recent?limit=${limit}`,
+      { headers: this.getAuthHeaders() },
+    );
+    return this.handleResponse(res);
+  }
+  async exportApplicationsCSV(params?: Record<string, any>) {
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/applications/export${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error("Export failed");
+    const blob = await res.blob();
+    return blob;
+  }
+
+  // Student applications
+  async listMyApplications(params?: Record<string, any>) {
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/applications/my${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async getMyApplicationStats() {
+    const res = await fetch(`${API_BASE_URL}/applications/my/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async createApplication(payload: {
+    scholarshipId: number;
+    applicationData?: any;
+    documents?: any;
+  }) {
+    const res = await fetch(`${API_BASE_URL}/applications`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+
+  async changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }) {
+    const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+
   async verifyToken(): Promise<ApiResponse<User>> {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: "GET",
@@ -183,6 +259,42 @@ class ApiService {
     }
 
     return result;
+  }
+
+  // Profile documents
+  async listMyDocuments() {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async uploadMyDocument(payload: {
+    name: string;
+    size?: number;
+    type?: string;
+    content: string;
+  }) {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+  async deleteMyDocument(id: number) {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async downloadMyDocument(id: number) {
+    const res = await fetch(
+      `${API_BASE_URL}/auth/profile/documents/${id}/download`,
+      { headers: this.getAuthHeaders() },
+    );
+    if (!res.ok) throw new Error("Download failed");
+    return await res.blob();
   }
 
   // Surveys (surveyor staff module)

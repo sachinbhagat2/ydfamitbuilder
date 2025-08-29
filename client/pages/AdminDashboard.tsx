@@ -23,6 +23,7 @@ import {
   TrendingUp,
   DollarSign,
   Calendar,
+  Trash,
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -32,6 +33,12 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("schemes");
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [appStats, setAppStats] = useState<any>(null);
+  const [recentApps, setRecentApps] = useState<any[]>([]);
+  const [appStatusFilter, setAppStatusFilter] = useState<string>('all');
+  const [applications, setApplications] = useState<any[]>([]);
+  const [appPage, setAppPage] = useState(1);
+  const [appTotal, setAppTotal] = useState(0);
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
@@ -122,6 +129,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchSchemes();
+    fetchOverviewData();
   }, []);
 
   const fetchSchemes = async () => {
@@ -129,6 +137,32 @@ const AdminDashboard = () => {
       const api = (await import("../services/api")).default;
       const res = await api.listScholarships({ status: "all", limit: 100 });
       if (res.success) setSchemes(res.data);
+    } catch (e) {}
+  };
+
+  const fetchOverviewData = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const [statsRes, recentRes] = await Promise.all([
+        api.getApplicationStats(),
+        api.getRecentApplications(5),
+      ]);
+      if (statsRes.success) setAppStats(statsRes.data);
+      if (recentRes.success) setRecentApps(recentRes.data || []);
+    } catch (e) {}
+  };
+
+  const fetchApplications = async (page = 1, status = appStatusFilter) => {
+    try {
+      const api = (await import("../services/api")).default;
+      const params: any = { page, limit: 10 };
+      if (status && status !== 'all') params.status = status;
+      const res = await api.listApplications(params);
+      if (res.success) {
+        setApplications(res.data);
+        setAppPage(page);
+        setAppTotal(res.pagination?.total || 0);
+      }
     } catch (e) {}
   };
 
@@ -197,6 +231,7 @@ const AdminDashboard = () => {
       maxApplications: form.maxApplications
         ? Number(form.maxApplications)
         : undefined,
+      status: form.status || "active",
     };
     if (editing) await api.updateScholarship(editing.id, payload);
     else await api.createScholarship(payload);
@@ -204,48 +239,59 @@ const AdminDashboard = () => {
     await fetchSchemes();
   };
 
-  const recentApplications = [
-    {
-      id: 1,
-      applicant: "Priya Sharma",
-      scheme: "Merit Excellence",
-      status: "Under Review",
-      submittedDate: "2024-01-15",
-      score: 85,
-    },
-    {
-      id: 2,
-      applicant: "Rahul Kumar",
-      scheme: "Rural Development",
-      status: "Approved",
-      submittedDate: "2024-01-14",
-      score: 92,
-    },
-    {
-      id: 3,
-      applicant: "Anjali Patel",
-      scheme: "Women Empowerment",
-      status: "Pending Documents",
-      submittedDate: "2024-01-13",
-      score: 78,
-    },
-    {
-      id: 4,
-      applicant: "Arjun Singh",
-      scheme: "Merit Excellence",
-      status: "Interview Scheduled",
-      submittedDate: "2024-01-12",
-      score: 88,
-    },
-  ];
+  const deleteScheme = async (id: number) => {
+    if (!window.confirm("Delete this scheme? This action cannot be undone.")) return;
+    const api = (await import("../services/api")).default;
+    await api.deleteScholarship(id);
+    await fetchSchemes();
+  };
+
+  const copyScheme = async (s: any) => {
+    const api = (await import("../services/api")).default;
+    const payload = {
+      title: `Copy of ${s.title || s.name}`,
+      description: s.description || "",
+      amount: String(s.amount || "0"),
+      currency: s.currency || "INR",
+      eligibilityCriteria: Array.isArray(s.eligibilityCriteria)
+        ? s.eligibilityCriteria
+        : [],
+      requiredDocuments: Array.isArray(s.requiredDocuments)
+        ? s.requiredDocuments
+        : [],
+      applicationDeadline: s.applicationDeadline
+        ? new Date(s.applicationDeadline).toISOString()
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      selectionDeadline: s.selectionDeadline
+        ? new Date(s.selectionDeadline).toISOString()
+        : undefined,
+      maxApplications: s.maxApplications ?? null,
+      tags: Array.isArray(s.tags) ? s.tags : undefined,
+      status: s.status || "active",
+    };
+    await api.createScholarship(payload);
+    await fetchSchemes();
+  };
+
+  const recentApplications = recentApps.length ? recentApps.map((a:any) => ({
+    id: a.id,
+    applicant: `Student #${a.studentId}`,
+    scheme: `Scheme #${a.scholarshipId}`,
+    status: a.status,
+    submittedDate: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : '',
+    score: a.score ?? '-',
+  })) : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
+      case "active":
         return "bg-green-100 text-green-800";
       case "Draft":
+      case "inactive":
         return "bg-gray-100 text-gray-800";
       case "Closed":
+      case "closed":
         return "bg-red-100 text-red-800";
       case "Under Review":
         return "bg-yellow-100 text-yellow-800";
@@ -264,13 +310,47 @@ const AdminDashboard = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {[
+          {
+            title: "Total Applications",
+            value: appStats?.total ?? 0,
+            change: "",
+            icon: FileText,
+            color: "bg-blue-500",
+            filter: 'all',
+          },
+          {
+            title: "Approved",
+            value: appStats?.approved ?? 0,
+            change: "",
+            icon: CheckCircle,
+            color: "bg-green-500",
+            filter: 'approved',
+          },
+          {
+            title: "In Progress",
+            value: (appStats?.under_review ?? 0),
+            change: "",
+            icon: Clock,
+            color: "bg-yellow-500",
+            filter: 'under_review',
+          },
+          {
+            title: "Rejected",
+            value: appStats?.rejected ?? 0,
+            change: "",
+            icon: XCircle,
+            color: "bg-red-500",
+            filter: 'rejected',
+          },
+        ].map((stat, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray"
+            className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray cursor-pointer"
+            onClick={() => { setTab('applications'); setAppStatusFilter(stat.filter as any); fetchApplications(1, stat.filter as any); }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -304,6 +384,28 @@ const AdminDashboard = () => {
           ].map((action, index) => (
             <button
               key={action.label}
+              onClick={async () => {
+                if (action.label === "Create Scheme") {
+                  setTab("schemes");
+                  openCreate();
+                } else if (action.label === "Review Apps") {
+                  setTab('applications');
+                  await fetchApplications(1, 'all');
+                } else if (action.label === "Export Data") {
+                  const api = (await import("../services/api")).default;
+                  const blob = await api.exportApplicationsCSV(appStatusFilter !== 'all' ? { status: appStatusFilter } : undefined);
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'applications.csv';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } else if (action.label === "Settings") {
+                  setTab('settings');
+                }
+              }}
               className={`${action.color} text-white p-4 rounded-lg flex flex-col items-center space-y-2 hover:opacity-90 transition-opacity`}
             >
               <action.icon className="h-6 w-6" />
@@ -454,7 +556,7 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {scheme.applications}
+                      {scheme.currentApplications ?? scheme.applications ?? 0}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {scheme.amount
@@ -477,8 +579,11 @@ const AdminDashboard = () => {
                         >
                           <Edit className="h-4 w-4 text-gray-600" />
                         </button>
-                        <button className="p-1 hover:bg-gray-200 rounded">
+                        <button onClick={() => copyScheme(scheme)} className="p-1 hover:bg-gray-200 rounded">
                           <Copy className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button onClick={() => deleteScheme(scheme.id)} className="p-1 hover:bg-red-100 rounded">
+                          <Trash className="h-4 w-4 text-red-600" />
                         </button>
                         <button className="p-1 hover:bg-gray-200 rounded">
                           <MoreVertical className="h-4 w-4 text-gray-600" />
@@ -631,7 +736,57 @@ const AdminDashboard = () => {
           <div className="flex-1 p-6">
             {activeTab === "overview" && renderOverview()}
             {activeTab === "schemes" && renderSchemes()}
-            {activeTab === "applications" && renderOverview()}
+            {activeTab === "applications" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Applications</h2>
+                  <div className="flex items-center gap-2">
+                    <select className="border rounded px-2 py-1" value={appStatusFilter} onChange={(e)=>{ setAppStatusFilter(e.target.value); fetchApplications(1, e.target.value); }}>
+                      <option value="all">All</option>
+                      <option value="submitted">submitted</option>
+                      <option value="under_review">under_review</option>
+                      <option value="approved">approved</option>
+                      <option value="rejected">rejected</option>
+                      <option value="waitlisted">waitlisted</option>
+                    </select>
+                    <button onClick={()=>fetchApplications(1, appStatusFilter)} className="px-3 py-2 bg-ydf-deep-blue text-white rounded">Refresh</button>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-ydf-light-gray">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholarship</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ydf-light-gray">
+                        {applications.map((a)=> (
+                          <tr key={a.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm text-gray-900">{a.id}</td>
+                            <td className="px-6 py-3 text-sm text-gray-900">#{a.scholarshipId}</td>
+                            <td className="px-6 py-3 text-sm text-gray-900">#{a.studentId}</td>
+                            <td className="px-6 py-3"><span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}>{a.status}</span></td>
+                            <td className="px-6 py-3 text-sm text-gray-900">{a.submittedAt ? new Date(a.submittedAt).toLocaleString() : ''}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Page {appPage} • Total {appTotal}</span>
+                  <div className="flex gap-2">
+                    <button disabled={appPage<=1} onClick={()=>fetchApplications(appPage-1)} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
+                    <button disabled={applications.length<10} onClick={()=>fetchApplications(appPage+1)} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                  </div>
+                </div>
+              </div>
+            )}
             {activeTab === "analytics" && renderAnalytics()}
           </div>
         </div>
@@ -639,7 +794,7 @@ const AdminDashboard = () => {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-semibold">
               {editing ? "Edit Scholarship" : "Create Scholarship"}
             </h3>
@@ -708,6 +863,18 @@ const AdminDashboard = () => {
                     setForm({ ...form, selectionDeadline: e.target.value })
                   }
                 />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Status</label>
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                >
+                  <option value="active">active</option>
+                  <option value="inactive">inactive</option>
+                  <option value="closed">closed</option>
+                </select>
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">

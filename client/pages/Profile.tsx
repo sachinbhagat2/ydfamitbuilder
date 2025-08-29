@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import api from "../services/api";
+import { toast } from "../hooks/use-toast";
 import {
   ArrowLeft,
   User,
@@ -29,27 +31,33 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("personal");
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [pwd, setPwd] = useState({
+    current: "",
+    next: "",
+    confirm: "",
+    loading: false,
+  });
   const [profileData, setProfileData] = useState({
-    firstName: "Arjun",
-    lastName: "Singh",
-    email: "arjun.singh@email.com",
-    phone: "+91 9876543210",
-    dateOfBirth: "2002-03-15",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
     gender: "Male",
-    address: "123 MG Road, Bangalore",
-    city: "Bangalore",
-    state: "Karnataka",
-    pincode: "560001",
-    course: "B.Tech Computer Science",
-    college: "IIIT Bangalore",
-    year: "3rd Year",
-    rollNumber: "CS20B1234",
-    cgpa: "8.75",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    course: "",
+    college: "",
+    year: "",
+    rollNumber: "",
+    cgpa: "",
     category: "General",
-    familyIncome: "₹5,00,000",
+    familyIncome: "",
   });
 
-  const [documents, setDocuments] = useState([
+  const [documents, setDocuments] = useState<any[]>([
     {
       id: 1,
       name: "Aadhaar Card",
@@ -94,9 +102,119 @@ const Profile = () => {
     }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Save logic here
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.getProfile();
+        if (res.success && res.data) {
+          const u: any = res.data;
+          const pd = u.profileData || {};
+          setProfileData({
+            firstName: u.firstName || "",
+            lastName: u.lastName || "",
+            email: u.email || "",
+            phone: u.phone || "",
+            dateOfBirth: pd.dateOfBirth || "",
+            gender: pd.gender || "Male",
+            address: pd.address || "",
+            city: pd.city || "",
+            state: pd.state || "",
+            pincode: pd.pincode || "",
+            course: pd.course || "",
+            college: pd.college || "",
+            year: pd.year || "",
+            rollNumber: pd.rollNumber || "",
+            cgpa: pd.cgpa || "",
+            category: pd.category || "General",
+            familyIncome: pd.familyIncome || "",
+          });
+        }
+      } catch (e: any) {
+        toast({
+          title: "Failed to load profile",
+          description: String(e?.message || e),
+        });
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    // Validation
+    if (!profileData.firstName.trim() || !profileData.lastName.trim()) {
+      toast({
+        title: "Name is required",
+        description: "Please enter first and last name",
+      });
+      return;
+    }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email);
+    if (!emailOk) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+      });
+      return;
+    }
+    const phoneOk = /^\+?\d[\d\s-]{7,}$/.test(profileData.phone);
+    if (!phoneOk) {
+      toast({
+        title: "Invalid phone",
+        description: "Please enter a valid phone number",
+      });
+      return;
+    }
+    if (profileData.pincode && !/^\d{5,6}$/.test(profileData.pincode)) {
+      toast({
+        title: "Invalid pincode",
+        description: "Pincode must be 5-6 digits",
+      });
+      return;
+    }
+    if (
+      profileData.cgpa &&
+      (isNaN(Number(profileData.cgpa)) ||
+        Number(profileData.cgpa) < 0 ||
+        Number(profileData.cgpa) > 10)
+    ) {
+      toast({
+        title: "Invalid CGPA",
+        description: "CGPA must be between 0 and 10",
+      });
+      return;
+    }
+
+    try {
+      const payload: any = {
+        firstName: profileData.firstName.trim(),
+        lastName: profileData.lastName.trim(),
+        phone: profileData.phone,
+        profileData: {
+          dateOfBirth: profileData.dateOfBirth,
+          gender: profileData.gender,
+          address: profileData.address,
+          city: profileData.city,
+          state: profileData.state,
+          pincode: profileData.pincode,
+          course: profileData.course,
+          college: profileData.college,
+          year: profileData.year,
+          rollNumber: profileData.rollNumber,
+          cgpa: profileData.cgpa,
+          category: profileData.category,
+          familyIncome: profileData.familyIncome,
+        },
+      };
+      const res = await api.updateProfile(payload);
+      if (res.success) {
+        toast({
+          title: "Profile updated",
+          description: "Your changes have been saved",
+        });
+        setIsEditing(false);
+      }
+    } catch (e: any) {
+      toast({ title: "Update failed", description: String(e?.message || e) });
+    }
   };
 
   const getDocumentStatusColor = (status: string) => {
@@ -197,7 +315,7 @@ const Profile = () => {
               type="email"
               value={profileData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              disabled={!isEditing}
+              disabled={true}
               className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
             />
           </div>
@@ -307,9 +425,27 @@ const Profile = () => {
   const renderEducationInfo = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-lg p-6 shadow-sm border border-ydf-light-gray">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          Educational Information
-        </h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Educational Information
+          </h3>
+          <button
+            onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+            className="flex items-center space-x-2 px-4 py-2 bg-ydf-deep-blue text-white rounded-lg hover:bg-opacity-90 transition-colors"
+          >
+            {isEditing ? (
+              <>
+                <Save className="h-4 w-4" />
+                <span>Save</span>
+              </>
+            ) : (
+              <>
+                <Edit className="h-4 w-4" />
+                <span>Edit</span>
+              </>
+            )}
+          </button>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -427,14 +563,53 @@ const Profile = () => {
           <h3 className="text-lg font-semibold text-gray-900">
             Uploaded Documents
           </h3>
-          <button className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors">
-            <Upload className="h-4 w-4" />
-            <span>Upload New</span>
-          </button>
+          <div>
+            <input
+              id="doc-file"
+              type="file"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    const base64 = String(reader.result || "");
+                    const res = await api.uploadMyDocument({
+                      name: file.name,
+                      size: file.size,
+                      type: file.type,
+                      content: base64,
+                    });
+                    if (res.success) {
+                      const list = await api.listMyDocuments();
+                      if (list.success) setDocuments(list.data || []);
+                      toast({ title: "Uploaded", description: file.name });
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                } catch (err: any) {
+                  toast({
+                    title: "Upload failed",
+                    description: String(err?.message || err),
+                  });
+                } finally {
+                  (e.target as HTMLInputElement).value = "";
+                }
+              }}
+            />
+            <label
+              htmlFor="doc-file"
+              className="cursor-pointer bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload New</span>
+            </label>
+          </div>
         </div>
 
         <div className="space-y-4">
-          {documents.map((doc) => (
+          {documents.map((doc: any) => (
             <div
               key={doc.id}
               className="flex items-center justify-between p-4 border border-ydf-light-gray rounded-lg hover:bg-gray-50 transition-colors"
@@ -447,7 +622,12 @@ const Profile = () => {
                   <h4 className="font-medium text-gray-900">{doc.name}</h4>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
                     <span>Uploaded: {doc.uploadDate}</span>
-                    <span>Size: {doc.size}</span>
+                    <span>
+                      Size:{" "}
+                      {doc.size
+                        ? `${Math.round((Number(doc.size) || 0) / 1024)} KB`
+                        : "-"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -458,19 +638,77 @@ const Profile = () => {
                   {doc.status}
                 </span>
                 <div className="flex items-center space-x-1">
-                  <button className="p-1 hover:bg-gray-200 rounded">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const blob = await api.downloadMyDocument(
+                          Number(doc.id),
+                        );
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, "_blank");
+                      } catch (e: any) {
+                        toast({
+                          title: "Open failed",
+                          description: String(e?.message || e),
+                        });
+                      }
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
                     <Eye className="h-4 w-4 text-gray-600" />
                   </button>
-                  <button className="p-1 hover:bg-gray-200 rounded">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const blob = await api.downloadMyDocument(
+                          Number(doc.id),
+                        );
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = doc.name || "document";
+                        a.click();
+                      } catch (e: any) {
+                        toast({
+                          title: "Download failed",
+                          description: String(e?.message || e),
+                        });
+                      }
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
                     <Download className="h-4 w-4 text-gray-600" />
                   </button>
-                  <button className="p-1 hover:bg-gray-200 rounded">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await api.deleteMyDocument(Number(doc.id));
+                        if (res.success) {
+                          setDocuments((prev) =>
+                            prev.filter(
+                              (d: any) => Number(d.id) !== Number(doc.id),
+                            ),
+                          );
+                        }
+                      } catch (e: any) {
+                        toast({
+                          title: "Delete failed",
+                          description: String(e?.message || e),
+                        });
+                      }
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
                     <Trash2 className="h-4 w-4 text-red-600" />
                   </button>
                 </div>
               </div>
             </div>
           ))}
+          {(!documents || documents.length === 0) && (
+            <div className="text-sm text-gray-600">
+              No documents uploaded yet.
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -525,6 +763,10 @@ const Profile = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter current password"
+                value={pwd.current}
+                onChange={(e) =>
+                  setPwd((p) => ({ ...p, current: e.target.value }))
+                }
                 className="w-full px-3 py-2 pr-10 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
               />
               <button
@@ -546,6 +788,8 @@ const Profile = () => {
             <input
               type="password"
               placeholder="Enter new password"
+              value={pwd.next}
+              onChange={(e) => setPwd((p) => ({ ...p, next: e.target.value }))}
               className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
             />
           </div>
@@ -556,11 +800,57 @@ const Profile = () => {
             <input
               type="password"
               placeholder="Confirm new password"
+              value={pwd.confirm}
+              onChange={(e) =>
+                setPwd((p) => ({ ...p, confirm: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
             />
           </div>
-          <button className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
-            Update Password
+          <button
+            onClick={async () => {
+              if (!pwd.current || !pwd.next || !pwd.confirm) {
+                toast({ title: "All fields required" });
+                return;
+              }
+              if (pwd.next !== pwd.confirm) {
+                toast({ title: "Passwords do not match" });
+                return;
+              }
+              if (pwd.next.length < 8) {
+                toast({
+                  title: "Weak password",
+                  description:
+                    "Use at least 8 characters with upper, lower, number & symbol",
+                });
+              }
+              try {
+                setPwd((p) => ({ ...p, loading: true }));
+                const res = await api.changePassword({
+                  currentPassword: pwd.current,
+                  newPassword: pwd.next,
+                });
+                if (res.success) {
+                  toast({ title: "Password updated" });
+                  setPwd({
+                    current: "",
+                    next: "",
+                    confirm: "",
+                    loading: false,
+                  });
+                }
+              } catch (e: any) {
+                toast({
+                  title: "Update failed",
+                  description: String(e?.message || e),
+                });
+                setPwd((p) => ({ ...p, loading: false }));
+              }
+            }}
+            disabled={pwd.loading}
+            className={`px-4 py-2 rounded-lg transition-colors text-white ${pwd.loading ? "bg-gray-400" : "bg-ydf-deep-blue hover:bg-opacity-90"}`}
+          >
+            {pwd.loading ? "Updating..." : "Update Password"}
           </button>
         </div>
       </div>

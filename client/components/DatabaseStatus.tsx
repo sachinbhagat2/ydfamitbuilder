@@ -12,7 +12,6 @@ const DatabaseStatus = () => {
     const checkConnection = async () => {
       try {
         const response = await fetch("/api/test/connection");
-        const ok = response.ok;
         let result: any = {};
         try {
           result = await response.json();
@@ -20,12 +19,13 @@ const DatabaseStatus = () => {
         const dbOk =
           result?.results?.database?.status === "connected" ||
           result?.success === true;
-        setIsConnected(ok); // API reachable -> app usable
-        setDbConnected(dbOk);
-      } catch (error) {
-        // Fall back to mock mode when API check fails
+        // Consider any HTTP response as API reachable (even 4xx/5xx)
         setIsConnected(true);
-        setDbConnected(false);
+        setDbConnected(!!dbOk);
+      } catch (error) {
+        // Network failure => API unreachable
+        setIsConnected(false);
+        setDbConnected(null);
       } finally {
         setIsLoading(false);
       }
@@ -58,12 +58,10 @@ const DatabaseStatus = () => {
 
   if (isConnected && dbConnected === false) {
     return (
-      <Alert className="border-blue-200 bg-blue-50">
-        <Database className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
-          Running with mock database. You can still sign in using demo accounts:
-          admin@ydf.org, student@ydf.org, reviewer@ydf.org, donor@ydf.org,
-          surveyor@ydf.org
+      <Alert className="border-orange-200 bg-orange-50">
+        <AlertCircle className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-orange-700">
+          Live database not connected. Please try again shortly or contact support.
         </AlertDescription>
       </Alert>
     );
@@ -82,11 +80,11 @@ const DatabaseStatus = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open("/docs/MYSQL_SETUP.md", "_blank")}
+              onClick={() => window.open("/api/test/connection", "_blank")}
               className="text-orange-700 border-orange-300 hover:bg-orange-100"
             >
               <ExternalLink className="h-3 w-3 mr-1" />
-              MySQL Setup Guide
+              API Status
             </Button>
           </div>
         </div>

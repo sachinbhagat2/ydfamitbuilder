@@ -17,10 +17,10 @@ import testRoutes from "./routes/test";
 import authRoutes from "./routes/auth";
 import scholarshipRoutes from "./routes/scholarships";
 import surveysRoutes from "./routes/surveys";
+import applicationsRoutes from "./routes/applications";
 import createDefaultScholarships from "./config/seed-scholarships";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const IS_SERVERLESS = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,8 +39,10 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
+// Serve static files in production when not running in serverless
+if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const staticPath = path.join(__dirname, "../spa");
   app.use(express.static(staticPath));
 }
@@ -65,6 +67,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/scholarships", scholarshipRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/surveys", surveysRoutes);
+app.use("/api/applications", applicationsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -95,19 +98,34 @@ app.use("/api/*", (req, res) => {
       "/api/auth/login",
       "/api/auth/register",
       "/api/scholarships",
+      "/api/applications",
+      "/api/applications/stats",
     ],
   });
 });
 
-// Serve React app for all non-API routes
+// Serve React app for all non-API routes when not running in serverless
 app.get("*", (req, res) => {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
+    // Serve built SPA in production (non-serverless)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
     const staticPath = path.join(__dirname, "../spa");
     res.sendFile(path.join(staticPath, "index.html"));
-  } else {
-    // In development, serve the index.html from the project root
+  } else if (process.env.NODE_ENV === "development") {
+    // Serve dev index.html locally
     const indexPath = path.join(__dirname, "../index.html");
     res.sendFile(indexPath);
+  } else {
+    // Serverless or invalid route in dev
+    res.status(404).json({
+      success: false,
+      error: "Frontend route - should be handled by SPA host/dev server",
+      message:
+        "Access through Vite dev server (dev) or Netlify static host (prod)",
+      path: req.path,
+      method: req.method,
+    });
   }
 });
 
@@ -195,12 +213,7 @@ async function startServer() {
   }
 }
 
-if (
-  !process.env.NETLIFY &&
-  !process.env.VERCEL &&
-  !process.env.AWS_LAMBDA_FUNCTION_NAME &&
-  process.env.NODE_ENV !== "test"
-) {
+if (!IS_SERVERLESS && process.env.NODE_ENV !== "test") {
   startServer();
 }
 
