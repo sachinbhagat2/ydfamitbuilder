@@ -1263,19 +1263,22 @@ const AdminDashboard = () => {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Joined
                           </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ydf-light-gray">
                         {usersLoading && (
                           <tr>
-                            <td colSpan={6} className="px-6 py-4 text-gray-600">
+                            <td colSpan={7} className="px-6 py-4 text-gray-600">
                               Loading...
                             </td>
                           </tr>
                         )}
                         {!usersLoading && users.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="px-6 py-4 text-gray-600">
+                            <td colSpan={7} className="px-6 py-4 text-gray-600">
                               No users found
                             </td>
                           </tr>
@@ -1307,6 +1310,19 @@ const AdminDashboard = () => {
                                 {u.createdAt
                                   ? new Date(u.createdAt).toLocaleString()
                                   : ""}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                <button
+                                  onClick={async () => {
+                                    const api = (await import("../services/api")).default;
+                                    const next = !u.isActive;
+                                    const res = await api.updateUser(u.id, { isActive: next });
+                                    if (res.success) fetchUsers(1, userRoleFilter, userSearch);
+                                  }}
+                                  className={`px-3 py-1 rounded ${u.isActive ? "bg-red-600 text-white" : "bg-green-600 text-white"}`}
+                                >
+                                  {u.isActive ? "Deactivate" : "Activate"}
+                                </button>
                               </td>
                             </tr>
                           ))}
