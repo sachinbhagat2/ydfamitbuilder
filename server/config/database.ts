@@ -1134,8 +1134,16 @@ class DatabaseAdapter {
         approved: 0,
         rejected: 0,
         waitlisted: 0,
+        total_applied_amount: 0,
       };
       for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
+      try {
+        const sumRes = await pgPool.query(
+          'SELECT COALESCE(SUM(s.amount)::numeric,0) as total FROM applications a JOIN scholarships s ON s.id = a."scholarshipId"'
+        );
+        const sumVal = (sumRes.rows as any[])[0]?.total;
+        map.total_applied_amount = typeof sumVal === 'string' ? parseFloat(sumVal) : Number(sumVal || 0);
+      } catch {}
       return map;
     }
     const [totalRows] = await pool.execute(
