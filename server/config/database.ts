@@ -528,6 +528,44 @@ async function ensureAnnouncementsTable() {
   `);
 }
 
+async function ensureReviewsTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS application_reviews (
+        id BIGSERIAL PRIMARY KEY,
+        "applicationId" BIGINT NOT NULL,
+        "reviewerId" BIGINT NOT NULL,
+        criteria JSONB,
+        "overallScore" INT,
+        comments TEXT,
+        recommendation TEXT,
+        "isComplete" BOOLEAN DEFAULT TRUE,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS application_reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      applicationId INT NOT NULL,
+      reviewerId INT NOT NULL,
+      criteria JSON NULL,
+      overallScore INT NULL,
+      comments TEXT NULL,
+      recommendation ENUM('approve','reject','conditionally_approve') NULL,
+      isComplete TINYINT(1) DEFAULT 1,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_rev_app (applicationId),
+      INDEX idx_rev_reviewer (reviewerId)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async listUsers(
