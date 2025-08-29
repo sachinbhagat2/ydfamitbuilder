@@ -74,6 +74,7 @@ app.use("/api/test", testRoutes);
 app.use("/api/surveys", surveysRoutes);
 app.use("/api/applications", applicationsRoutes);
 app.use("/api/announcements", announcementsRoutes);
+app.use("/api/reviewer", (await import("./routes/reviewer")).default as any);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
