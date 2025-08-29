@@ -227,6 +227,15 @@ class ApiService {
     return this.handleResponse(res);
   }
 
+  async changePassword(payload: { currentPassword: string; newPassword: string }) {
+    const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+
   async verifyToken(): Promise<ApiResponse<User>> {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: "GET",
