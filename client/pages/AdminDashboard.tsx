@@ -303,7 +303,40 @@ const AdminDashboard = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {[
+          {
+            title: "Total Applications",
+            value: appStats?.total ?? 0,
+            change: "",
+            icon: FileText,
+            color: "bg-blue-500",
+            filter: 'all',
+          },
+          {
+            title: "Approved",
+            value: appStats?.approved ?? 0,
+            change: "",
+            icon: CheckCircle,
+            color: "bg-green-500",
+            filter: 'approved',
+          },
+          {
+            title: "In Progress",
+            value: (appStats?.under_review ?? 0),
+            change: "",
+            icon: Clock,
+            color: "bg-yellow-500",
+            filter: 'under_review',
+          },
+          {
+            title: "Rejected",
+            value: appStats?.rejected ?? 0,
+            change: "",
+            icon: XCircle,
+            color: "bg-red-500",
+            filter: 'rejected',
+          },
+        ].map((stat, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
