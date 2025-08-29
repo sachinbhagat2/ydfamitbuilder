@@ -1403,7 +1403,9 @@ class DatabaseAdapter {
         waitlisted: 0,
       };
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const arr = memory.applications.filter((a) => a.assignedReviewerId === reviewerId);
+      const arr = memory.applications.filter(
+        (a) => a.assignedReviewerId === reviewerId,
+      );
       const total = arr.length;
       const by = (st: string) => arr.filter((a) => a.status === st).length;
       return {

@@ -102,7 +102,12 @@ const ReviewerDashboard = () => {
 
   const [stats, setStats] = useState([
     { title: "Submitted", value: "0", icon: Clock, color: "bg-yellow-500" },
-    { title: "Under Review", value: "0", icon: CheckCircle, color: "bg-green-500" },
+    {
+      title: "Under Review",
+      value: "0",
+      icon: CheckCircle,
+      color: "bg-green-500",
+    },
     { title: "Approved", value: "0", icon: Star, color: "bg-red-500" },
     { title: "Rejected", value: "0", icon: Calendar, color: "bg-blue-500" },
   ]);
@@ -114,10 +119,30 @@ const ReviewerDashboard = () => {
         if (r.success && r.data) {
           const d = r.data as any;
           setStats([
-            { title: "Submitted", value: String(d.submitted || 0), icon: Clock, color: "bg-yellow-500" },
-            { title: "Under Review", value: String(d.under_review || 0), icon: CheckCircle, color: "bg-green-500" },
-            { title: "Approved", value: String(d.approved || 0), icon: Star, color: "bg-red-500" },
-            { title: "Rejected", value: String(d.rejected || 0), icon: Calendar, color: "bg-blue-500" },
+            {
+              title: "Submitted",
+              value: String(d.submitted || 0),
+              icon: Clock,
+              color: "bg-yellow-500",
+            },
+            {
+              title: "Under Review",
+              value: String(d.under_review || 0),
+              icon: CheckCircle,
+              color: "bg-green-500",
+            },
+            {
+              title: "Approved",
+              value: String(d.approved || 0),
+              icon: Star,
+              color: "bg-red-500",
+            },
+            {
+              title: "Rejected",
+              value: String(d.rejected || 0),
+              icon: Calendar,
+              color: "bg-blue-500",
+            },
           ]);
         }
       } catch {}

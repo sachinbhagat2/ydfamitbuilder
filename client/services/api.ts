@@ -233,7 +233,9 @@ class ApiService {
 
   // Reviewer endpoints
   async listReviewerApplications(params?: Record<string, any>) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     const res = await fetch(`${API_BASE_URL}/reviewer/applications${qs}`, {
       headers: this.getAuthHeaders(),
     });
@@ -247,7 +249,11 @@ class ApiService {
   }
   async updateMyAssignedApplication(
     id: number,
-    payload: Partial<{ status: string; score: number | null; reviewNotes: string | null }>,
+    payload: Partial<{
+      status: string;
+      score: number | null;
+      reviewNotes: string | null;
+    }>,
   ) {
     const res = await fetch(`${API_BASE_URL}/reviewer/applications/${id}`, {
       method: "PATCH",
@@ -271,7 +277,9 @@ class ApiService {
     return this.handleResponse(res);
   }
   async listMyReviews(params?: { applicationId?: number }) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     const res = await fetch(`${API_BASE_URL}/reviewer/reviews${qs}`, {
       headers: this.getAuthHeaders(),
     });

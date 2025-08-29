@@ -78,12 +78,16 @@ router.patch(
   async (req: any, res) => {
     try {
       const id = Number(req.params.id);
-      if (!id) return res.status(400).json({ success: false, error: "Invalid id" });
+      if (!id)
+        return res.status(400).json({ success: false, error: "Invalid id" });
 
       // Load application
       let appRec: any = null;
       if (pgPool) {
-        const r = await pgPool.query("SELECT * FROM applications WHERE id = $1", [id]);
+        const r = await pgPool.query(
+          "SELECT * FROM applications WHERE id = $1",
+          [id],
+        );
         appRec = (r.rows as any[])[0] || null;
       } else if (pool) {
         const [r]: any = await pool.execute(
@@ -92,23 +96,36 @@ router.patch(
         );
         appRec = (r as any[])[0] || null;
       } else {
-        const all = await (mockDatabase as any).getApplications({ page: 1, limit: 10000 });
+        const all = await (mockDatabase as any).getApplications({
+          page: 1,
+          limit: 10000,
+        });
         appRec = (all.data as any[]).find((a) => a.id === id) || null;
       }
 
       if (!appRec)
-        return res.status(404).json({ success: false, error: "Application not found" });
+        return res
+          .status(404)
+          .json({ success: false, error: "Application not found" });
       if (Number(appRec.assignedReviewerId) !== Number(req.user?.id))
-        return res.status(403).json({ success: false, error: "Not assigned to you" });
+        return res
+          .status(403)
+          .json({ success: false, error: "Not assigned to you" });
 
       const { status, score, reviewNotes } = req.body || {};
       if (
         status &&
-        !["submitted", "under_review", "approved", "rejected", "waitlisted"].includes(
-          String(status),
-        )
+        ![
+          "submitted",
+          "under_review",
+          "approved",
+          "rejected",
+          "waitlisted",
+        ].includes(String(status))
       ) {
-        return res.status(400).json({ success: false, error: "Invalid status" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid status" });
       }
 
       const updated = await (mockDatabase as any).updateApplication(id, {
@@ -117,7 +134,11 @@ router.patch(
         reviewNotes: reviewNotes ?? undefined,
       });
 
-      res.json({ success: true, data: updated, message: "Application updated" });
+      res.json({
+        success: true,
+        data: updated,
+        message: "Application updated",
+      });
     } catch (error) {
       console.error("Reviewer update application error:", error);
       res.status(500).json({ success: false, error: "Internal server error" });
@@ -132,8 +153,13 @@ router.post(
   authorize("reviewer"),
   async (req: any, res) => {
     try {
-      const { applicationId, criteria, overallScore, comments, recommendation } =
-        req.body || {};
+      const {
+        applicationId,
+        criteria,
+        overallScore,
+        comments,
+        recommendation,
+      } = req.body || {};
       if (!applicationId)
         return res
           .status(400)
@@ -142,7 +168,10 @@ router.post(
       // Check assignment
       let appRec: any = null;
       if (pgPool) {
-        const r = await pgPool.query("SELECT * FROM applications WHERE id = $1", [applicationId]);
+        const r = await pgPool.query(
+          "SELECT * FROM applications WHERE id = $1",
+          [applicationId],
+        );
         appRec = (r.rows as any[])[0] || null;
       } else if (pool) {
         const [r]: any = await pool.execute(
@@ -151,13 +180,22 @@ router.post(
         );
         appRec = (r as any[])[0] || null;
       } else {
-        const all = await (mockDatabase as any).getApplications({ page: 1, limit: 10000 });
-        appRec = (all.data as any[]).find((a) => a.id === Number(applicationId)) || null;
+        const all = await (mockDatabase as any).getApplications({
+          page: 1,
+          limit: 10000,
+        });
+        appRec =
+          (all.data as any[]).find((a) => a.id === Number(applicationId)) ||
+          null;
       }
       if (!appRec)
-        return res.status(404).json({ success: false, error: "Application not found" });
+        return res
+          .status(404)
+          .json({ success: false, error: "Application not found" });
       if (Number(appRec.assignedReviewerId) !== Number(req.user?.id))
-        return res.status(403).json({ success: false, error: "Not assigned to you" });
+        return res
+          .status(403)
+          .json({ success: false, error: "Not assigned to you" });
 
       // Create review record
       const review = await (mockDatabase as any).createReview({
@@ -169,7 +207,9 @@ router.post(
         recommendation: recommendation ?? null,
       });
 
-      res.status(201).json({ success: true, data: review, message: "Review saved" });
+      res
+        .status(201)
+        .json({ success: true, data: review, message: "Review saved" });
     } catch (error) {
       console.error("Create review error:", error);
       res.status(500).json({ success: false, error: "Internal server error" });

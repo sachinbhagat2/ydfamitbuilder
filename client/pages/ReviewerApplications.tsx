@@ -19,12 +19,19 @@ export default function ReviewerApplications() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / limit)), [total, limit]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / limit)),
+    [total, limit],
+  );
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.listReviewerApplications({ page, limit, status: statusFilter });
+      const res = await api.listReviewerApplications({
+        page,
+        limit,
+        status: statusFilter,
+      });
       if (res.success) {
         setRows(res.data || []);
         setTotal(res.pagination?.total || 0);
@@ -43,8 +50,12 @@ export default function ReviewerApplications() {
     <div className="min-h-screen bg-gray-50">
       <RoleBasedNavigation />
       <div className="px-6 py-4 bg-white border-b">
-        <h1 className="text-2xl font-bold text-gray-900">Review Applications</h1>
-        <p className="text-sm text-gray-600">Manage applications assigned to you</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Review Applications
+        </h1>
+        <p className="text-sm text-gray-600">
+          Manage applications assigned to you
+        </p>
       </div>
 
       <div className="p-6 space-y-4">
@@ -71,13 +82,27 @@ export default function ReviewerApplications() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scholarship</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Scholarship
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Score
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Notes
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -86,7 +111,10 @@ export default function ReviewerApplications() {
                 ))}
                 {!rows.length && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-6 text-center text-gray-500">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-6 text-center text-gray-500"
+                    >
                       {loading ? "Loading..." : "No applications found"}
                     </td>
                   </tr>
@@ -122,7 +150,9 @@ export default function ReviewerApplications() {
 
 function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
   const [status, setStatus] = useState<string>(row.status);
-  const [score, setScore] = useState<string>(row.score == null ? "" : String(row.score));
+  const [score, setScore] = useState<string>(
+    row.score == null ? "" : String(row.score),
+  );
   const [notes, setNotes] = useState<string>(row.reviewNotes || "");
   const [saving, setSaving] = useState(false);
 
@@ -155,10 +185,18 @@ function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
   return (
     <tr>
       <td className="px-6 py-3 text-sm text-gray-900">{row.id}</td>
-      <td className="px-6 py-3 text-sm text-gray-900">{row.studentName || row.studentId}</td>
-      <td className="px-6 py-3 text-sm text-gray-900">{row.scholarshipTitle || row.scholarshipId}</td>
       <td className="px-6 py-3 text-sm text-gray-900">
-        <select className="border rounded px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value)}>
+        {row.studentName || row.studentId}
+      </td>
+      <td className="px-6 py-3 text-sm text-gray-900">
+        {row.scholarshipTitle || row.scholarshipId}
+      </td>
+      <td className="px-6 py-3 text-sm text-gray-900">
+        <select
+          className="border rounded px-2 py-1"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
           {statuses.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
