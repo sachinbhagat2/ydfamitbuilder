@@ -346,6 +346,7 @@ const Scholarships = () => {
       (scholarship.tags || []).some((t: any) =>
         String(t).toLowerCase().includes(q),
       ) ||
+      String(scholarship.category || "").toLowerCase().includes(q) ||
       String(scholarship.amount)
         .replace(/[^0-9]/g, "")
         .includes(q.replace(/[^0-9]/g, ""));
