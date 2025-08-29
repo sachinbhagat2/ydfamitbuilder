@@ -1160,8 +1160,16 @@ class DatabaseAdapter {
       approved: 0,
       rejected: 0,
       waitlisted: 0,
+      total_applied_amount: 0,
     };
     for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
+    try {
+      const [sumRows] = await pool.execute(
+        "SELECT COALESCE(SUM(s.amount),0) as total FROM applications a JOIN scholarships s ON s.id = a.scholarshipId"
+      );
+      const sumVal = (sumRows as any[])[0]?.total;
+      map.total_applied_amount = Number(sumVal || 0);
+    } catch {}
     return map;
   }
 
