@@ -258,15 +258,13 @@ const Scholarships = () => {
     },
   ];
 
-  const categories = [
-    "all",
-    "Academic Excellence",
-    "Gender Equity",
-    "Technology",
-    "Arts & Culture",
-    "Disability Support",
-    "Sports",
-  ];
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    (remoteScholarships || []).forEach((s: any) => {
+      if (Array.isArray(s?.tags)) s.tags.forEach((t: any) => set.add(String(t)));
+    });
+    return ["all", ...Array.from(set)];
+  }, [remoteScholarships]);
 
   const amountRanges = [
     { value: "all", label: "All Amounts" },
@@ -316,7 +314,7 @@ const Scholarships = () => {
           name: s.title,
           organization: "Youth Dreamers Foundation",
           amount: `₹${s.amount}`,
-          category: "General",
+          category: Array.isArray(s.tags) && s.tags.length ? s.tags[0] : "General",
           deadline: s.applicationDeadline
             ? new Date(s.applicationDeadline).toISOString().slice(0, 10)
             : "",
@@ -342,15 +340,21 @@ const Scholarships = () => {
       : fallbackScholarships;
 
   const filteredScholarships = scholarships.filter((scholarship) => {
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      searchQuery === "" ||
-      scholarship.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      scholarship.organization
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      q === "" ||
+      scholarship.name.toLowerCase().includes(q) ||
+      scholarship.organization.toLowerCase().includes(q) ||
+      (scholarship.tags || []).some((t: any) => String(t).toLowerCase().includes(q)) ||
+      String(scholarship.amount).replace(/[^0-9]/g, "").includes(q.replace(/[^0-9]/g, ""));
 
-    const matchesCategory =
-      selectedCategory === "all" || scholarship.category === selectedCategory;
+    const matchesCategory = (() => {
+      if (selectedCategory === "all") return true;
+      const tags = (scholarship.tags || []) as any[];
+      return Array.isArray(tags)
+        ? tags.some((t) => String(t) === String(selectedCategory))
+        : false;
+    })();
 
     const matchesDeadline = () => {
       if (selectedDeadline === "all") return true;
