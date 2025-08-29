@@ -145,12 +145,14 @@ const AdminDashboard = () => {
   const fetchOverviewData = async () => {
     try {
       const api = (await import("../services/api")).default;
-      const [statsRes, recentRes] = await Promise.all([
+      const [statsRes, recentRes, annRes] = await Promise.all([
         api.getApplicationStats(),
         api.getRecentApplications(5),
+        api.listAnnouncements(5),
       ]);
       if (statsRes.success) setAppStats(statsRes.data);
       if (recentRes.success) setRecentApps(recentRes.data || []);
+      if (annRes.success) setAnnouncements(annRes.data || []);
     } catch (e) {}
   };
 
