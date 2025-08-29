@@ -32,6 +32,9 @@ const Scholarships = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState("deadline");
+  const { isAuthenticated } = useAuth();
+  const [appliedIds, setAppliedIds] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
