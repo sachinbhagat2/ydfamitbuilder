@@ -157,16 +157,20 @@ const Profile = () => {
     if (!data.city.trim()) e.city = "City is required";
     if (!data.state.trim()) e.state = "State is required";
     if (!data.pincode.trim()) e.pincode = "Pincode is required";
-    else if (!/^\d{5,6}$/.test(data.pincode)) e.pincode = "Pincode must be 5-6 digits";
+    else if (!/^\d{5,6}$/.test(data.pincode))
+      e.pincode = "Pincode must be 5-6 digits";
     if (!data.course.trim()) e.course = "Course is required";
     if (!data.college.trim()) e.college = "College/University is required";
     if (!data.year.trim()) e.year = "Current year is required";
     if (!data.rollNumber.trim()) e.rollNumber = "Roll number is required";
     if (!data.category.trim()) e.category = "Category is required";
-    if (!data.familyIncome.trim()) e.familyIncome = "Annual family income is required";
+    if (!data.familyIncome.trim())
+      e.familyIncome = "Annual family income is required";
     if (
       data.cgpa &&
-      (isNaN(Number(data.cgpa)) || Number(data.cgpa) < 0 || Number(data.cgpa) > 10)
+      (isNaN(Number(data.cgpa)) ||
+        Number(data.cgpa) < 0 ||
+        Number(data.cgpa) > 10)
     ) {
       e.cgpa = "CGPA must be between 0 and 10";
     }
@@ -570,9 +574,9 @@ const Profile = () => {
               aria-invalid={!!errors.category}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.category ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             >
-            {errors.category && (
-              <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-            )}
+              {errors.category && (
+                <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+              )}
               <option value="General">General</option>
               <option value="OBC">OBC</option>
               <option value="SC">SC</option>

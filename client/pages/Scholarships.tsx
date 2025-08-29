@@ -365,9 +365,14 @@ const Scholarships = () => {
         String(scholarship.status || "").toLowerCase(),
         String(scholarship.deadline || "").toLowerCase(),
         String(scholarship.applicants || "").toLowerCase(),
-        (scholarship.tags || []).map((t: any) => String(t).toLowerCase()).join(" "),
+        (scholarship.tags || [])
+          .map((t: any) => String(t).toLowerCase())
+          .join(" "),
       ];
-      const amountDigits = String(scholarship.amount || "").replace(/[^0-9]/g, "");
+      const amountDigits = String(scholarship.amount || "").replace(
+        /[^0-9]/g,
+        "",
+      );
       return tokens.every((tok) => {
         const t = tok.toLowerCase();
         const tDigits = t.replace(/[^0-9]/g, "");
@@ -388,7 +393,10 @@ const Scholarships = () => {
 
     const matchesType = (() => {
       if (selectedType === "all") return true;
-      return String(scholarship.type || "").toLowerCase() === String(selectedType).toLowerCase();
+      return (
+        String(scholarship.type || "").toLowerCase() ===
+        String(selectedType).toLowerCase()
+      );
     })();
 
     const matchesDeadline = () => {
@@ -424,7 +432,11 @@ const Scholarships = () => {
     };
 
     return (
-      matchesSearch && matchesCategory && matchesType && matchesAmount() && matchesDeadline()
+      matchesSearch &&
+      matchesCategory &&
+      matchesType &&
+      matchesAmount() &&
+      matchesDeadline()
     );
   });
 
@@ -630,7 +642,18 @@ const Scholarships = () => {
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
               >
-                {(["all", ...Array.from(new Set((scholarships || []).map((s: any) => s.type || "General"))) ] as string[]).map((t) => (
+                {(
+                  [
+                    "all",
+                    ...Array.from(
+                      new Set(
+                        (scholarships || []).map(
+                          (s: any) => s.type || "General",
+                        ),
+                      ),
+                    ),
+                  ] as string[]
+                ).map((t) => (
                   <option key={t} value={t}>
                     {t === "all" ? "All Types" : t}
                   </option>
