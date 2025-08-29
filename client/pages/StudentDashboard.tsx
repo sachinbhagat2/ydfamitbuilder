@@ -182,7 +182,13 @@ const StudentDashboard = () => {
                   <DollarSign className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">₹2.5L</p>
+                  <p className="text-2xl font-bold text-gray-900">{
+                    (()=>{
+                      const map = new Map(activeScholarships.map((s:any)=> [s.id, Number(s.amount||0)]));
+                      const sum = myApps.reduce((acc:any,a:any)=> acc + (map.get(a.scholarshipId)||0), 0);
+                      return `₹${sum.toLocaleString('en-IN')}`;
+                    })()
+                  }</p>
                   <p className="text-sm text-gray-600">Total Applied</p>
                 </div>
               </div>
