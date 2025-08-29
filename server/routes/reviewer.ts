@@ -31,7 +31,13 @@ router.get(
               studentName: u
                 ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
                 : null,
+              studentEmail: u?.email || null,
+              studentPhone: u?.phone || null,
+              studentProfile: u?.profileData || null,
               scholarshipTitle: s ? s.title : null,
+              scholarshipAmount: s?.amount ?? null,
+              scholarshipCurrency: s?.currency ?? null,
+              scholarshipTags: s?.tags ?? null,
             };
           } catch {
             return r;
