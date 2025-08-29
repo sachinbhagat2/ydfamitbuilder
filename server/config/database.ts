@@ -1354,6 +1354,72 @@ class DatabaseAdapter {
     return map;
   }
 
+  async getApplicationStatsForReviewer(reviewerId: number) {
+    if (!reviewerId)
+      return {
+        total: 0,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const arr = memory.applications.filter((a) => a.assignedReviewerId === reviewerId);
+      const total = arr.length;
+      const by = (st: string) => arr.filter((a) => a.status === st).length;
+      return {
+        total,
+        submitted: by("submitted"),
+        under_review: by("under_review"),
+        approved: by("approved"),
+        rejected: by("rejected"),
+        waitlisted: by("waitlisted"),
+      };
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const totalRes = await pgPool.query(
+        'SELECT COUNT(*)::int as cnt FROM applications WHERE "assignedReviewerId" = $1',
+        [reviewerId],
+      );
+      const groupRes = await pgPool.query(
+        'SELECT status, COUNT(*)::int as cnt FROM applications WHERE "assignedReviewerId" = $1 GROUP BY status',
+        [reviewerId],
+      );
+      const total = (totalRes.rows as any[])[0]?.cnt || 0;
+      const map: any = {
+        total,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+      for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
+      return map;
+    }
+    const [totalRows] = await pool.execute(
+      "SELECT COUNT(*) as cnt FROM applications WHERE assignedReviewerId = ?",
+      [reviewerId],
+    );
+    const [groupRows] = await pool.execute(
+      "SELECT status, COUNT(*) as cnt FROM applications WHERE assignedReviewerId = ? GROUP BY status",
+      [reviewerId],
+    );
+    const total = (totalRows as any[])[0]?.cnt || 0;
+    const map: any = {
+      total,
+      submitted: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      waitlisted: 0,
+    };
+    for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
+    return map;
+  }
+
   async createApplication(
     input: { scholarshipId: number; applicationData?: any; documents?: any },
     studentId?: number,
