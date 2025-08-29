@@ -73,7 +73,15 @@ const StudentDashboard = () => {
       .replace(/\b\w/g, (l) => l.toUpperCase());
     const category = Array.isArray(s?.tags) ? s.tags.join(", ") : "General";
     const color = status === "Approved" ? "bg-green-500" : "bg-ydf-deep-blue";
-    return { id: Number(a.scholarshipId), name, amount, deadline, status, category, color };
+    return {
+      id: Number(a.scholarshipId),
+      name,
+      amount,
+      deadline,
+      status,
+      category,
+      color,
+    };
   });
 
   const announcements = [

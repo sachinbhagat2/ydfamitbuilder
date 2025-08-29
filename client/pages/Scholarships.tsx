@@ -47,7 +47,6 @@ const Scholarships = () => {
     })();
   }, []);
 
-
   const fallbackScholarships = [
     {
       id: 1,
@@ -245,7 +244,8 @@ const Scholarships = () => {
   const categories = useMemo(() => {
     const set = new Set<string>();
     (remoteScholarships || []).forEach((s: any) => {
-      if (Array.isArray(s?.tags)) s.tags.forEach((t: any) => set.add(String(t)));
+      if (Array.isArray(s?.tags))
+        s.tags.forEach((t: any) => set.add(String(t)));
     });
     return ["all", ...Array.from(set)];
   }, [remoteScholarships]);
@@ -298,7 +298,8 @@ const Scholarships = () => {
           name: s.title,
           organization: "Youth Dreamers Foundation",
           amount: `₹${s.amount}`,
-          category: Array.isArray(s.tags) && s.tags.length ? s.tags[0] : "General",
+          category:
+            Array.isArray(s.tags) && s.tags.length ? s.tags[0] : "General",
           deadline: s.applicationDeadline
             ? new Date(s.applicationDeadline).toISOString().slice(0, 10)
             : "",
@@ -329,8 +330,12 @@ const Scholarships = () => {
       q === "" ||
       scholarship.name.toLowerCase().includes(q) ||
       scholarship.organization.toLowerCase().includes(q) ||
-      (scholarship.tags || []).some((t: any) => String(t).toLowerCase().includes(q)) ||
-      String(scholarship.amount).replace(/[^0-9]/g, "").includes(q.replace(/[^0-9]/g, ""));
+      (scholarship.tags || []).some((t: any) =>
+        String(t).toLowerCase().includes(q),
+      ) ||
+      String(scholarship.amount)
+        .replace(/[^0-9]/g, "")
+        .includes(q.replace(/[^0-9]/g, ""));
 
     const matchesCategory = (() => {
       if (selectedCategory === "all") return true;
@@ -345,7 +350,9 @@ const Scholarships = () => {
       if (!scholarship.deadline) return false;
       const now = new Date();
       const d = new Date(scholarship.deadline);
-      const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil(
+        (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      );
       if (diffDays < 0) return false;
       if (selectedDeadline === "week") return diffDays <= 7;
       if (selectedDeadline === "month") return diffDays <= 30;
@@ -370,7 +377,9 @@ const Scholarships = () => {
       }
     };
 
-    return matchesSearch && matchesCategory && matchesAmount() && matchesDeadline();
+    return (
+      matchesSearch && matchesCategory && matchesAmount() && matchesDeadline()
+    );
   });
 
   const ApplicationModal = ({ scholarship, onClose }: any) => {
@@ -652,7 +661,11 @@ const Scholarships = () => {
           </p>
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <span>Sort by:</span>
-            <select className="border border-ydf-light-gray rounded px-2 py-1" value={sortBy} onChange={(e)=>setSortBy(e.target.value)}>
+            <select
+              className="border border-ydf-light-gray rounded px-2 py-1"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
               <option value="deadline">Deadline</option>
               <option value="amount">Amount</option>
               <option value="applicants">Applicants</option>
@@ -666,18 +679,26 @@ const Scholarships = () => {
             const arr = [...filteredScholarships];
             if (sortBy === "deadline") {
               arr.sort((a: any, b: any) => {
-                const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-                const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+                const da = a.deadline
+                  ? new Date(a.deadline).getTime()
+                  : Infinity;
+                const db = b.deadline
+                  ? new Date(b.deadline).getTime()
+                  : Infinity;
                 return da - db;
               });
             } else if (sortBy === "amount") {
               arr.sort((a: any, b: any) => {
-                const aa = parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0;
-                const bb = parseInt(String(b.amount).replace(/[^0-9]/g, "")) || 0;
+                const aa =
+                  parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0;
+                const bb =
+                  parseInt(String(b.amount).replace(/[^0-9]/g, "")) || 0;
                 return bb - aa;
               });
             } else if (sortBy === "applicants") {
-              arr.sort((a: any, b: any) => (b.applicants || 0) - (a.applicants || 0));
+              arr.sort(
+                (a: any, b: any) => (b.applicants || 0) - (a.applicants || 0),
+              );
             }
             return arr;
           }, [filteredScholarships, sortBy]).map((scholarship, index) => (

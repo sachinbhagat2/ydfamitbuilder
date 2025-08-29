@@ -946,27 +946,31 @@ class DatabaseAdapter {
   }
 
   // Announcements
-  async getAnnouncements(params: { limit?: number; activeOnly?: boolean } = {}) {
+  async getAnnouncements(
+    params: { limit?: number; activeOnly?: boolean } = {},
+  ) {
     const limit = params.limit ?? 5;
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       let list = [...memory.announcements];
       if (params.activeOnly) list = list.filter((a: any) => a.isActive);
-      list.sort((a: any, b: any) => (b.createdAt as any) - (a.createdAt as any));
+      list.sort(
+        (a: any, b: any) => (b.createdAt as any) - (a.createdAt as any),
+      );
       return list.slice(0, limit);
     }
     await ensureAnnouncementsTable();
     if (MODE === "postgres" && pgPool) {
-      const where = params.activeOnly ? 'WHERE "isActive" = TRUE' : '';
+      const where = params.activeOnly ? 'WHERE "isActive" = TRUE' : "";
       const result = await pgPool.query(
         `SELECT * FROM announcements ${where} ORDER BY "createdAt" DESC LIMIT $1`,
-        [limit]
+        [limit],
       );
       return result.rows as any[];
     }
-    const where = params.activeOnly ? 'WHERE isActive = 1' : '';
+    const where = params.activeOnly ? "WHERE isActive = 1" : "";
     const [rows] = await pool.execute(
       `SELECT * FROM announcements ${where} ORDER BY createdAt DESC LIMIT ?`,
-      [limit]
+      [limit],
     );
     return rows as any[];
   }
@@ -978,14 +982,14 @@ class DatabaseAdapter {
     await ensureAnnouncementsTable();
     if (MODE === "postgres" && pgPool) {
       const result = await pgPool.query(
-        'SELECT * FROM announcements WHERE id = $1 LIMIT 1',
-        [id]
+        "SELECT * FROM announcements WHERE id = $1 LIMIT 1",
+        [id],
       );
       return (result.rows as any[])[0] || null;
     }
     const [rows] = await pool.execute(
-      'SELECT * FROM announcements WHERE id = ? LIMIT 1',
-      [id]
+      "SELECT * FROM announcements WHERE id = ? LIMIT 1",
+      [id],
     );
     return (rows as any[])[0] || null;
   }
@@ -1104,8 +1108,11 @@ class DatabaseAdapter {
       const by = (st: string) =>
         memory.applications.filter((a) => a.status === st).length;
       const totalAppliedAmount = memory.applications.reduce((acc, a) => {
-        const s = memory.scholarships.find((x: any) => x.id === a.scholarshipId);
-        const amt = s && s.amount ? Number(String(s.amount).replace(/[^0-9.]/g, "")) : 0;
+        const s = memory.scholarships.find(
+          (x: any) => x.id === a.scholarshipId,
+        );
+        const amt =
+          s && s.amount ? Number(String(s.amount).replace(/[^0-9.]/g, "")) : 0;
         return acc + (isNaN(amt) ? 0 : amt);
       }, 0);
       return {
@@ -1139,10 +1146,11 @@ class DatabaseAdapter {
       for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
       try {
         const sumRes = await pgPool.query(
-          'SELECT COALESCE(SUM(s.amount)::numeric,0) as total FROM applications a JOIN scholarships s ON s.id = a."scholarshipId"'
+          'SELECT COALESCE(SUM(s.amount)::numeric,0) as total FROM applications a JOIN scholarships s ON s.id = a."scholarshipId"',
         );
         const sumVal = (sumRes.rows as any[])[0]?.total;
-        map.total_applied_amount = typeof sumVal === 'string' ? parseFloat(sumVal) : Number(sumVal || 0);
+        map.total_applied_amount =
+          typeof sumVal === "string" ? parseFloat(sumVal) : Number(sumVal || 0);
       } catch {}
       return map;
     }
@@ -1165,7 +1173,7 @@ class DatabaseAdapter {
     for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
     try {
       const [sumRows] = await pool.execute(
-        "SELECT COALESCE(SUM(s.amount),0) as total FROM applications a JOIN scholarships s ON s.id = a.scholarshipId"
+        "SELECT COALESCE(SUM(s.amount),0) as total FROM applications a JOIN scholarships s ON s.id = a.scholarshipId",
       );
       const sumVal = (sumRows as any[])[0]?.total;
       map.total_applied_amount = Number(sumVal || 0);

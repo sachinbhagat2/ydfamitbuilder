@@ -8,7 +8,10 @@ const router = Router();
 router.get("/", async (req, res) => {
   try {
     const limit = Number((req.query.limit as any) || 5);
-    const list = await mockDatabase.getAnnouncements({ limit, activeOnly: true });
+    const list = await mockDatabase.getAnnouncements({
+      limit,
+      activeOnly: true,
+    });
     const response: ApiResponse<any[]> = {
       success: true,
       data: list,
@@ -26,7 +29,8 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params as any;
     const item = await mockDatabase.getAnnouncementById(Number(id));
-    if (!item) return res.status(404).json({ success: false, error: "Not found" });
+    if (!item)
+      return res.status(404).json({ success: false, error: "Not found" });
     const response: ApiResponse<any> = {
       success: true,
       data: item,

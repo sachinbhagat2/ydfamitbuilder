@@ -447,12 +447,18 @@ const Progress = () => {
                         onClick={() => {
                           const raw = apps.find((a) => a.id === application.id);
                           const sch = schMap.get(Number(raw?.scholarshipId));
-                          const payload = { application: raw, scholarship: sch };
-                          const blob = new Blob([JSON.stringify(payload, null, 2)], {
-                            type: 'application/json',
-                          });
+                          const payload = {
+                            application: raw,
+                            scholarship: sch,
+                          };
+                          const blob = new Blob(
+                            [JSON.stringify(payload, null, 2)],
+                            {
+                              type: "application/json",
+                            },
+                          );
                           const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
+                          const a = document.createElement("a");
                           a.href = url;
                           a.download = `application-${application.id}.json`;
                           document.body.appendChild(a);
