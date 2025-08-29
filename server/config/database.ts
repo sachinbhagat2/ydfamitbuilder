@@ -273,6 +273,7 @@ class InMemoryStore {
       updatedAt: new Date(),
     },
   ];
+  public reviews: any[] = [];
 }
 
 const memory = new InMemoryStore();
@@ -1645,6 +1646,131 @@ class DatabaseAdapter {
       [id],
     );
     return (rows as any[])[0] || null;
+  }
+  async createReview(input: {
+    applicationId: number;
+    reviewerId: number;
+    criteria?: any;
+    overallScore?: number | null;
+    comments?: string | null;
+    recommendation?: string | null;
+    isComplete?: boolean | null;
+  }) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const nextId = (
+        memory.reviews.length
+          ? Math.max(...memory.reviews.map((r: any) => r.id)) + 1
+          : 1
+      ) as number;
+      const rec: any = {
+        id: nextId,
+        applicationId: input.applicationId,
+        reviewerId: input.reviewerId,
+        criteria: input.criteria ?? null,
+        overallScore:
+          input.overallScore == null ? null : Number(input.overallScore),
+        comments: input.comments ?? null,
+        recommendation: input.recommendation ?? null,
+        isComplete: input.isComplete == null ? true : !!input.isComplete,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      memory.reviews.unshift(rec);
+      return rec;
+    }
+    await ensureReviewsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO application_reviews ("applicationId","reviewerId", criteria, "overallScore", comments, recommendation, "isComplete") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
+        [
+          input.applicationId,
+          input.reviewerId,
+          input.criteria ? JSON.stringify(input.criteria) : null,
+          input.overallScore == null ? null : Number(input.overallScore),
+          input.comments ?? null,
+          input.recommendation ?? null,
+          input.isComplete == null ? true : !!input.isComplete,
+        ],
+      );
+      return (result.rows as any[])[0];
+    }
+    const [res]: any = await pool.execute(
+      "INSERT INTO application_reviews (applicationId, reviewerId, criteria, overallScore, comments, recommendation, isComplete) VALUES (?,?,?,?,?,?,?)",
+      [
+        input.applicationId,
+        input.reviewerId,
+        input.criteria ? JSON.stringify(input.criteria) : null,
+        input.overallScore == null ? null : Number(input.overallScore),
+        input.comments ?? null,
+        input.recommendation ?? null,
+        input.isComplete == null ? 1 : input.isComplete ? 1 : 0,
+      ],
+    );
+    const insertId = (res && (res.insertId || res[0]?.insertId)) || undefined;
+    if (insertId) {
+      const [rows]: any = await pool.execute(
+        "SELECT * FROM application_reviews WHERE id = ?",
+        [insertId],
+      );
+      return (rows as any[])[0];
+    }
+    return {
+      applicationId: input.applicationId,
+      reviewerId: input.reviewerId,
+      criteria: input.criteria ?? null,
+      overallScore:
+        input.overallScore == null ? null : Number(input.overallScore),
+      comments: input.comments ?? null,
+      recommendation: input.recommendation ?? null,
+      isComplete: input.isComplete == null ? 1 : input.isComplete ? 1 : 0,
+    } as any;
+  }
+
+  async listReviews(params: { applicationId?: number; reviewerId?: number }) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let arr = [...memory.reviews];
+      if (params.applicationId)
+        arr = arr.filter((r) => r.applicationId === params.applicationId);
+      if (params.reviewerId)
+        arr = arr.filter((r) => r.reviewerId === params.reviewerId);
+      arr.sort((a: any, b: any) => (b.createdAt as any) - (a.createdAt as any));
+      return arr;
+    }
+    await ensureReviewsTable();
+    if (MODE === "postgres" && pgPool) {
+      const where: string[] = [];
+      const vals: any[] = [];
+      if (params.applicationId) {
+        where.push('"applicationId" = $' + (vals.length + 1));
+        vals.push(params.applicationId);
+      }
+      if (params.reviewerId) {
+        where.push('"reviewerId" = $' + (vals.length + 1));
+        vals.push(params.reviewerId);
+      }
+      const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+      const result = await pgPool.query(
+        `SELECT * FROM application_reviews ${whereSql} ORDER BY "createdAt" DESC`,
+        vals,
+      );
+      return result.rows as any[];
+    }
+    const where: string[] = [];
+    const vals: any[] = [];
+    if (params.applicationId) {
+      where.push("applicationId = ?");
+      vals.push(params.applicationId);
+    }
+    if (params.reviewerId) {
+      where.push("reviewerId = ?");
+      vals.push(params.reviewerId);
+    }
+    const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+    const [rows] = await pool.execute(
+      `SELECT * FROM application_reviews ${whereSql} ORDER BY createdAt DESC`,
+      vals,
+    );
+    return rows as any[];
   }
 }
 
