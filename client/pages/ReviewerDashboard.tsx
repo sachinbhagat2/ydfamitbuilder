@@ -28,105 +28,44 @@ const ReviewerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("all");
 
-  const pendingApplications = [
-    {
-      id: 1,
-      applicant: {
-        name: "Priya Sharma",
-        age: 20,
-        location: "Mumbai, Maharashtra",
-        email: "priya.sharma@email.com",
-        phone: "+91 9876543210",
-        course: "B.Tech Computer Science",
-        year: "3rd Year",
-      },
-      scheme: "Merit Excellence Scholarship",
-      amount: "₹50,000",
-      submittedDate: "2024-01-15",
-      score: 85,
-      status: "Under Review",
-      documents: [
-        "Aadhaar Card",
-        "10th Marksheet",
-        "12th Marksheet",
-        "Income Certificate",
-        "College ID",
-      ],
-      priority: "high",
-      region: "West",
-    },
-    {
-      id: 2,
-      applicant: {
-        name: "Rahul Kumar",
-        age: 19,
-        location: "Patna, Bihar",
-        email: "rahul.kumar@email.com",
-        phone: "+91 9123456789",
-        course: "B.Sc Agriculture",
-        year: "2nd Year",
-      },
-      scheme: "Rural Development Grant",
-      amount: "₹25,000",
-      submittedDate: "2024-01-14",
-      score: 92,
-      status: "Pending Documents",
-      documents: ["Aadhaar Card", "10th Marksheet", "Income Certificate"],
-      priority: "medium",
-      region: "East",
-    },
-    {
-      id: 3,
-      applicant: {
-        name: "Anjali Patel",
-        age: 21,
-        location: "Ahmedabad, Gujarat",
-        email: "anjali.patel@email.com",
-        phone: "+91 9988776655",
-        course: "B.A. Economics",
-        year: "Final Year",
-      },
-      scheme: "Women Empowerment Scholarship",
-      amount: "₹40,000",
-      submittedDate: "2024-01-13",
-      score: 78,
-      status: "Interview Scheduled",
-      documents: [
-        "Aadhaar Card",
-        "10th Marksheet",
-        "12th Marksheet",
-        "Income Certificate",
-        "Caste Certificate",
-      ],
-      priority: "high",
-      region: "West",
-    },
-    {
-      id: 4,
-      applicant: {
-        name: "Arjun Singh",
-        age: 22,
-        location: "Bangalore, Karnataka",
-        email: "arjun.singh@email.com",
-        phone: "+91 9765432108",
-        course: "M.Tech AI & ML",
-        year: "1st Year",
-      },
-      scheme: "Technical Innovation Fund",
-      amount: "₹75,000",
-      submittedDate: "2024-01-12",
-      score: 88,
-      status: "Under Review",
-      documents: [
-        "Aadhaar Card",
-        "UG Marksheet",
-        "Project Portfolio",
-        "Income Certificate",
-      ],
-      priority: "medium",
-      region: "South",
-    },
-  ];
+  const [pendingApplications, setPendingApplications] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.listReviewerApplications({ page: 1, limit: 5 });
+        if (res.success) {
+          // Normalize to match UI expectations
+          const mapped = (res.data || []).map((a: any) => ({
+            id: a.id,
+            applicant: {
+              name: a.studentName || `Student #${a.studentId}`,
+              age: a?.formData?.age || "",
+              location: a?.formData?.location || "",
+              email: a?.formData?.email || "",
+              phone: a?.formData?.phone || "",
+              course: a?.formData?.course || "",
+              year: a?.formData?.year || "",
+            },
+            scheme: a.scholarshipTitle || `Scholarship #${a.scholarshipId}`,
+            amount: a.amountAwarded ? `₹${a.amountAwarded}` : "",
+            submittedDate: a.submittedAt,
+            score: a.score ?? "",
+            status:
+              a.status === "under_review"
+                ? "Under Review"
+                : a.status === "submitted"
+                  ? "Submitted"
+                  : a.status,
+            documents: Array.isArray(a.documents) ? a.documents : [],
+            priority: "medium",
+            region: "",
+          }));
+          setPendingApplications(mapped);
+        }
+      } catch {}
+    })();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
