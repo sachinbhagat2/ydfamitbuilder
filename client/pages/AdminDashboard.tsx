@@ -43,6 +43,16 @@ const AdminDashboard = () => {
   const [applications, setApplications] = useState<any[]>([]);
   const [appPage, setAppPage] = useState(1);
   const [appTotal, setAppTotal] = useState(0);
+  const [reviewers, setReviewers] = useState<any[]>([]);
+  const [assignState, setAssignState] = useState<{
+    open: boolean;
+    appId?: number;
+    reviewerId?: number | "";
+  }>({ open: false });
+  const [sortBy, setSortBy] = useState<
+    "submittedAt" | "status" | "studentName" | "scholarshipTitle"
+  >("submittedAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
@@ -142,6 +152,16 @@ const AdminDashboard = () => {
     fetchOverviewData();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "applications") {
+      fetchApplications(1, appStatusFilter);
+      fetchReviewers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const fetchSchemes = async () => {
     try {
       const api = (await import("../services/api")).default;
@@ -176,6 +196,30 @@ const AdminDashboard = () => {
         setAppTotal(res.pagination?.total || 0);
       }
     } catch (e) {}
+  };
+
+  const fetchReviewers = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.listUsers({ userType: "reviewer", limit: 100 });
+      if (res.success) setReviewers(res.data || []);
+    } catch (e) {}
+  };
+
+  const reviewerName = (id?: number | null) => {
+    if (!id) return "Unassigned";
+    const r = reviewers.find((u: any) => Number(u.id) === Number(id));
+    return r
+      ? `${r.firstName || ""} ${r.lastName || ""}`.trim() || r.email
+      : `#${id}`;
+  };
+
+  const updateApplication = async (id: number, payload: any) => {
+    const api = (await import("../services/api")).default;
+    const res = await api.updateApplication(id, payload);
+    if (res.success) {
+      await fetchApplications(appPage, appStatusFilter);
+    }
   };
 
   const openCreate = () => {
@@ -952,49 +996,163 @@ const AdminDashboard = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-ydf-light-gray">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("id" as any);
+                              setSortDir(
+                                sortBy === ("id" as any) && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             ID
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("scholarshipTitle");
+                              setSortDir(
+                                sortBy === "scholarshipTitle" &&
+                                  sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Scholarship
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("studentName");
+                              setSortDir(
+                                sortBy === "studentName" && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Student
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("status");
+                              setSortDir(
+                                sortBy === "status" && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Status
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("submittedAt");
+                              setSortDir(
+                                sortBy === "submittedAt" && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Submitted
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Reviewer
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ydf-light-gray">
-                        {applications.map((a) => (
-                          <tr key={a.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.id}
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.scholarshipTitle || `#${a.scholarshipId}`}
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.studentName || `#${a.studentId}`}
-                            </td>
-                            <td className="px-6 py-3">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
-                              >
-                                {a.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.submittedAt
-                                ? new Date(a.submittedAt).toLocaleString()
-                                : ""}
-                            </td>
-                          </tr>
-                        ))}
+                        {[...applications]
+                          .sort((a: any, b: any) => {
+                            const dir = sortDir === "asc" ? 1 : -1;
+                            const get = (x: any) =>
+                              sortBy === "submittedAt"
+                                ? new Date(x.submittedAt || 0).getTime()
+                                : String(x[sortBy] || "").toLowerCase();
+                            const va: any = get(a);
+                            const vb: any = get(b);
+                            if (va < vb) return -1 * dir;
+                            if (va > vb) return 1 * dir;
+                            return 0;
+                          })
+                          .map((a) => (
+                            <tr key={a.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.id}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.scholarshipTitle || `#${a.scholarshipId}`}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.studentName || `#${a.studentId}`}
+                              </td>
+                              <td className="px-6 py-3">
+                                <select
+                                  className={`px-2 py-1 border rounded text-xs ${getStatusColor(a.status)}`}
+                                  value={a.status}
+                                  onChange={(e) =>
+                                    updateApplication(a.id, {
+                                      status: e.target.value,
+                                    })
+                                  }
+                                >
+                                  <option value="submitted">submitted</option>
+                                  <option value="under_review">
+                                    under_review
+                                  </option>
+                                  <option value="approved">approved</option>
+                                  <option value="rejected">rejected</option>
+                                  <option value="waitlisted">waitlisted</option>
+                                </select>
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.submittedAt
+                                  ? new Date(a.submittedAt).toLocaleString()
+                                  : ""}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {reviewerName(a.assignedReviewerId)}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {!a.assignedReviewerId ? (
+                                  <button
+                                    onClick={() =>
+                                      setAssignState({
+                                        open: true,
+                                        appId: a.id,
+                                        reviewerId: "",
+                                      })
+                                    }
+                                    className="px-3 py-1 rounded bg-ydf-deep-blue text-white"
+                                  >
+                                    Assign Reviewer
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      setAssignState({
+                                        open: true,
+                                        appId: a.id,
+                                        reviewerId: a.assignedReviewerId,
+                                      })
+                                    }
+                                    className="px-3 py-1 rounded border"
+                                  >
+                                    Change Reviewer
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>
@@ -1026,6 +1184,57 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {assignState.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Assign Reviewer</h3>
+            <div>
+              <label className="text-sm text-gray-600">Reviewer</label>
+              <select
+                className="w-full border rounded px-3 py-2 mt-1"
+                value={assignState.reviewerId as any}
+                onChange={(e) =>
+                  setAssignState((s) => ({
+                    ...s,
+                    reviewerId: e.target.value ? Number(e.target.value) : "",
+                  }))
+                }
+              >
+                <option value="">Select reviewer</option>
+                {reviewers.map((r: any) => (
+                  <option key={r.id} value={r.id}>
+                    {(r.firstName || "") + " " + (r.lastName || "")} ({r.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setAssignState({ open: false })}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!assignState.reviewerId}
+                onClick={async () => {
+                  if (assignState.appId && assignState.reviewerId) {
+                    await updateApplication(assignState.appId, {
+                      assignedReviewerId: assignState.reviewerId,
+                      status: "under_review",
+                    });
+                  }
+                  setAssignState({ open: false });
+                }}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewScholarship && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

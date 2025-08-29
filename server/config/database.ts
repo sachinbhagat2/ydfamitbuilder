@@ -530,6 +530,102 @@ async function ensureAnnouncementsTable() {
 
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
+  async listUsers(
+    params: {
+      userType?: string;
+      isActive?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    } = {},
+  ) {
+    const { userType, isActive, search, page = 1, limit = 100 } = params;
+    const offset = (page - 1) * limit;
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let list = [...memory.users];
+      if (userType)
+        list = list.filter((u) => String(u.userType) === String(userType));
+      if (typeof isActive === "boolean")
+        list = list.filter((u) => !!u.isActive === isActive);
+      if (search) {
+        const q = search.toLowerCase();
+        list = list.filter(
+          (u) =>
+            String(u.email || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(u.firstName || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(u.lastName || "")
+              .toLowerCase()
+              .includes(q),
+        );
+      }
+      list.sort(
+        (a: any, b: any) => (b.createdAt as any) - (a.createdAt as any),
+      );
+      return list.slice(offset, offset + limit);
+    }
+    if (MODE === "postgres" && pgPool) {
+      const where: string[] = [];
+      const vals: any[] = [];
+      if (userType) {
+        where.push('"userType" = $' + (vals.length + 1));
+        vals.push(userType);
+      }
+      if (typeof isActive === "boolean") {
+        where.push('"isActive" = $' + (vals.length + 1));
+        vals.push(isActive);
+      }
+      if (search) {
+        where.push(
+          "(LOWER(email) LIKE $" +
+            (vals.length + 1) +
+            ' OR LOWER("firstName") LIKE $' +
+            (vals.length + 2) +
+            ' OR LOWER("lastName") LIKE $' +
+            (vals.length + 3) +
+            ")",
+        );
+        vals.push(
+          `%${search.toLowerCase()}%`,
+          `%${search.toLowerCase()}%`,
+          `%${search.toLowerCase()}%`,
+        );
+      }
+      const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+      const result = await pgPool.query(
+        `SELECT id, email, "firstName", "lastName", phone, "userType", "isActive", "emailVerified", "createdAt", "updatedAt" FROM users ${whereSql} ORDER BY "createdAt" DESC OFFSET $${vals.length + 1} LIMIT $${vals.length + 2}`,
+        [...vals, offset, limit],
+      );
+      return result.rows as any[];
+    }
+    const where: string[] = [];
+    const vals: any[] = [];
+    if (userType) {
+      where.push("userType = ?");
+      vals.push(userType);
+    }
+    if (typeof isActive === "boolean") {
+      where.push("isActive = ?");
+      vals.push(isActive ? 1 : 0);
+    }
+    if (search) {
+      where.push(
+        "(LOWER(email) LIKE ? OR LOWER(firstName) LIKE ? OR LOWER(lastName) LIKE ?)",
+      );
+      const like = `%${search.toLowerCase()}%`;
+      vals.push(like, like, like);
+    }
+    const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+    const [rows] = await pool.execute(
+      `SELECT id, email, firstName, lastName, phone, userType, isActive, emailVerified, createdAt, updatedAt FROM users ${whereSql} ORDER BY createdAt DESC LIMIT ? OFFSET ?`,
+      [...vals, limit, offset],
+    );
+    return rows as any[];
+  }
+
   async findUserByEmail(email: string) {
     const normalized = String(email || "")
       .trim()
@@ -1307,6 +1403,108 @@ class DatabaseAdapter {
       [result.insertId],
     );
     return (rows as any[])[0];
+  }
+
+  async updateApplication(
+    id: number,
+    data: {
+      status?: string;
+      assignedReviewerId?: number | null;
+      score?: number | null;
+      amountAwarded?: number | null;
+      reviewNotes?: string | null;
+    },
+  ) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const idx = memory.applications.findIndex((a: any) => a.id === id);
+      if (idx === -1) return null;
+      const next = { ...memory.applications[idx] } as any;
+      if (data.status) next.status = data.status;
+      if ("assignedReviewerId" in data)
+        next.assignedReviewerId = data.assignedReviewerId ?? null;
+      if ("score" in data) next.score = data.score ?? null;
+      if ("amountAwarded" in data)
+        next.amountAwarded = data.amountAwarded ?? null;
+      if ("reviewNotes" in data) next.reviewNotes = data.reviewNotes ?? null;
+      next.updatedAt = new Date();
+      memory.applications[idx] = next;
+      return next;
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let i = 1;
+      if (data.status) {
+        sets.push(`status = $${i++}`);
+        vals.push(data.status);
+      }
+      if ("assignedReviewerId" in data) {
+        sets.push(`"assignedReviewerId" = $${i++}`);
+        vals.push(data.assignedReviewerId);
+      }
+      if ("score" in data) {
+        sets.push(`score = $${i++}`);
+        vals.push(data.score);
+      }
+      if ("amountAwarded" in data) {
+        sets.push(`"amountAwarded" = $${i++}`);
+        vals.push(data.amountAwarded);
+      }
+      if ("reviewNotes" in data) {
+        sets.push(`"reviewNotes" = $${i++}`);
+        vals.push(data.reviewNotes);
+      }
+      if (!sets.length) {
+        const res = await pgPool.query(
+          "SELECT * FROM applications WHERE id = $1",
+          [id],
+        );
+        return (res.rows as any[])[0] || null;
+      }
+      const sql = `UPDATE applications SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      vals.push(id);
+      const result = await pgPool.query(sql, vals);
+      return (result.rows as any[])[0] || null;
+    }
+    const cols: string[] = [];
+    const vals: any[] = [];
+    if (data.status) {
+      cols.push("status = ?");
+      vals.push(data.status);
+    }
+    if ("assignedReviewerId" in data) {
+      cols.push("assignedReviewerId = ?");
+      vals.push(data.assignedReviewerId);
+    }
+    if ("score" in data) {
+      cols.push("score = ?");
+      vals.push(data.score);
+    }
+    if ("amountAwarded" in data) {
+      cols.push("amountAwarded = ?");
+      vals.push(data.amountAwarded);
+    }
+    if ("reviewNotes" in data) {
+      cols.push("reviewNotes = ?");
+      vals.push(data.reviewNotes);
+    }
+    if (!cols.length) {
+      const [rows] = await pool.execute(
+        "SELECT * FROM applications WHERE id = ?",
+        [id],
+      );
+      return (rows as any[])[0] || null;
+    }
+    await pool.execute(
+      `UPDATE applications SET ${cols.join(", ")}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+      [...vals, id],
+    );
+    const [rows] = await pool.execute(
+      "SELECT * FROM applications WHERE id = ?",
+      [id],
+    );
+    return (rows as any[])[0] || null;
   }
 }
 
