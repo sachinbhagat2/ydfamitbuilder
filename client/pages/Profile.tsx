@@ -290,8 +290,12 @@ const Profile = () => {
               value={profileData.firstName}
               onChange={(e) => handleInputChange("firstName", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.firstName}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.firstName ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.firstName && (
+              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -302,8 +306,12 @@ const Profile = () => {
               value={profileData.lastName}
               onChange={(e) => handleInputChange("lastName", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.lastName}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.lastName ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.lastName && (
+              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -314,8 +322,12 @@ const Profile = () => {
               value={profileData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
               disabled={true}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.email}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.email ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -326,8 +338,12 @@ const Profile = () => {
               value={profileData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.phone}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.phone ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -374,8 +390,12 @@ const Profile = () => {
               onChange={(e) => handleInputChange("address", e.target.value)}
               disabled={!isEditing}
               rows={3}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.address}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.address ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.address && (
+              <p className="mt-1 text-sm text-red-600">{errors.address}</p>
+            )}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
@@ -387,8 +407,12 @@ const Profile = () => {
                 value={profileData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+                aria-invalid={!!errors.city}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.city ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
               />
+              {errors.city && (
+                <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -399,8 +423,12 @@ const Profile = () => {
                 value={profileData.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+                aria-invalid={!!errors.state}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.state ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
               />
+              {errors.state && (
+                <p className="mt-1 text-sm text-red-600">{errors.state}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -411,8 +439,12 @@ const Profile = () => {
                 value={profileData.pincode}
                 onChange={(e) => handleInputChange("pincode", e.target.value)}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+                aria-invalid={!!errors.pincode}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.pincode ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
               />
+              {errors.pincode && (
+                <p className="mt-1 text-sm text-red-600">{errors.pincode}</p>
+              )}
             </div>
           </div>
         </div>
@@ -454,8 +486,12 @@ const Profile = () => {
               value={profileData.course}
               onChange={(e) => handleInputChange("course", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.course}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.course ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.course && (
+              <p className="mt-1 text-sm text-red-600">{errors.course}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -466,8 +502,12 @@ const Profile = () => {
               value={profileData.college}
               onChange={(e) => handleInputChange("college", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.college}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.college ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.college && (
+              <p className="mt-1 text-sm text-red-600">{errors.college}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -477,7 +517,8 @@ const Profile = () => {
               value={profileData.year}
               onChange={(e) => handleInputChange("year", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.year}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.year ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             >
               <option value="1st Year">1st Year</option>
               <option value="2nd Year">2nd Year</option>
@@ -495,8 +536,12 @@ const Profile = () => {
               value={profileData.rollNumber}
               onChange={(e) => handleInputChange("rollNumber", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.rollNumber}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.rollNumber ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.rollNumber && (
+              <p className="mt-1 text-sm text-red-600">{errors.rollNumber}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -507,8 +552,12 @@ const Profile = () => {
               value={profileData.cgpa}
               onChange={(e) => handleInputChange("cgpa", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.cgpa}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.cgpa ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.cgpa && (
+              <p className="mt-1 text-sm text-red-600">{errors.cgpa}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -518,8 +567,12 @@ const Profile = () => {
               value={profileData.category}
               onChange={(e) => handleInputChange("category", e.target.value)}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.category}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.category ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             >
+            {errors.category && (
+              <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+            )}
               <option value="General">General</option>
               <option value="OBC">OBC</option>
               <option value="SC">SC</option>
@@ -546,8 +599,12 @@ const Profile = () => {
                 handleInputChange("familyIncome", e.target.value)
               }
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
+              aria-invalid={!!errors.familyIncome}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 disabled:bg-gray-50 ${errors.familyIncome ? "border-red-500 focus:ring-red-500" : "border-ydf-light-gray focus:ring-ydf-deep-blue focus:border-transparent"}`}
             />
+            {errors.familyIncome && (
+              <p className="mt-1 text-sm text-red-600">{errors.familyIncome}</p>
+            )}
           </div>
         </div>
       </div>
