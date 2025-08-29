@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "../hooks/use-toast";
 import {
   ArrowLeft,
   Search,
@@ -336,7 +337,7 @@ const Scholarships = () => {
     return matchesSearch && matchesCategory && matchesAmount();
   });
 
-  const ApplicationModal = ({ scholarship, onClose }: any) => (
+  const ApplicationModal = ({ scholarship, onClose }: any) => { const navigate = useNavigate(); const [isSubmitting, setIsSubmitting] = useState(false); const startApplication = async () => { try { setIsSubmitting(true); const api = (await import('../services/api')).default; const res = await api.createApplication({ scholarshipId: Number(scholarship.id) }); if (res.success) { toast({ title: 'Application submitted', description: 'Track it in Progress' }); onClose(); navigate('/progress'); } } catch (e: any) { toast({ title: 'Apply failed', description: String(e?.message||e) }); } finally { setIsSubmitting(false); } }; return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -441,7 +442,7 @@ const Scholarships = () => {
             >
               Cancel
             </button>
-            <button className="bg-ydf-deep-blue text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
+            <button onClick={startApplication} disabled={isSubmitting} className={`px-6 py-2 rounded-lg transition-colors text-white ${isSubmitting ? 'bg-gray-400' : 'bg-ydf-deep-blue hover:bg-opacity-90'}`}>
               Start Application
             </button>
           </div>
@@ -449,6 +450,7 @@ const Scholarships = () => {
       </motion.div>
     </div>
   );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -710,10 +712,10 @@ const Scholarships = () => {
 
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between">
-                  <button className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900">
+                  <Link to={`/scholarships/${scholarship.id}`} className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900">
                     <Info className="h-4 w-4" />
                     <span>View Details</span>
-                  </button>
+                  </Link>
                   <div className="flex items-center space-x-2">
                     <button className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors">
                       <Heart className="h-4 w-4" />
