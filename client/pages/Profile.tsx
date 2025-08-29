@@ -124,7 +124,10 @@ const Profile = () => {
           });
         }
       } catch (e: any) {
-        toast({ title: 'Failed to load profile', description: String(e?.message||e) });
+        toast({
+          title: "Failed to load profile",
+          description: String(e?.message || e),
+        });
       }
     })();
   }, []);
@@ -132,15 +135,47 @@ const Profile = () => {
   const handleSave = async () => {
     // Validation
     if (!profileData.firstName.trim() || !profileData.lastName.trim()) {
-      toast({ title: 'Name is required', description: 'Please enter first and last name' });
+      toast({
+        title: "Name is required",
+        description: "Please enter first and last name",
+      });
       return;
     }
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email);
-    if (!emailOk) { toast({ title: 'Invalid email', description: 'Please enter a valid email address' }); return; }
+    if (!emailOk) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+      });
+      return;
+    }
     const phoneOk = /^\+?\d[\d\s-]{7,}$/.test(profileData.phone);
-    if (!phoneOk) { toast({ title: 'Invalid phone', description: 'Please enter a valid phone number' }); return; }
-    if (profileData.pincode && !/^\d{5,6}$/.test(profileData.pincode)) { toast({ title: 'Invalid pincode', description: 'Pincode must be 5-6 digits' }); return; }
-    if (profileData.cgpa && (isNaN(Number(profileData.cgpa)) || Number(profileData.cgpa) < 0 || Number(profileData.cgpa) > 10)) { toast({ title: 'Invalid CGPA', description: 'CGPA must be between 0 and 10' }); return; }
+    if (!phoneOk) {
+      toast({
+        title: "Invalid phone",
+        description: "Please enter a valid phone number",
+      });
+      return;
+    }
+    if (profileData.pincode && !/^\d{5,6}$/.test(profileData.pincode)) {
+      toast({
+        title: "Invalid pincode",
+        description: "Pincode must be 5-6 digits",
+      });
+      return;
+    }
+    if (
+      profileData.cgpa &&
+      (isNaN(Number(profileData.cgpa)) ||
+        Number(profileData.cgpa) < 0 ||
+        Number(profileData.cgpa) > 10)
+    ) {
+      toast({
+        title: "Invalid CGPA",
+        description: "CGPA must be between 0 and 10",
+      });
+      return;
+    }
 
     try {
       const payload: any = {
@@ -165,11 +200,14 @@ const Profile = () => {
       };
       const res = await api.updateProfile(payload);
       if (res.success) {
-        toast({ title: 'Profile updated', description: 'Your changes have been saved' });
+        toast({
+          title: "Profile updated",
+          description: "Your changes have been saved",
+        });
         setIsEditing(false);
       }
     } catch (e: any) {
-      toast({ title: 'Update failed', description: String(e?.message||e) });
+      toast({ title: "Update failed", description: String(e?.message || e) });
     }
   };
 

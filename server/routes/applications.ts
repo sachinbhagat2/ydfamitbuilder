@@ -1,14 +1,24 @@
-import { Router } from 'express';
-import { authenticateToken, authorize } from '../utils/auth';
-import { mockDatabase } from '../config/database';
-import { ApiResponse, PaginatedResponse, Application } from '../../shared/types/database';
+import { Router } from "express";
+import { authenticateToken, authorize } from "../utils/auth";
+import { mockDatabase } from "../config/database";
+import {
+  ApiResponse,
+  PaginatedResponse,
+  Application,
+} from "../../shared/types/database";
 
 const router = Router();
 
 // List applications with optional filters (admin only)
-router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
+router.get("/", authenticateToken, authorize("admin"), async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, studentId, scholarshipId } = req.query as any;
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      studentId,
+      scholarshipId,
+    } = req.query as any;
     const result = await mockDatabase.getApplications({
       page: Number(page),
       limit: Number(limit),
@@ -21,68 +31,112 @@ router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
       success: true,
       data: result.data,
       pagination: result.pagination,
-      message: 'Applications retrieved successfully',
+      message: "Applications retrieved successfully",
     };
     res.json(response);
   } catch (error) {
-    console.error('List applications error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("List applications error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
 // Stats (admin only)
-router.get('/stats', authenticateToken, authorize('admin'), async (_req, res) => {
-  try {
-    const stats = await mockDatabase.getApplicationStats();
-    const response: ApiResponse = { success: true, data: stats, message: 'Stats retrieved successfully' };
-    res.json(response);
-  } catch (error) {
-    console.error('Applications stats error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
+router.get(
+  "/stats",
+  authenticateToken,
+  authorize("admin"),
+  async (_req, res) => {
+    try {
+      const stats = await mockDatabase.getApplicationStats();
+      const response: ApiResponse = {
+        success: true,
+        data: stats,
+        message: "Stats retrieved successfully",
+      };
+      res.json(response);
+    } catch (error) {
+      console.error("Applications stats error:", error);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  },
+);
 
 // Recent applications (admin only)
-router.get('/recent', authenticateToken, authorize('admin'), async (req, res) => {
-  try {
-    const limit = Number((req.query.limit as any) || 5);
-    const recent = await mockDatabase.getRecentApplications(limit);
-    const response: ApiResponse<Application[]> = { success: true, data: recent, message: 'Recent applications' };
-    res.json(response);
-  } catch (error) {
-    console.error('Recent applications error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
+router.get(
+  "/recent",
+  authenticateToken,
+  authorize("admin"),
+  async (req, res) => {
+    try {
+      const limit = Number((req.query.limit as any) || 5);
+      const recent = await mockDatabase.getRecentApplications(limit);
+      const response: ApiResponse<Application[]> = {
+        success: true,
+        data: recent,
+        message: "Recent applications",
+      };
+      res.json(response);
+    } catch (error) {
+      console.error("Recent applications error:", error);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  },
+);
 
 // Export CSV (admin only)
-router.get('/export', authenticateToken, authorize('admin'), async (req, res) => {
-  try {
-    const { status } = req.query as any;
-    const all = await mockDatabase.getApplications({ page: 1, limit: 10000, status: status as any });
-    const rows = all.data as any[];
-    const headers = ['id','scholarshipId','studentId','status','score','amountAwarded','assignedReviewerId','submittedAt','updatedAt'];
-    const csv = [headers.join(',')]
-      .concat(
-        rows.map(r => headers.map(h => {
-          const v = r[h] != null ? r[h] : '';
-          if (v instanceof Date) return new Date(v).toISOString();
-          const s = String(v).replace(/"/g, '""');
-          return /[",\n]/.test(s) ? `"${s}"` : s;
-        }).join(','))
-      )
-      .join('\n');
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="applications.csv"');
-    res.send(csv);
-  } catch (error) {
-    console.error('Export applications error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
+router.get(
+  "/export",
+  authenticateToken,
+  authorize("admin"),
+  async (req, res) => {
+    try {
+      const { status } = req.query as any;
+      const all = await mockDatabase.getApplications({
+        page: 1,
+        limit: 10000,
+        status: status as any,
+      });
+      const rows = all.data as any[];
+      const headers = [
+        "id",
+        "scholarshipId",
+        "studentId",
+        "status",
+        "score",
+        "amountAwarded",
+        "assignedReviewerId",
+        "submittedAt",
+        "updatedAt",
+      ];
+      const csv = [headers.join(",")]
+        .concat(
+          rows.map((r) =>
+            headers
+              .map((h) => {
+                const v = r[h] != null ? r[h] : "";
+                if (v instanceof Date) return new Date(v).toISOString();
+                const s = String(v).replace(/"/g, '""');
+                return /[",\n]/.test(s) ? `"${s}"` : s;
+              })
+              .join(","),
+          ),
+        )
+        .join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="applications.csv"',
+      );
+      res.send(csv);
+    } catch (error) {
+      console.error("Export applications error:", error);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  },
+);
 
 // Student: my applications
-router.get('/my', authenticateToken, async (req: any, res) => {
+router.get("/my", authenticateToken, async (req: any, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query as any;
     const result = await mockDatabase.getApplications({
@@ -95,38 +149,54 @@ router.get('/my', authenticateToken, async (req: any, res) => {
       success: true,
       data: result.data,
       pagination: result.pagination,
-      message: 'My applications',
+      message: "My applications",
     };
     res.json(response);
   } catch (error) {
-    console.error('My applications error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("My applications error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
 // Student: my stats
-router.get('/my/stats', authenticateToken, async (req: any, res) => {
+router.get("/my/stats", authenticateToken, async (req: any, res) => {
   try {
-    const stats = await mockDatabase.getApplicationStatsForStudent(req.user?.id);
-    const response: ApiResponse = { success: true, data: stats, message: 'My stats' };
+    const stats = await mockDatabase.getApplicationStatsForStudent(
+      req.user?.id,
+    );
+    const response: ApiResponse = {
+      success: true,
+      data: stats,
+      message: "My stats",
+    };
     res.json(response);
   } catch (error) {
-    console.error('My applications stats error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("My applications stats error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
 // Student: create application
-router.post('/', authenticateToken, async (req: any, res) => {
+router.post("/", authenticateToken, async (req: any, res) => {
   try {
     const { scholarshipId, applicationData, documents } = req.body || {};
-    if (!scholarshipId) return res.status(400).json({ success: false, error: 'scholarshipId is required' });
-    const created = await mockDatabase.createApplication({ scholarshipId, applicationData, documents }, req.user?.id);
-    const response: ApiResponse<Application> = { success: true, data: created, message: 'Application submitted' };
+    if (!scholarshipId)
+      return res
+        .status(400)
+        .json({ success: false, error: "scholarshipId is required" });
+    const created = await mockDatabase.createApplication(
+      { scholarshipId, applicationData, documents },
+      req.user?.id,
+    );
+    const response: ApiResponse<Application> = {
+      success: true,
+      data: created,
+      message: "Application submitted",
+    };
     res.status(201).json(response);
   } catch (error) {
-    console.error('Create application error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Create application error:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 

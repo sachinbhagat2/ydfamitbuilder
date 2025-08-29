@@ -173,7 +173,8 @@ const Progress = () => {
     const approved =
       applications.filter((a) => a.status === "Approved").length || 0;
     const totalAmount = applications.reduce(
-      (acc, a) => acc + (parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0),
+      (acc, a) =>
+        acc + (parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0),
       0,
     );
     return [
@@ -183,8 +184,18 @@ const Progress = () => {
         icon: FileText,
         color: "bg-blue-500",
       },
-      { title: "Under Review", value: under, icon: Clock, color: "bg-yellow-500" },
-      { title: "Approved", value: approved, icon: CheckCircle, color: "bg-green-500" },
+      {
+        title: "Under Review",
+        value: under,
+        icon: Clock,
+        color: "bg-yellow-500",
+      },
+      {
+        title: "Approved",
+        value: approved,
+        icon: CheckCircle,
+        color: "bg-green-500",
+      },
       {
         title: "Total Amount Applied",
         value: `₹${totalAmount.toLocaleString("en-IN")}`,
@@ -232,7 +243,9 @@ const Progress = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stat.value}
+                  </p>
                 </div>
                 <div className={`${stat.color} p-3 rounded-lg`}>
                   <stat.icon className="h-6 w-6 text-white" />
@@ -356,42 +369,47 @@ const Progress = () => {
                     Application Timeline
                   </h4>
                   <div className="space-y-4">
-                    {application.timeline.map((step: any, stepIndex: number) => (
-                      <div key={stepIndex} className="flex items-start space-x-4">
+                    {application.timeline.map(
+                      (step: any, stepIndex: number) => (
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            step.completed
-                              ? "bg-green-500 text-white"
-                              : "bg-gray-200 text-gray-600"
-                          }`}
+                          key={stepIndex}
+                          className="flex items-start space-x-4"
                         >
-                          {step.completed ? (
-                            <CheckCircle className="h-4 w-4" />
-                          ) : (
-                            <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h5
-                              className={`font-medium ${
-                                step.completed
-                                  ? "text-gray-900"
-                                  : "text-gray-600"
-                              }`}
-                            >
-                              {step.step}
-                            </h5>
-                            <span className="text-sm text-gray-500">
-                              {step.date}
-                            </span>
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              step.completed
+                                ? "bg-green-500 text-white"
+                                : "bg-gray-200 text-gray-600"
+                            }`}
+                          >
+                            {step.completed ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : (
+                              <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                            )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {step.description}
-                          </p>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h5
+                                className={`font-medium ${
+                                  step.completed
+                                    ? "text-gray-900"
+                                    : "text-gray-600"
+                                }`}
+                              >
+                                {step.step}
+                              </h5>
+                              <span className="text-sm text-gray-500">
+                                {step.date}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {step.description}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -422,7 +440,10 @@ const Progress = () => {
                         <Download className="h-4 w-4" />
                         <span>Download</span>
                       </button>
-                      <Link to="/support" className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                      <Link
+                        to="/support"
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
                         <MessageCircle className="h-4 w-4" />
                         <span>Contact Support</span>
                       </Link>
@@ -440,7 +461,9 @@ const Progress = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               No applications found
             </h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
+            <p className="text-gray-600">
+              Try adjusting your search or filter criteria.
+            </p>
           </div>
         )}
       </div>

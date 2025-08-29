@@ -40,7 +40,7 @@ const StudentDashboard = () => {
       const [statsRes, appsRes, schRes] = await Promise.all([
         api.getMyApplicationStats(),
         api.listMyApplications({ page: 1, limit: 10 }),
-        api.listScholarships({ status: 'active', limit: 5 }),
+        api.listScholarships({ status: "active", limit: 5 }),
       ]);
       if (statsRes.success) setMyStats(statsRes.data);
       if (appsRes.success) setMyApps(appsRes.data || []);
@@ -58,15 +58,17 @@ const StudentDashboard = () => {
     setShowOnboarding(false);
   };
 
-  const appliedSet = new Set(myApps.map((a:any)=> a.scholarshipId));
-  const scholarships = activeScholarships.slice(0,3).map((s:any) => ({
+  const appliedSet = new Set(myApps.map((a: any) => a.scholarshipId));
+  const scholarships = activeScholarships.slice(0, 3).map((s: any) => ({
     id: s.id,
     name: s.title,
     amount: `₹${s.amount}`,
-    deadline: s.applicationDeadline ? new Date(s.applicationDeadline).toLocaleDateString() : '-',
-    status: appliedSet.has(s.id) ? 'Applied' : 'Eligible',
-    category: Array.isArray(s.tags) ? s.tags.join(', ') : 'General',
-    color: appliedSet.has(s.id) ? 'bg-ydf-deep-blue' : 'bg-ydf-teal-green',
+    deadline: s.applicationDeadline
+      ? new Date(s.applicationDeadline).toLocaleDateString()
+      : "-",
+    status: appliedSet.has(s.id) ? "Applied" : "Eligible",
+    category: Array.isArray(s.tags) ? s.tags.join(", ") : "General",
+    color: appliedSet.has(s.id) ? "bg-ydf-deep-blue" : "bg-ydf-teal-green",
   }));
 
   const announcements = [
@@ -165,7 +167,9 @@ const StudentDashboard = () => {
                   <GraduationCap className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{(myStats?.submitted || 0) + (myStats?.under_review || 0)}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {(myStats?.submitted || 0) + (myStats?.under_review || 0)}
+                  </p>
                   <p className="text-sm text-gray-600">Active Applications</p>
                 </div>
               </div>
@@ -182,13 +186,22 @@ const StudentDashboard = () => {
                   <DollarSign className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{
-                    (()=>{
-                      const map = new Map(activeScholarships.map((s:any)=> [s.id, Number(s.amount||0)]));
-                      const sum = myApps.reduce((acc:any,a:any)=> acc + (map.get(a.scholarshipId)||0), 0);
-                      return `₹${sum.toLocaleString('en-IN')}`;
-                    })()
-                  }</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {(() => {
+                      const map = new Map(
+                        activeScholarships.map((s: any) => [
+                          s.id,
+                          Number(s.amount || 0),
+                        ]),
+                      );
+                      const sum = myApps.reduce(
+                        (acc: any, a: any) =>
+                          acc + (map.get(a.scholarshipId) || 0),
+                        0,
+                      );
+                      return `₹${sum.toLocaleString("en-IN")}`;
+                    })()}
+                  </p>
                   <p className="text-sm text-gray-600">Total Applied</p>
                 </div>
               </div>
@@ -244,7 +257,10 @@ const StudentDashboard = () => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray"
                 >
-                  <Link to={`/scholarships/${scholarship.id}`} className="block">
+                  <Link
+                    to={`/scholarships/${scholarship.id}`}
+                    className="block"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">

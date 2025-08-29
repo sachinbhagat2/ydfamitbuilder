@@ -36,8 +36,11 @@ const Scholarships = () => {
   useEffect(() => {
     (async () => {
       try {
-        const api = (await import('../services/api')).default;
-        const res = await api.listScholarships({ status: 'active', limit: 100 });
+        const api = (await import("../services/api")).default;
+        const res = await api.listScholarships({
+          status: "active",
+          limit: 100,
+        });
         if (res.success) setRemoteScholarships(res.data);
       } catch {}
     })();
@@ -288,23 +291,37 @@ const Scholarships = () => {
     }
   };
 
-  const scholarships = (remoteScholarships && remoteScholarships.length ? remoteScholarships.map((s:any)=> ({
-    id: s.id,
-    name: s.title,
-    organization: 'Youth Dreamers Foundation',
-    amount: `₹${s.amount}`,
-    category: 'General',
-    deadline: s.applicationDeadline ? new Date(s.applicationDeadline).toISOString().slice(0,10) : '',
-    applicants: s.currentApplications || 0,
-    eligibility: Array.isArray(s.eligibilityCriteria) ? s.eligibilityCriteria : [],
-    description: s.description,
-    benefits: [],
-    documents: Array.isArray(s.requiredDocuments) ? s.requiredDocuments : [],
-    status: s.status === 'active' ? 'Open' : s.status === 'closed' ? 'Closed' : 'Open',
-    difficulty: 'Medium',
-    rating: 4.6,
-    tags: Array.isArray(s.tags) ? s.tags : [],
-  })) : fallbackScholarships);
+  const scholarships =
+    remoteScholarships && remoteScholarships.length
+      ? remoteScholarships.map((s: any) => ({
+          id: s.id,
+          name: s.title,
+          organization: "Youth Dreamers Foundation",
+          amount: `₹${s.amount}`,
+          category: "General",
+          deadline: s.applicationDeadline
+            ? new Date(s.applicationDeadline).toISOString().slice(0, 10)
+            : "",
+          applicants: s.currentApplications || 0,
+          eligibility: Array.isArray(s.eligibilityCriteria)
+            ? s.eligibilityCriteria
+            : [],
+          description: s.description,
+          benefits: [],
+          documents: Array.isArray(s.requiredDocuments)
+            ? s.requiredDocuments
+            : [],
+          status:
+            s.status === "active"
+              ? "Open"
+              : s.status === "closed"
+                ? "Closed"
+                : "Open",
+          difficulty: "Medium",
+          rating: 4.6,
+          tags: Array.isArray(s.tags) ? s.tags : [],
+        }))
+      : fallbackScholarships;
 
   const filteredScholarships = scholarships.filter((scholarship) => {
     const matchesSearch =
@@ -337,119 +354,147 @@ const Scholarships = () => {
     return matchesSearch && matchesCategory && matchesAmount();
   });
 
-  const ApplicationModal = ({ scholarship, onClose }: any) => { const navigate = useNavigate(); const [isSubmitting, setIsSubmitting] = useState(false); const startApplication = async () => { try { setIsSubmitting(true); const api = (await import('../services/api')).default; const res = await api.createApplication({ scholarshipId: Number(scholarship.id) }); if (res.success) { toast({ title: 'Application submitted', description: 'Track it in Progress' }); onClose(); navigate('/progress'); } } catch (e: any) { toast({ title: 'Apply failed', description: String(e?.message||e) }); } finally { setIsSubmitting(false); } }; return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">
-              Apply for {scholarship.name}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Scholarship Details */}
-          <div className="bg-ydf-deep-blue text-white p-4 rounded-lg">
-            <h3 className="font-semibold text-lg">{scholarship.name}</h3>
-            <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
-              <div>Amount: {scholarship.amount}</div>
-              <div>Deadline: {scholarship.deadline}</div>
+  const ApplicationModal = ({ scholarship, onClose }: any) => {
+    const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const startApplication = async () => {
+      try {
+        setIsSubmitting(true);
+        const api = (await import("../services/api")).default;
+        const res = await api.createApplication({
+          scholarshipId: Number(scholarship.id),
+        });
+        if (res.success) {
+          toast({
+            title: "Application submitted",
+            description: "Track it in Progress",
+          });
+          onClose();
+          navigate("/progress");
+        }
+      } catch (e: any) {
+        toast({ title: "Apply failed", description: String(e?.message || e) });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        >
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">
+                Apply for {scholarship.name}
+              </h2>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
           </div>
 
-          {/* Eligibility Check */}
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3">
-              Eligibility Criteria
-            </h4>
-            <div className="space-y-2">
-              {scholarship.eligibility.map(
-                (criteria: string, index: number) => (
+          <div className="p-6 space-y-6">
+            {/* Scholarship Details */}
+            <div className="bg-ydf-deep-blue text-white p-4 rounded-lg">
+              <h3 className="font-semibold text-lg">{scholarship.name}</h3>
+              <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                <div>Amount: {scholarship.amount}</div>
+                <div>Deadline: {scholarship.deadline}</div>
+              </div>
+            </div>
+
+            {/* Eligibility Check */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">
+                Eligibility Criteria
+              </h4>
+              <div className="space-y-2">
+                {scholarship.eligibility.map(
+                  (criteria: string, index: number) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm text-gray-700">{criteria}</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* Required Documents */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">
+                Required Documents
+              </h4>
+              <div className="space-y-2">
+                {scholarship.documents.map((doc: string, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-gray-700">{criteria}</span>
+                    <FileText className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm text-gray-700">{doc}</span>
                   </div>
-                ),
-              )}
+                ))}
+              </div>
+            </div>
+
+            {/* Application Form Preview */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3">
+                Application Steps
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-ydf-deep-blue text-white rounded-full flex items-center justify-center text-xs">
+                    1
+                  </div>
+                  <span>Personal Information</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs">
+                    2
+                  </div>
+                  <span>Educational Details</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs">
+                    3
+                  </div>
+                  <span>Document Upload</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs">
+                    4
+                  </div>
+                  <span>Review & Submit</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Required Documents */}
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3">
-              Required Documents
-            </h4>
-            <div className="space-y-2">
-              {scholarship.documents.map((doc: string, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-gray-700">{doc}</span>
-                </div>
-              ))}
+          <div className="p-6 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startApplication}
+                disabled={isSubmitting}
+                className={`px-6 py-2 rounded-lg transition-colors text-white ${isSubmitting ? "bg-gray-400" : "bg-ydf-deep-blue hover:bg-opacity-90"}`}
+              >
+                Start Application
+              </button>
             </div>
           </div>
-
-          {/* Application Form Preview */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-gray-900 mb-3">
-              Application Steps
-            </h4>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-ydf-deep-blue text-white rounded-full flex items-center justify-center text-xs">
-                  1
-                </div>
-                <span>Personal Information</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs">
-                  2
-                </div>
-                <span>Educational Details</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs">
-                  3
-                </div>
-                <span>Document Upload</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs">
-                  4
-                </div>
-                <span>Review & Submit</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button onClick={startApplication} disabled={isSubmitting} className={`px-6 py-2 rounded-lg transition-colors text-white ${isSubmitting ? 'bg-gray-400' : 'bg-ydf-deep-blue hover:bg-opacity-90'}`}>
-              Start Application
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
+        </motion.div>
+      </div>
+    );
   };
 
   return (
@@ -712,7 +757,10 @@ const Scholarships = () => {
 
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between">
-                  <Link to={`/scholarships/${scholarship.id}`} className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900">
+                  <Link
+                    to={`/scholarships/${scholarship.id}`}
+                    className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
+                  >
                     <Info className="h-4 w-4" />
                     <span>View Details</span>
                   </Link>

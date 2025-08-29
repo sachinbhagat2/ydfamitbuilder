@@ -190,40 +190,40 @@ class InMemoryStore {
       id: 1,
       scholarshipId: 1,
       studentId: 1,
-      status: 'submitted',
+      status: "submitted",
       score: null,
       amountAwarded: null,
       assignedReviewerId: 3,
       formData: {},
       documents: [],
-      submittedAt: new Date(Date.now() - 1000*60*60*24),
-      updatedAt: new Date(Date.now() - 1000*60*60*12),
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
     },
     {
       id: 2,
       scholarshipId: 2,
       studentId: 1,
-      status: 'under_review',
+      status: "under_review",
       score: 80,
       amountAwarded: null,
       assignedReviewerId: 3,
       formData: {},
       documents: [],
-      submittedAt: new Date(Date.now() - 1000*60*60*48),
-      updatedAt: new Date(Date.now() - 1000*60*60*6),
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
     },
     {
       id: 3,
       scholarshipId: 3,
       studentId: 1,
-      status: 'approved',
+      status: "approved",
       score: 92,
-      amountAwarded: '50000',
+      amountAwarded: "50000",
       assignedReviewerId: 3,
       formData: {},
       documents: [],
-      submittedAt: new Date(Date.now() - 1000*60*60*72),
-      updatedAt: new Date(Date.now() - 1000*60*60*3),
+      submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
     },
   ];
 }
@@ -859,42 +859,106 @@ class DatabaseAdapter {
   }
 
   // Applications
-  async getApplications(params: { page?: number; limit?: number; status?: string; studentId?: number; scholarshipId?: number }) {
+  async getApplications(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    studentId?: number;
+    scholarshipId?: number;
+  }) {
     const page = params.page || 1;
     const limit = params.limit || 10;
     const offset = (page - 1) * limit;
 
-    if (USE_MOCK || (MODE !== 'postgres' && !pool)) {
-      let list = [...memory.applications].sort((a,b) => (b.submittedAt as any) - (a.submittedAt as any));
-      if (params.status && params.status !== 'all') list = list.filter(a => String(a.status).toLowerCase() === String(params.status).toLowerCase());
-      if (params.studentId) list = list.filter(a => a.studentId === params.studentId);
-      if (params.scholarshipId) list = list.filter(a => a.scholarshipId === params.scholarshipId);
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let list = [...memory.applications].sort(
+        (a, b) => (b.submittedAt as any) - (a.submittedAt as any),
+      );
+      if (params.status && params.status !== "all")
+        list = list.filter(
+          (a) =>
+            String(a.status).toLowerCase() ===
+            String(params.status).toLowerCase(),
+        );
+      if (params.studentId)
+        list = list.filter((a) => a.studentId === params.studentId);
+      if (params.scholarshipId)
+        list = list.filter((a) => a.scholarshipId === params.scholarshipId);
       const pageData = list.slice(offset, offset + limit);
-      return { data: pageData, pagination: { page, limit, total: list.length, totalPages: Math.ceil(list.length/limit) } };
+      return {
+        data: pageData,
+        pagination: {
+          page,
+          limit,
+          total: list.length,
+          totalPages: Math.ceil(list.length / limit),
+        },
+      };
     }
     await ensureApplicationsTable();
-    if (MODE === 'postgres' && pgPool) {
+    if (MODE === "postgres" && pgPool) {
       const where: string[] = [];
       const vals: any[] = [];
-      if (params.status && params.status !== 'all') { where.push('status = $' + (vals.length+1)); vals.push(params.status); }
-      if (params.studentId) { where.push('"studentId" = $' + (vals.length+1)); vals.push(params.studentId); }
-      if (params.scholarshipId) { where.push('"scholarshipId" = $' + (vals.length+1)); vals.push(params.scholarshipId); }
-      const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
-      const dataRes = await pgPool.query(`SELECT * FROM applications ${whereSql} ORDER BY "submittedAt" DESC OFFSET $${vals.length+1} LIMIT $${vals.length+2}`, [...vals, offset, limit]);
-      const countRes = await pgPool.query(`SELECT COUNT(*)::int as cnt FROM applications ${whereSql}`, vals);
+      if (params.status && params.status !== "all") {
+        where.push("status = $" + (vals.length + 1));
+        vals.push(params.status);
+      }
+      if (params.studentId) {
+        where.push('"studentId" = $' + (vals.length + 1));
+        vals.push(params.studentId);
+      }
+      if (params.scholarshipId) {
+        where.push('"scholarshipId" = $' + (vals.length + 1));
+        vals.push(params.scholarshipId);
+      }
+      const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+      const dataRes = await pgPool.query(
+        `SELECT * FROM applications ${whereSql} ORDER BY "submittedAt" DESC OFFSET $${vals.length + 1} LIMIT $${vals.length + 2}`,
+        [...vals, offset, limit],
+      );
+      const countRes = await pgPool.query(
+        `SELECT COUNT(*)::int as cnt FROM applications ${whereSql}`,
+        vals,
+      );
       const total = (countRes.rows as any[])[0]?.cnt || 0;
-      return { data: dataRes.rows as any[], pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+      return {
+        data: dataRes.rows as any[],
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
     }
     const where: string[] = [];
     const vals: any[] = [];
-    if (params.status && params.status !== 'all') { where.push('status = ?'); vals.push(params.status); }
-    if (params.studentId) { where.push('studentId = ?'); vals.push(params.studentId); }
-    if (params.scholarshipId) { where.push('scholarshipId = ?'); vals.push(params.scholarshipId); }
-    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
-    const [rows] = await pool.execute(`SELECT * FROM applications ${whereSql} ORDER BY submittedAt DESC LIMIT ? OFFSET ?`, [...vals, limit, offset]);
-    const [countRows] = await pool.execute(`SELECT COUNT(*) as cnt FROM applications ${whereSql}`, vals);
+    if (params.status && params.status !== "all") {
+      where.push("status = ?");
+      vals.push(params.status);
+    }
+    if (params.studentId) {
+      where.push("studentId = ?");
+      vals.push(params.studentId);
+    }
+    if (params.scholarshipId) {
+      where.push("scholarshipId = ?");
+      vals.push(params.scholarshipId);
+    }
+    const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+    const [rows] = await pool.execute(
+      `SELECT * FROM applications ${whereSql} ORDER BY submittedAt DESC LIMIT ? OFFSET ?`,
+      [...vals, limit, offset],
+    );
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as cnt FROM applications ${whereSql}`,
+      vals,
+    );
     const total = (countRows as any[])[0]?.cnt || 0;
-    return { data: rows as any[], pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+    return {
+      data: rows as any[],
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async getRecentApplications(limit = 5) {
@@ -903,62 +967,138 @@ class DatabaseAdapter {
   }
 
   async getApplicationStats() {
-    if (USE_MOCK || (MODE !== 'postgres' && !pool)) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const total = memory.applications.length;
-      const by = (st: string) => memory.applications.filter(a => a.status === st).length;
-      return { total, submitted: by('submitted'), under_review: by('under_review'), approved: by('approved'), rejected: by('rejected'), waitlisted: by('waitlisted') };
+      const by = (st: string) =>
+        memory.applications.filter((a) => a.status === st).length;
+      return {
+        total,
+        submitted: by("submitted"),
+        under_review: by("under_review"),
+        approved: by("approved"),
+        rejected: by("rejected"),
+        waitlisted: by("waitlisted"),
+      };
     }
     await ensureApplicationsTable();
-    if (MODE === 'postgres' && pgPool) {
-      const totalRes = await pgPool.query('SELECT COUNT(*)::int as cnt FROM applications');
-      const groupRes = await pgPool.query('SELECT status, COUNT(*)::int as cnt FROM applications GROUP BY status');
+    if (MODE === "postgres" && pgPool) {
+      const totalRes = await pgPool.query(
+        "SELECT COUNT(*)::int as cnt FROM applications",
+      );
+      const groupRes = await pgPool.query(
+        "SELECT status, COUNT(*)::int as cnt FROM applications GROUP BY status",
+      );
       const total = (totalRes.rows as any[])[0]?.cnt || 0;
-      const map: any = { total, submitted: 0, under_review: 0, approved: 0, rejected: 0, waitlisted: 0 };
+      const map: any = {
+        total,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
       for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
       return map;
     }
-    const [totalRows] = await pool.execute('SELECT COUNT(*) as cnt FROM applications');
-    const [groupRows] = await pool.execute('SELECT status, COUNT(*) as cnt FROM applications GROUP BY status');
+    const [totalRows] = await pool.execute(
+      "SELECT COUNT(*) as cnt FROM applications",
+    );
+    const [groupRows] = await pool.execute(
+      "SELECT status, COUNT(*) as cnt FROM applications GROUP BY status",
+    );
     const total = (totalRows as any[])[0]?.cnt || 0;
-    const map: any = { total, submitted: 0, under_review: 0, approved: 0, rejected: 0, waitlisted: 0 };
+    const map: any = {
+      total,
+      submitted: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      waitlisted: 0,
+    };
     for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
     return map;
   }
 
   async getApplicationStatsForStudent(studentId: number) {
-    if (!studentId) return { total: 0, submitted: 0, under_review: 0, approved: 0, rejected: 0, waitlisted: 0 };
-    if (USE_MOCK || (MODE !== 'postgres' && !pool)) {
-      const arr = memory.applications.filter(a => a.studentId === studentId);
+    if (!studentId)
+      return {
+        total: 0,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const arr = memory.applications.filter((a) => a.studentId === studentId);
       const total = arr.length;
-      const by = (st: string) => arr.filter(a => a.status === st).length;
-      return { total, submitted: by('submitted'), under_review: by('under_review'), approved: by('approved'), rejected: by('rejected'), waitlisted: by('waitlisted') };
+      const by = (st: string) => arr.filter((a) => a.status === st).length;
+      return {
+        total,
+        submitted: by("submitted"),
+        under_review: by("under_review"),
+        approved: by("approved"),
+        rejected: by("rejected"),
+        waitlisted: by("waitlisted"),
+      };
     }
     await ensureApplicationsTable();
-    if (MODE === 'postgres' && pgPool) {
-      const totalRes = await pgPool.query('SELECT COUNT(*)::int as cnt FROM applications WHERE "studentId" = $1', [studentId]);
-      const groupRes = await pgPool.query('SELECT status, COUNT(*)::int as cnt FROM applications WHERE "studentId" = $1 GROUP BY status', [studentId]);
+    if (MODE === "postgres" && pgPool) {
+      const totalRes = await pgPool.query(
+        'SELECT COUNT(*)::int as cnt FROM applications WHERE "studentId" = $1',
+        [studentId],
+      );
+      const groupRes = await pgPool.query(
+        'SELECT status, COUNT(*)::int as cnt FROM applications WHERE "studentId" = $1 GROUP BY status',
+        [studentId],
+      );
       const total = (totalRes.rows as any[])[0]?.cnt || 0;
-      const map: any = { total, submitted: 0, under_review: 0, approved: 0, rejected: 0, waitlisted: 0 };
+      const map: any = {
+        total,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
       for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
       return map;
     }
-    const [totalRows] = await pool.execute('SELECT COUNT(*) as cnt FROM applications WHERE studentId = ?', [studentId]);
-    const [groupRows] = await pool.execute('SELECT status, COUNT(*) as cnt FROM applications WHERE studentId = ? GROUP BY status', [studentId]);
+    const [totalRows] = await pool.execute(
+      "SELECT COUNT(*) as cnt FROM applications WHERE studentId = ?",
+      [studentId],
+    );
+    const [groupRows] = await pool.execute(
+      "SELECT status, COUNT(*) as cnt FROM applications WHERE studentId = ? GROUP BY status",
+      [studentId],
+    );
     const total = (totalRows as any[])[0]?.cnt || 0;
-    const map: any = { total, submitted: 0, under_review: 0, approved: 0, rejected: 0, waitlisted: 0 };
+    const map: any = {
+      total,
+      submitted: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      waitlisted: 0,
+    };
     for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
     return map;
   }
 
-  async createApplication(input: { scholarshipId: number; applicationData?: any; documents?: any }, studentId?: number) {
+  async createApplication(
+    input: { scholarshipId: number; applicationData?: any; documents?: any },
+    studentId?: number,
+  ) {
     const now = new Date();
-    if (USE_MOCK || (MODE !== 'postgres' && !pool)) {
-      const nextId = memory.applications.length ? Math.max(...memory.applications.map(a => a.id)) + 1 : 1;
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const nextId = memory.applications.length
+        ? Math.max(...memory.applications.map((a) => a.id)) + 1
+        : 1;
       const rec: any = {
         id: nextId,
         scholarshipId: input.scholarshipId,
         studentId: studentId || 0,
-        status: 'submitted',
+        status: "submitted",
         score: null,
         amountAwarded: null,
         assignedReviewerId: null,
@@ -971,30 +1111,39 @@ class DatabaseAdapter {
       return rec;
     }
     await ensureApplicationsTable();
-    if (MODE === 'postgres' && pgPool) {
-      const result = await pgPool.query('INSERT INTO applications ("scholarshipId", "studentId", status, score, "amountAwarded", "assignedReviewerId", "formData", documents, "submittedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING *', [
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'INSERT INTO applications ("scholarshipId", "studentId", status, score, "amountAwarded", "assignedReviewerId", "formData", documents, "submittedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING *',
+        [
+          input.scholarshipId,
+          studentId || null,
+          "submitted",
+          null,
+          null,
+          null,
+          input.applicationData ? JSON.stringify(input.applicationData) : null,
+          input.documents ? JSON.stringify(input.documents) : null,
+        ],
+      );
+      return (result.rows as any[])[0];
+    }
+    const [result]: any = await pool.execute(
+      "INSERT INTO applications (scholarshipId, studentId, status, score, amountAwarded, assignedReviewerId, formData, documents, submittedAt) VALUES (?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)",
+      [
         input.scholarshipId,
         studentId || null,
-        'submitted',
+        "submitted",
         null,
         null,
         null,
         input.applicationData ? JSON.stringify(input.applicationData) : null,
         input.documents ? JSON.stringify(input.documents) : null,
-      ]);
-      return (result.rows as any[])[0];
-    }
-    const [result]: any = await pool.execute('INSERT INTO applications (scholarshipId, studentId, status, score, amountAwarded, assignedReviewerId, formData, documents, submittedAt) VALUES (?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)', [
-      input.scholarshipId,
-      studentId || null,
-      'submitted',
-      null,
-      null,
-      null,
-      input.applicationData ? JSON.stringify(input.applicationData) : null,
-      input.documents ? JSON.stringify(input.documents) : null,
-    ]);
-    const [rows] = await pool.execute('SELECT * FROM applications WHERE id = ? LIMIT 1', [result.insertId]);
+      ],
+    );
+    const [rows] = await pool.execute(
+      "SELECT * FROM applications WHERE id = ? LIMIT 1",
+      [result.insertId],
+    );
     return (rows as any[])[0];
   }
 }

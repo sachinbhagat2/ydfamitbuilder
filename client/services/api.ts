@@ -165,39 +165,62 @@ class ApiService {
 
   // Applications endpoints (admin)
   async listApplications(params?: Record<string, any>) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
-    const res = await fetch(`${API_BASE_URL}/applications${qs}`, { headers: this.getAuthHeaders() });
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/applications${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async getApplicationStats() {
-    const res = await fetch(`${API_BASE_URL}/applications/stats`, { headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/applications/stats`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async getRecentApplications(limit = 5) {
-    const res = await fetch(`${API_BASE_URL}/applications/recent?limit=${limit}`, { headers: this.getAuthHeaders() });
+    const res = await fetch(
+      `${API_BASE_URL}/applications/recent?limit=${limit}`,
+      { headers: this.getAuthHeaders() },
+    );
     return this.handleResponse(res);
   }
   async exportApplicationsCSV(params?: Record<string, any>) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
-    const res = await fetch(`${API_BASE_URL}/applications/export${qs}`, { headers: this.getAuthHeaders() });
-    if (!res.ok) throw new Error('Export failed');
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/applications/export${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error("Export failed");
     const blob = await res.blob();
     return blob;
   }
 
   // Student applications
   async listMyApplications(params?: Record<string, any>) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
-    const res = await fetch(`${API_BASE_URL}/applications/my${qs}`, { headers: this.getAuthHeaders() });
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/applications/my${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async getMyApplicationStats() {
-    const res = await fetch(`${API_BASE_URL}/applications/my/stats`, { headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/applications/my/stats`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
-  async createApplication(payload: { scholarshipId: number; applicationData?: any; documents?: any }) {
+  async createApplication(payload: {
+    scholarshipId: number;
+    applicationData?: any;
+    documents?: any;
+  }) {
     const res = await fetch(`${API_BASE_URL}/applications`, {
-      method: 'POST',
+      method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(payload),
     });
