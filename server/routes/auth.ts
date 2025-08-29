@@ -7,6 +7,7 @@ import {
   isValidEmail,
   isValidPassword,
   authenticateToken,
+  authorize,
   AuthRequest,
 } from "../utils/auth";
 import {
