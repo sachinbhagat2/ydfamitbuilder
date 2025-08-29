@@ -658,7 +658,25 @@ const Scholarships = () => {
 
         {/* Scholarships Grid */}
         <div className="grid gap-6">
-          {filteredScholarships.map((scholarship, index) => (
+          {useMemo(() => {
+            const arr = [...filteredScholarships];
+            if (sortBy === "deadline") {
+              arr.sort((a: any, b: any) => {
+                const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+                const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+                return da - db;
+              });
+            } else if (sortBy === "amount") {
+              arr.sort((a: any, b: any) => {
+                const aa = parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0;
+                const bb = parseInt(String(b.amount).replace(/[^0-9]/g, "")) || 0;
+                return bb - aa;
+              });
+            } else if (sortBy === "applicants") {
+              arr.sort((a: any, b: any) => (b.applicants || 0) - (a.applicants || 0));
+            }
+            return arr;
+          }, [filteredScholarships, sortBy]).map((scholarship, index) => (
             <motion.div
               key={scholarship.id}
               initial={{ opacity: 0, y: 20 }}
