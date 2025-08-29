@@ -132,7 +132,21 @@ function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
       const payload: any = { status, reviewNotes: notes };
       if (score !== "") payload.score = Number(score);
       const res = await api.updateMyAssignedApplication(row.id, payload);
-      if (res.success) onSaved();
+      if (res.success) {
+        const recommendation =
+          status === "approved"
+            ? "approve"
+            : status === "rejected"
+              ? "reject"
+              : "conditionally_approve";
+        await api.createReview({
+          applicationId: row.id,
+          overallScore: score === "" ? null : Number(score),
+          comments: notes || null,
+          recommendation,
+        });
+        onSaved();
+      }
     } finally {
       setSaving(false);
     }
