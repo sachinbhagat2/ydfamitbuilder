@@ -364,7 +364,9 @@ const Scholarships = () => {
       }
     };
 
-    return matchesSearch && matchesCategory && matchesAmount();
+    const appliedSet = new Set(appliedIds);
+    const notApplied = !appliedSet.has(Number(scholarship.id));
+    return matchesSearch && matchesCategory && matchesAmount() && matchesDeadline() && notApplied;
   });
 
   const ApplicationModal = ({ scholarship, onClose }: any) => {
