@@ -185,6 +185,47 @@ class InMemoryStore {
       updatedAt: new Date(),
     },
   ];
+  public applications: any[] = [
+    {
+      id: 1,
+      scholarshipId: 1,
+      studentId: 1,
+      status: 'submitted',
+      score: null,
+      amountAwarded: null,
+      assignedReviewerId: 3,
+      formData: {},
+      documents: [],
+      submittedAt: new Date(Date.now() - 1000*60*60*24),
+      updatedAt: new Date(Date.now() - 1000*60*60*12),
+    },
+    {
+      id: 2,
+      scholarshipId: 2,
+      studentId: 1,
+      status: 'under_review',
+      score: 80,
+      amountAwarded: null,
+      assignedReviewerId: 3,
+      formData: {},
+      documents: [],
+      submittedAt: new Date(Date.now() - 1000*60*60*48),
+      updatedAt: new Date(Date.now() - 1000*60*60*6),
+    },
+    {
+      id: 3,
+      scholarshipId: 3,
+      studentId: 1,
+      status: 'approved',
+      score: 92,
+      amountAwarded: '50000',
+      assignedReviewerId: 3,
+      formData: {},
+      documents: [],
+      submittedAt: new Date(Date.now() - 1000*60*60*72),
+      updatedAt: new Date(Date.now() - 1000*60*60*3),
+    },
+  ];
 }
 
 const memory = new InMemoryStore();
