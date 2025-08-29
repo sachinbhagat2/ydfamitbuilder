@@ -22,14 +22,31 @@ const StudentDashboard = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [myStats, setMyStats] = useState<any>(null);
+  const [myApps, setMyApps] = useState<any[]>([]);
+  const [activeScholarships, setActiveScholarships] = useState<any[]>([]);
 
   useEffect(() => {
-    // Check if user is new (hasn't seen onboarding)
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_student");
     if (!hasSeenOnboarding) {
       setShowOnboarding(true);
     }
+    fetchDashboard();
   }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const [statsRes, appsRes, schRes] = await Promise.all([
+        api.getMyApplicationStats(),
+        api.listMyApplications({ page: 1, limit: 10 }),
+        api.listScholarships({ status: 'active', limit: 5 }),
+      ]);
+      if (statsRes.success) setMyStats(statsRes.data);
+      if (appsRes.success) setMyApps(appsRes.data || []);
+      if (schRes.success) setActiveScholarships(schRes.data || []);
+    } catch (e) {}
+  };
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("ydf_onboarding_student", "true");
