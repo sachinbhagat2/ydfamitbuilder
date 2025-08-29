@@ -1314,10 +1314,15 @@ const AdminDashboard = () => {
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 <button
                                   onClick={async () => {
-                                    const api = (await import("../services/api")).default;
+                                    const api = (
+                                      await import("../services/api")
+                                    ).default;
                                     const next = !u.isActive;
-                                    const res = await api.updateUser(u.id, { isActive: next });
-                                    if (res.success) fetchUsers(1, userRoleFilter, userSearch);
+                                    const res = await api.updateUser(u.id, {
+                                      isActive: next,
+                                    });
+                                    if (res.success)
+                                      fetchUsers(1, userRoleFilter, userSearch);
                                   }}
                                   className={`px-3 py-1 rounded ${u.isActive ? "bg-red-600 text-white" : "bg-green-600 text-white"}`}
                                 >

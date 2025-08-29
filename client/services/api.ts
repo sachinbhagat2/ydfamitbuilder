@@ -242,7 +242,10 @@ class ApiService {
     return this.handleResponse(res);
   }
   // Admin: update user status
-  async updateUser(userId: number, payload: { isActive?: boolean; userType?: string }) {
+  async updateUser(
+    userId: number,
+    payload: { isActive?: boolean; userType?: string },
+  ) {
     const res = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
       method: "PATCH",
       headers: this.getAuthHeaders(),

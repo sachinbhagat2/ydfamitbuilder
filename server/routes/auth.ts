@@ -683,7 +683,9 @@ router.patch(
       const id = Number(req.params.id);
       const { isActive } = req.body || {};
       if (!Number.isFinite(id)) {
-        return res.status(400).json({ success: false, error: "Invalid user id" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid user id" });
       }
       if (typeof isActive !== "boolean") {
         return res
@@ -695,7 +697,9 @@ router.patch(
         updatedAt: new Date(),
       });
       if (!updated) {
-        return res.status(404).json({ success: false, error: "User not found" });
+        return res
+          .status(404)
+          .json({ success: false, error: "User not found" });
       }
       const { password: _pw, ...userWithoutPassword } = updated;
       return res.json({ success: true, data: userWithoutPassword });
