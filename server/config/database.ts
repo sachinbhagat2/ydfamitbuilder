@@ -1180,6 +1180,10 @@ class DatabaseAdapter {
       where.push("studentId = ?");
       vals.push(params.studentId);
     }
+    if (params.reviewerId) {
+      where.push("assignedReviewerId = ?");
+      vals.push(params.reviewerId);
+    }
     if (params.scholarshipId) {
       where.push("scholarshipId = ?");
       vals.push(params.scholarshipId);
