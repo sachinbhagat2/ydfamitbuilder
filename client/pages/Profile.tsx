@@ -56,6 +56,7 @@ const Profile = () => {
     category: "General",
     familyIncome: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [documents, setDocuments] = useState<any[]>([
     {
