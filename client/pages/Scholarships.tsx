@@ -648,10 +648,10 @@ const Scholarships = () => {
           </p>
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <span>Sort by:</span>
-            <select className="border border-ydf-light-gray rounded px-2 py-1">
-              <option>Deadline</option>
-              <option>Amount</option>
-              <option>Relevance</option>
+            <select className="border border-ydf-light-gray rounded px-2 py-1" value={sortBy} onChange={(e)=>setSortBy(e.target.value)}>
+              <option value="deadline">Deadline</option>
+              <option value="amount">Amount</option>
+              <option value="applicants">Applicants</option>
             </select>
           </div>
         </div>
