@@ -262,4 +262,60 @@ router.post("/", authenticateToken, async (req: any, res) => {
   }
 });
 
+// Admin: update application (status, reviewer, score)
+router.patch(
+  "/:id",
+  authenticateToken,
+  authorize("admin"),
+  async (req: any, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!id)
+        return res
+          .status(400)
+          .json({ success: false, error: "Valid id is required" });
+
+      const { status, assignedReviewerId, score, amountAwarded, reviewNotes } =
+        req.body || {};
+
+      if (
+        status &&
+        !["submitted", "under_review", "approved", "rejected", "waitlisted"].includes(
+          String(status),
+        )
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid status value" });
+      }
+
+      const updated = await (mockDatabase as any).updateApplication(id, {
+        status,
+        assignedReviewerId:
+          assignedReviewerId === undefined ? undefined : Number(assignedReviewerId) || null,
+        score: score === undefined ? undefined : Number(score),
+        amountAwarded:
+          amountAwarded === undefined ? undefined : Number(amountAwarded),
+        reviewNotes: reviewNotes ?? undefined,
+      });
+
+      if (!updated)
+        return res
+          .status(404)
+          .json({ success: false, error: "Application not found" });
+
+      return res.json({
+        success: true,
+        data: updated,
+        message: "Application updated",
+      });
+    } catch (error) {
+      console.error("Update application error:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Internal server error" });
+    }
+  },
+);
+
 export default router;
