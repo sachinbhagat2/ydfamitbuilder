@@ -1657,9 +1657,11 @@ class DatabaseAdapter {
     isComplete?: boolean | null;
   }) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const nextId = (memory.reviews.length
-        ? Math.max(...memory.reviews.map((r: any) => r.id)) + 1
-        : 1) as number;
+      const nextId = (
+        memory.reviews.length
+          ? Math.max(...memory.reviews.map((r: any) => r.id)) + 1
+          : 1
+      ) as number;
       const rec: any = {
         id: nextId,
         applicationId: input.applicationId,
@@ -1716,7 +1718,8 @@ class DatabaseAdapter {
       applicationId: input.applicationId,
       reviewerId: input.reviewerId,
       criteria: input.criteria ?? null,
-      overallScore: input.overallScore == null ? null : Number(input.overallScore),
+      overallScore:
+        input.overallScore == null ? null : Number(input.overallScore),
       comments: input.comments ?? null,
       recommendation: input.recommendation ?? null,
       isComplete: input.isComplete == null ? 1 : input.isComplete ? 1 : 0,

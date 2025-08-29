@@ -36,16 +36,39 @@ const ReviewerDashboard = () => {
       const res = await api.listReviewerApplications({ page: 1, limit: 100 });
       if (res.success) {
         const mapped = (res.data || []).map((a: any) => {
-          const formData = typeof a.formData === "string" ? (() => { try { return JSON.parse(a.formData); } catch { return {}; } })() : (a.formData || {});
+          const formData =
+            typeof a.formData === "string"
+              ? (() => {
+                  try {
+                    return JSON.parse(a.formData);
+                  } catch {
+                    return {};
+                  }
+                })()
+              : a.formData || {};
           const documents = Array.isArray(a.documents)
             ? a.documents
             : typeof a.documents === "string"
-              ? (() => { try { const v = JSON.parse(a.documents); return Array.isArray(v) ? v : []; } catch { return []; } })()
+              ? (() => {
+                  try {
+                    const v = JSON.parse(a.documents);
+                    return Array.isArray(v) ? v : [];
+                  } catch {
+                    return [];
+                  }
+                })()
               : [];
           const currency = (a.scholarshipCurrency || "INR").toUpperCase();
-          const amtStr = a.amountAwarded != null ? String(a.amountAwarded) : (a.scholarshipAmount != null ? String(a.scholarshipAmount) : "");
+          const amtStr =
+            a.amountAwarded != null
+              ? String(a.amountAwarded)
+              : a.scholarshipAmount != null
+                ? String(a.scholarshipAmount)
+                : "";
           const displayAmount = amtStr
-            ? (currency === "INR" ? `₹${amtStr}` : `${currency} ${amtStr}`)
+            ? currency === "INR"
+              ? `₹${amtStr}`
+              : `${currency} ${amtStr}`
             : "";
           return {
             id: a.id,
@@ -86,7 +109,9 @@ const ReviewerDashboard = () => {
       data = data.filter(
         (d) =>
           d.applicant.name.toLowerCase().includes(q) ||
-          String(d.scheme || "").toLowerCase().includes(q),
+          String(d.scheme || "")
+            .toLowerCase()
+            .includes(q),
       );
     }
     if (statusFilter !== "all") {
@@ -285,7 +310,9 @@ const ReviewerDashboard = () => {
         {/* Applications List */}
         <div className="space-y-4">
           {filtered.map((application, index) => {
-            const finalStatus = application.status === "approved" || application.status === "rejected";
+            const finalStatus =
+              application.status === "approved" ||
+              application.status === "rejected";
             return (
               <motion.div
                 key={application.id}
@@ -351,7 +378,9 @@ const ReviewerDashboard = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Scheme:</span>
-                        <span className="font-medium">{application.scheme}</span>
+                        <span className="font-medium">
+                          {application.scheme}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Amount:</span>
@@ -363,7 +392,9 @@ const ReviewerDashboard = () => {
                         <span className="text-gray-600">Submitted:</span>
                         <span className="font-medium">
                           {application.submittedDate
-                            ? new Date(application.submittedDate).toLocaleString()
+                            ? new Date(
+                                application.submittedDate,
+                              ).toLocaleString()
                             : "-"}
                         </span>
                       </div>
@@ -400,7 +431,9 @@ const ReviewerDashboard = () => {
                         </span>
                       ))}
                       {!application.documents.length && (
-                        <span className="text-sm text-gray-500">No documents</span>
+                        <span className="text-sm text-gray-500">
+                          No documents
+                        </span>
                       )}
                     </div>
                   </div>
@@ -439,7 +472,10 @@ const ReviewerDashboard = () => {
                           <button
                             className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-red-600 transition-colors"
                             onClick={async () => {
-                              await api.updateMyAssignedApplication(application.id, { status: "rejected" });
+                              await api.updateMyAssignedApplication(
+                                application.id,
+                                { status: "rejected" },
+                              );
                               await reload();
                             }}
                           >
@@ -449,7 +485,10 @@ const ReviewerDashboard = () => {
                           <button
                             className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-600 transition-colors"
                             onClick={async () => {
-                              await api.updateMyAssignedApplication(application.id, { status: "approved" });
+                              await api.updateMyAssignedApplication(
+                                application.id,
+                                { status: "approved" },
+                              );
                               await reload();
                             }}
                           >
@@ -477,26 +516,45 @@ const ReviewerDashboard = () => {
             <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Application Details</h3>
-                <button className="text-gray-500 hover:text-gray-700" onClick={() => setSelectedApp(null)}>✕</button>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => setSelectedApp(null)}
+                >
+                  ✕
+                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Applicant</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">
+                    Applicant
+                  </h4>
                   <p className="text-sm">{selectedApp.applicant.name}</p>
-                  <p className="text-sm text-gray-600">{selectedApp.applicant.email || "-"}</p>
-                  <p className="text-sm text-gray-600">{selectedApp.applicant.phone || "-"}</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedApp.applicant.email || "-"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedApp.applicant.phone || "-"}
+                  </p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Scheme</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">
+                    Scheme
+                  </h4>
                   <p className="text-sm">{selectedApp.scheme}</p>
                 </div>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-1">Form Data</h4>
-                <pre className="text-xs bg-gray-100 rounded p-3 overflow-auto max-h-64">{JSON.stringify(selectedApp.raw?.formData || {}, null, 2)}</pre>
+                <h4 className="text-sm font-medium text-gray-700 mb-1">
+                  Form Data
+                </h4>
+                <pre className="text-xs bg-gray-100 rounded p-3 overflow-auto max-h-64">
+                  {JSON.stringify(selectedApp.raw?.formData || {}, null, 2)}
+                </pre>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-1">Documents</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-1">
+                  Documents
+                </h4>
                 {selectedApp.documents?.length ? (
                   <ul className="list-disc pl-5 text-sm">
                     {selectedApp.documents.map((d: any, i: number) => (
