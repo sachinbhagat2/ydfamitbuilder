@@ -23,6 +23,7 @@ import ScholarshipDetails from "./pages/ScholarshipDetails";
 import Support from "./pages/Support";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
+import ReviewerApplications from "./pages/ReviewerApplications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,7 +76,7 @@ function App() {
                   path="/reviewer/applications"
                   element={
                     <ProtectedRoute allowedRoles={["reviewer"]}>
-                      {React.createElement((await import("./pages/ReviewerApplications")).default)}
+                      <ReviewerApplications />
                     </ProtectedRoute>
                   }
                 />
