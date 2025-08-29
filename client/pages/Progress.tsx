@@ -31,8 +31,8 @@ const Progress = () => {
       try {
         const api = (await import("../services/api")).default;
         const [appsRes, schRes] = await Promise.all([
-          api.listMyApplications({ limit: 100 }),
-          api.listScholarships({ status: "active", limit: 200 }),
+          api.listMyApplications({ limit: 1000 }),
+          api.listScholarships({ status: "all", limit: 2000 }),
         ]);
         if (appsRes.success) setApps(appsRes.data || []);
         if (schRes.success) {
@@ -160,9 +160,12 @@ const Progress = () => {
     const matchesFilter =
       activeFilter === "all" ||
       app.status.toLowerCase().replace(" ", "-") === activeFilter;
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      searchQuery === "" ||
-      app.scholarship.toLowerCase().includes(searchQuery.toLowerCase());
+      q === "" ||
+      app.scholarship.toLowerCase().includes(q) ||
+      (app.amount || "").toLowerCase().includes(q) ||
+      (app.category || "").toLowerCase().includes(q);
     return matchesFilter && matchesSearch;
   });
 
@@ -432,11 +435,32 @@ const Progress = () => {
                       <span>Application ID: #{application.id}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                      <Link
+                        to={`/scholarships/${String(applications[index]?.id || '')}`}
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
                         <Eye className="h-4 w-4" />
                         <span>View Details</span>
-                      </button>
-                      <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                      </Link>
+                      <button
+                        onClick={() => {
+                          const raw = apps.find((a) => a.id === application.id);
+                          const sch = schMap.get(Number(raw?.scholarshipId));
+                          const payload = { application: raw, scholarship: sch };
+                          const blob = new Blob([JSON.stringify(payload, null, 2)], {
+                            type: 'application/json',
+                          });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `application-${application.id}.json`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
                         <Download className="h-4 w-4" />
                         <span>Download</span>
                       </button>
