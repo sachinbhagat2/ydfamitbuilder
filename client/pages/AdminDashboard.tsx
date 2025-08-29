@@ -54,6 +54,12 @@ const AdminDashboard = () => {
   >("submittedAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Users tab state
+  const [users, setUsers] = useState<any[]>([]);
+  const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
+  const [userSearch, setUserSearch] = useState("");
+  const [usersLoading, setUsersLoading] = useState(false);
+
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
     if (!hasSeenOnboarding) {
