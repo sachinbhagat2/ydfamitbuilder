@@ -334,6 +334,19 @@ const Scholarships = () => {
     const matchesCategory =
       selectedCategory === "all" || scholarship.category === selectedCategory;
 
+    const matchesDeadline = () => {
+      if (selectedDeadline === "all") return true;
+      if (!scholarship.deadline) return false;
+      const now = new Date();
+      const d = new Date(scholarship.deadline);
+      const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return false;
+      if (selectedDeadline === "week") return diffDays <= 7;
+      if (selectedDeadline === "month") return diffDays <= 30;
+      if (selectedDeadline === "quarter") return diffDays <= 90;
+      return true;
+    };
+
     const matchesAmount = () => {
       if (selectedAmount === "all") return true;
       const amount = parseInt(scholarship.amount.replace(/[^0-9]/g, ""));
