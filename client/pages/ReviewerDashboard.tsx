@@ -100,32 +100,29 @@ const ReviewerDashboard = () => {
     return "text-red-600";
   };
 
-  const stats = [
-    {
-      title: "Pending Review",
-      value: "42",
-      icon: Clock,
-      color: "bg-yellow-500",
-    },
-    {
-      title: "Reviewed Today",
-      value: "18",
-      icon: CheckCircle,
-      color: "bg-green-500",
-    },
-    {
-      title: "High Priority",
-      value: "8",
-      icon: Star,
-      color: "bg-red-500",
-    },
-    {
-      title: "This Week",
-      value: "156",
-      icon: Calendar,
-      color: "bg-blue-500",
-    },
-  ];
+  const [stats, setStats] = useState([
+    { title: "Submitted", value: "0", icon: Clock, color: "bg-yellow-500" },
+    { title: "Under Review", value: "0", icon: CheckCircle, color: "bg-green-500" },
+    { title: "Approved", value: "0", icon: Star, color: "bg-red-500" },
+    { title: "Rejected", value: "0", icon: Calendar, color: "bg-blue-500" },
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await api.getReviewerStats();
+        if (r.success && r.data) {
+          const d = r.data as any;
+          setStats([
+            { title: "Submitted", value: String(d.submitted || 0), icon: Clock, color: "bg-yellow-500" },
+            { title: "Under Review", value: String(d.under_review || 0), icon: CheckCircle, color: "bg-green-500" },
+            { title: "Approved", value: String(d.approved || 0), icon: Star, color: "bg-red-500" },
+            { title: "Rejected", value: String(d.rejected || 0), icon: Calendar, color: "bg-blue-500" },
+          ]);
+        }
+      } catch {}
+    })();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
