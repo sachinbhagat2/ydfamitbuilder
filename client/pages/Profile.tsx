@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import api from "../services/api";
+import { toast } from "../hooks/use-toast";
 import {
   ArrowLeft,
   User,
@@ -30,23 +32,23 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [profileData, setProfileData] = useState({
-    firstName: "Arjun",
-    lastName: "Singh",
-    email: "arjun.singh@email.com",
-    phone: "+91 9876543210",
-    dateOfBirth: "2002-03-15",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
     gender: "Male",
-    address: "123 MG Road, Bangalore",
-    city: "Bangalore",
-    state: "Karnataka",
-    pincode: "560001",
-    course: "B.Tech Computer Science",
-    college: "IIIT Bangalore",
-    year: "3rd Year",
-    rollNumber: "CS20B1234",
-    cgpa: "8.75",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    course: "",
+    college: "",
+    year: "",
+    rollNumber: "",
+    cgpa: "",
     category: "General",
-    familyIncome: "₹5,00,000",
+    familyIncome: "",
   });
 
   const [documents, setDocuments] = useState([
@@ -94,9 +96,81 @@ const Profile = () => {
     }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Save logic here
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.getProfile();
+        if (res.success && res.data) {
+          const u: any = res.data;
+          const pd = u.profileData || {};
+          setProfileData({
+            firstName: u.firstName || "",
+            lastName: u.lastName || "",
+            email: u.email || "",
+            phone: u.phone || "",
+            dateOfBirth: pd.dateOfBirth || "",
+            gender: pd.gender || "Male",
+            address: pd.address || "",
+            city: pd.city || "",
+            state: pd.state || "",
+            pincode: pd.pincode || "",
+            course: pd.course || "",
+            college: pd.college || "",
+            year: pd.year || "",
+            rollNumber: pd.rollNumber || "",
+            cgpa: pd.cgpa || "",
+            category: pd.category || "General",
+            familyIncome: pd.familyIncome || "",
+          });
+        }
+      } catch (e: any) {
+        toast({ title: 'Failed to load profile', description: String(e?.message||e) });
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    // Validation
+    if (!profileData.firstName.trim() || !profileData.lastName.trim()) {
+      toast({ title: 'Name is required', description: 'Please enter first and last name' });
+      return;
+    }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email);
+    if (!emailOk) { toast({ title: 'Invalid email', description: 'Please enter a valid email address' }); return; }
+    const phoneOk = /^\+?\d[\d\s-]{7,}$/.test(profileData.phone);
+    if (!phoneOk) { toast({ title: 'Invalid phone', description: 'Please enter a valid phone number' }); return; }
+    if (profileData.pincode && !/^\d{5,6}$/.test(profileData.pincode)) { toast({ title: 'Invalid pincode', description: 'Pincode must be 5-6 digits' }); return; }
+    if (profileData.cgpa && (isNaN(Number(profileData.cgpa)) || Number(profileData.cgpa) < 0 || Number(profileData.cgpa) > 10)) { toast({ title: 'Invalid CGPA', description: 'CGPA must be between 0 and 10' }); return; }
+
+    try {
+      const payload: any = {
+        firstName: profileData.firstName.trim(),
+        lastName: profileData.lastName.trim(),
+        phone: profileData.phone,
+        profileData: {
+          dateOfBirth: profileData.dateOfBirth,
+          gender: profileData.gender,
+          address: profileData.address,
+          city: profileData.city,
+          state: profileData.state,
+          pincode: profileData.pincode,
+          course: profileData.course,
+          college: profileData.college,
+          year: profileData.year,
+          rollNumber: profileData.rollNumber,
+          cgpa: profileData.cgpa,
+          category: profileData.category,
+          familyIncome: profileData.familyIncome,
+        },
+      };
+      const res = await api.updateProfile(payload);
+      if (res.success) {
+        toast({ title: 'Profile updated', description: 'Your changes have been saved' });
+        setIsEditing(false);
+      }
+    } catch (e: any) {
+      toast({ title: 'Update failed', description: String(e?.message||e) });
+    }
   };
 
   const getDocumentStatusColor = (status: string) => {
@@ -197,7 +271,7 @@ const Profile = () => {
               type="email"
               value={profileData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              disabled={!isEditing}
+              disabled={true}
               className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent disabled:bg-gray-50"
             />
           </div>

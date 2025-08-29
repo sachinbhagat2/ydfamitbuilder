@@ -19,6 +19,7 @@ import SurveyorDashboard from "./pages/SurveyorDashboard";
 import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import Scholarships from "./pages/Scholarships";
+import ScholarshipDetails from "./pages/ScholarshipDetails";
 import Support from "./pages/Support";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
@@ -83,6 +84,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={["student"]}>
                       <Scholarships />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/scholarships/:id"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ScholarshipDetails />
                     </ProtectedRoute>
                   }
                 />

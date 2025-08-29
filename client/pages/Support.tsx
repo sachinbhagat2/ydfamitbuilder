@@ -31,6 +31,8 @@ import {
 
 const Support = () => {
   const [activeTab, setActiveTab] = useState("faq");
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<{role:'user'|'bot'; text:string; time:string}[]>([{ role:'bot', text:'Hi! How can I help you today?', time: new Date().toLocaleTimeString() }]);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [ticketForm, setTicketForm] = useState({
@@ -626,6 +628,7 @@ const Support = () => {
           <nav className="flex space-x-8">
             {[
               { id: "faq", label: "FAQ", icon: HelpCircle },
+              { id: "chat", label: "Live Chat", icon: MessageSquare },
               { id: "contact", label: "Contact Info", icon: Phone },
               { id: "ticket", label: "Submit Ticket", icon: FileText },
             ].map((tab) => (
@@ -655,6 +658,29 @@ const Support = () => {
           transition={{ duration: 0.3 }}
         >
           {activeTab === "faq" && renderFAQ()}
+          {activeTab === "chat" && (
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-white border border-ydf-light-gray rounded-lg overflow-hidden">
+                <div className="p-4 h-96 overflow-y-auto space-y-3">
+                  {chatMessages.map((m, i)=> (
+                    <div key={i} className={`flex ${m.role==='user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`${m.role==='user' ? 'bg-ydf-deep-blue text-white' : 'bg-gray-100 text-gray-800'} px-3 py-2 rounded-lg max-w-[80%]`}>
+                        <div className="text-sm">{m.text}</div>
+                        <div className={`text-[10px] mt-1 ${m.role==='user' ? 'text-blue-100' : 'text-gray-500'}`}>{m.time}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <form
+                  onSubmit={(e)=>{ e.preventDefault(); if(!chatInput.trim()) return; const now = new Date(); const userMsg = { role:'user' as const, text: chatInput.trim(), time: now.toLocaleTimeString() }; setChatMessages(prev=> [...prev, userMsg]); setChatInput(""); setTimeout(()=>{ const txt = userMsg.text.toLowerCase(); let reply = 'Thanks! Our team will get back shortly.'; if (txt.includes('status') || txt.includes('track')) reply = 'You can track your application in the Progress page.'; if (txt.includes('apply')) reply = 'Browse Scholarships and click Apply. I can guide you.'; if (txt.includes('profile')) reply = 'Open Profile to update your details. Changes require Save.'; setChatMessages(prev=> [...prev, { role:'bot', text: reply, time: new Date().toLocaleTimeString() }]); }, 600); }}
+                  className="flex items-center p-3 border-t border-ydf-light-gray space-x-2"
+                >
+                  <input value={chatInput} onChange={(e)=> setChatInput(e.target.value)} placeholder="Type your message..." className="flex-1 px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent" />
+                  <button type="submit" className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg">Send</button>
+                </form>
+              </div>
+            </div>
+          )}
           {activeTab === "contact" && renderContact()}
           {activeTab === "ticket" && renderTicket()}
         </motion.div>
