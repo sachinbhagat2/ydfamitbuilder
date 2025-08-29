@@ -1381,19 +1381,20 @@ const AdminDashboard = () => {
                 Cancel
               </button>
               <button
-                disabled={!assignState.reviewerId}
+                disabled={!assignState.reviewerId || assignSaving}
                 onClick={async () => {
-                  if (assignState.appId && assignState.reviewerId) {
-                    await updateApplication(assignState.appId, {
-                      assignedReviewerId: assignState.reviewerId,
-                      status: "under_review",
-                    });
-                  }
-                  setAssignState({ open: false });
+                  if (!assignState.appId || !assignState.reviewerId) return;
+                  setAssignSaving(true);
+                  const ok = await updateApplication(assignState.appId, {
+                    assignedReviewerId: assignState.reviewerId,
+                    status: "under_review",
+                  });
+                  setAssignSaving(false);
+                  if (ok) setAssignState({ open: false });
                 }}
                 className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
               >
-                Save
+                {assignSaving ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
