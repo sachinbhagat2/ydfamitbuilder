@@ -31,6 +31,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("personal");
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [pwd, setPwd] = useState({ current: "", next: "", confirm: "", loading: false });
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
@@ -637,6 +638,8 @@ const Profile = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter current password"
+                value={pwd.current}
+                onChange={(e)=> setPwd((p)=> ({...p, current: e.target.value}))}
                 className="w-full px-3 py-2 pr-10 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
               />
               <button
@@ -658,6 +661,8 @@ const Profile = () => {
             <input
               type="password"
               placeholder="Enter new password"
+              value={pwd.next}
+              onChange={(e)=> setPwd((p)=> ({...p, next: e.target.value}))}
               className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
             />
           </div>
@@ -668,11 +673,19 @@ const Profile = () => {
             <input
               type="password"
               placeholder="Confirm new password"
+              value={pwd.confirm}
+              onChange={(e)=> setPwd((p)=> ({...p, confirm: e.target.value}))}
               className="w-full px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
             />
           </div>
-          <button className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
-            Update Password
+          <button onClick={async ()=>{
+            if (!pwd.current || !pwd.next || !pwd.confirm) { toast({ title:'All fields required' }); return; }
+            if (pwd.next !== pwd.confirm) { toast({ title:'Passwords do not match' }); return; }
+            if (pwd.next.length < 8) { toast({ title:'Weak password', description:'Use at least 8 characters with upper, lower, number & symbol' }); }
+            try { setPwd((p)=> ({...p, loading:true})); const res = await api.changePassword({ currentPassword: pwd.current, newPassword: pwd.next }); if (res.success) { toast({ title:'Password updated' }); setPwd({ current:"", next:"", confirm:"", loading:false }); } }
+            catch(e:any){ toast({ title:'Update failed', description:String(e?.message||e) }); setPwd((p)=> ({...p, loading:false})); }
+          }} disabled={pwd.loading} className={`px-4 py-2 rounded-lg transition-colors text-white ${pwd.loading ? 'bg-gray-400' : 'bg-ydf-deep-blue hover:bg-opacity-90'}`}>
+            {pwd.loading ? 'Updating...' : 'Update Password'}
           </button>
         </div>
       </div>
