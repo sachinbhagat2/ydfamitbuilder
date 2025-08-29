@@ -988,25 +988,44 @@ const AdminDashboard = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-ydf-light-gray">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("id" as any); setSortDir(sortBy === ("id" as any) && sortDir === "asc" ? "desc" : "asc"); }}>
                             ID
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("scholarshipTitle"); setSortDir(sortBy === "scholarshipTitle" && sortDir === "asc" ? "desc" : "asc"); }}>
                             Scholarship
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("studentName"); setSortDir(sortBy === "studentName" && sortDir === "asc" ? "desc" : "asc"); }}>
                             Student
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("status"); setSortDir(sortBy === "status" && sortDir === "asc" ? "desc" : "asc"); }}>
                             Status
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("submittedAt"); setSortDir(sortBy === "submittedAt" && sortDir === "asc" ? "desc" : "asc"); }}>
                             Submitted
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Reviewer
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ydf-light-gray">
-                        {applications.map((a) => (
+                        {[...applications]
+                          .sort((a: any, b: any) => {
+                            const dir = sortDir === "asc" ? 1 : -1;
+                            const get = (x: any) =>
+                              sortBy === "submittedAt"
+                                ? new Date(x.submittedAt || 0).getTime()
+                                : String(x[sortBy] || "").toLowerCase();
+                            const va: any = get(a);
+                            const vb: any = get(b);
+                            if (va < vb) return -1 * dir;
+                            if (va > vb) return 1 * dir;
+                            return 0;
+                          })
+                          .map((a) => (
                           <tr key={a.id} className="hover:bg-gray-50">
                             <td className="px-6 py-3 text-sm text-gray-900">
                               {a.id}
