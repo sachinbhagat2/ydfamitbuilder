@@ -459,12 +459,17 @@ async function ensureApplicationsTable() {
         score INT,
         amountAwarded NUMERIC(10,2),
         assignedReviewerId BIGINT,
+        reviewNotes TEXT,
         formData JSONB,
         documents JSONB,
         submittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
+    // Ensure reviewNotes column exists
+    try {
+      await pgPool.query('ALTER TABLE applications ADD COLUMN IF NOT EXISTS "reviewNotes" TEXT');
+    } catch { /* ignore */ }
     return;
   }
   if (!pool) return;
@@ -473,10 +478,11 @@ async function ensureApplicationsTable() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       scholarshipId INT NOT NULL,
       studentId INT NOT NULL,
-      status ENUM('draft','submitted','under_review','approved','rejected') NOT NULL DEFAULT 'submitted',
+      status ENUM('draft','submitted','under_review','approved','rejected','waitlisted') NOT NULL DEFAULT 'submitted',
       score INT NULL,
       amountAwarded DECIMAL(10,2) NULL,
       assignedReviewerId INT NULL,
+      reviewNotes TEXT NULL,
       formData JSON NULL,
       documents JSON NULL,
       submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -486,6 +492,13 @@ async function ensureApplicationsTable() {
       INDEX idx_app_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+  // Ensure columns exist on older DBs
+  try {
+    const [cols]: any = await pool.execute("SHOW COLUMNS FROM applications LIKE 'reviewNotes'");
+    if (!(cols as any[])[0]) {
+      await pool.execute("ALTER TABLE applications ADD COLUMN reviewNotes TEXT NULL AFTER assignedReviewerId");
+    }
+  } catch { /* ignore */ }
 }
 
 async function ensureAnnouncementsTable() {
