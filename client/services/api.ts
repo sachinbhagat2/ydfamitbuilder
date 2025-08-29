@@ -185,6 +185,25 @@ class ApiService {
     return blob;
   }
 
+  // Student applications
+  async listMyApplications(params?: Record<string, any>) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/applications/my${qs}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async getMyApplicationStats() {
+    const res = await fetch(`${API_BASE_URL}/applications/my/stats`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async createApplication(payload: { scholarshipId: number; applicationData?: any; documents?: any }) {
+    const res = await fetch(`${API_BASE_URL}/applications`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+
   async verifyToken(): Promise<ApiResponse<User>> {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: "GET",
