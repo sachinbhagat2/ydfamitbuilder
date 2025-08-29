@@ -164,6 +164,8 @@ const AdminDashboard = () => {
     if (tab === "applications") {
       fetchApplications(1, appStatusFilter);
       fetchReviewers();
+    } else if (tab === "users") {
+      fetchUsers(1, userRoleFilter, userSearch);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -210,6 +212,25 @@ const AdminDashboard = () => {
       const res = await api.listUsers({ userType: "reviewer", limit: 100 });
       if (res.success) setReviewers(res.data || []);
     } catch (e) {}
+  };
+
+  const fetchUsers = async (
+    page = 1,
+    role = userRoleFilter,
+    search = userSearch,
+  ) => {
+    try {
+      setUsersLoading(true);
+      const api = (await import("../services/api")).default;
+      const params: any = { page, limit: 200 };
+      if (role && role !== "all") params.userType = role;
+      if (search && search.trim()) params.search = search.trim();
+      const res = await api.listUsers(params);
+      if (res.success) setUsers(res.data || []);
+    } catch (e) {
+    } finally {
+      setUsersLoading(false);
+    }
   };
 
   const reviewerName = (id?: number | null) => {
