@@ -76,6 +76,7 @@ const Progress = () => {
             : "Initial Review";
       return {
         id: a.id,
+        scholarshipId: Number(a.scholarshipId),
         scholarship: name,
         amount,
         appliedDate: a.submittedAt
@@ -436,7 +437,7 @@ const Progress = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Link
-                        to={`/scholarships/${String(applications[index]?.id || '')}`}
+                        to={`/scholarships/${application.scholarshipId}`}
                         className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
                       >
                         <Eye className="h-4 w-4" />
