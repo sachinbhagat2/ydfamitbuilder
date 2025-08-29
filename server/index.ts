@@ -106,19 +106,23 @@ app.use("/api/*", (req, res) => {
 
 // Serve React app for all non-API routes when not running in serverless
 app.get("*", (req, res) => {
-  // In development, let Vite handle the routing
   if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
+    // Serve built SPA in production (non-serverless)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const staticPath = path.join(__dirname, "../spa");
     res.sendFile(path.join(staticPath, "index.html"));
+  } else if (process.env.NODE_ENV === "development") {
+    // Serve dev index.html locally
+    const indexPath = path.join(__dirname, "../index.html");
+    res.sendFile(indexPath);
   } else {
-    // In development or serverless, don't handle frontend routes here
+    // Serverless or invalid route in dev
     res.status(404).json({
       success: false,
-      error: "Frontend route - should be handled by the SPA host/dev server",
+      error: "Frontend route - should be handled by SPA host/dev server",
       message:
-        "This route should be accessed through the Vite dev server (dev) or the Netlify static host (prod)",
+        "Access through Vite dev server (dev) or Netlify static host (prod)",
       path: req.path,
       method: req.method,
     });
