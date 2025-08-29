@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import RoleBasedNavigation from "../components/RoleBasedNavigation";
@@ -66,7 +66,7 @@ const ReviewerDashboard = () => {
         year: "2nd Year",
       },
       scheme: "Rural Development Grant",
-      amount: "₹25,000",
+      amount: "��25,000",
       submittedDate: "2024-01-14",
       score: 92,
       status: "Pending Documents",
