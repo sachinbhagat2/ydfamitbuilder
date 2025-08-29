@@ -17,6 +17,11 @@ class ApiService {
     };
   }
 
+  private getAuthHeadersForGet(): Record<string, string> {
+    const token = localStorage.getItem("ydf_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -168,7 +173,7 @@ class ApiService {
       ? `?${new URLSearchParams(params as any).toString()}`
       : "";
     const res = await fetch(`${API_BASE_URL}/scholarships/export${qs}`, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeadersForGet(),
     });
     if (!res.ok) throw new Error("Export failed");
     return await res.blob();
@@ -202,7 +207,7 @@ class ApiService {
       ? `?${new URLSearchParams(params as any).toString()}`
       : "";
     const res = await fetch(`${API_BASE_URL}/applications/export${qs}`, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeadersForGet(),
     });
     if (!res.ok) throw new Error("Export failed");
     const blob = await res.blob();
