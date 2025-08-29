@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useAuth } from "../contexts/AuthContext";
 import { toast } from "../hooks/use-toast";
 import {
   ArrowLeft,
@@ -34,7 +33,6 @@ const Scholarships = () => {
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState("deadline");
-  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     (async () => {
