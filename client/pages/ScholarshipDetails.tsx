@@ -20,13 +20,23 @@ const ScholarshipDetails = () => {
   const [loading, setLoading] = useState(true);
   const [sch, setSch] = useState<any | null>(null);
   const [isApplying, setIsApplying] = useState(false);
+  const [alreadyApplied, setAlreadyApplied] = useState(false);
 
   useEffect(() => {
     const run = async () => {
       if (!id) return;
       try {
-        const res = await api.getScholarship(Number(id));
-        if (res.success) setSch(res.data);
+        const [schRes, myRes] = await Promise.all([
+          api.getScholarship(Number(id)),
+          api.listMyApplications({ limit: 1000 }),
+        ]);
+        if (schRes.success) setSch(schRes.data);
+        if (myRes.success) {
+          const applied = (myRes.data || []).some(
+            (a: any) => Number(a.scholarshipId) === Number(id),
+          );
+          setAlreadyApplied(applied);
+        }
       } catch (e: any) {
         toast({
           title: "Failed to load",
@@ -197,14 +207,18 @@ const ScholarshipDetails = () => {
                       <span>Applications: {details.applicants}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={handleApply}
-                    disabled={isApplying || details.status !== "Open"}
-                    className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-white ${isApplying ? "bg-gray-400" : "bg-ydf-deep-blue hover:bg-opacity-90"}`}
-                  >
-                    <span>{isApplying ? "Submitting..." : "Apply Now"}</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                  {alreadyApplied ? (
+                    <span className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-green-100 text-green-700">Already Applied</span>
+                  ) : (
+                    <button
+                      onClick={handleApply}
+                      disabled={isApplying || details.status !== "Open"}
+                      className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-white ${isApplying ? "bg-gray-400" : "bg-ydf-deep-blue hover:bg-opacity-90"}`}
+                    >
+                      <span>{isApplying ? "Submitting..." : "Apply Now"}</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
