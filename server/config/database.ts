@@ -530,7 +530,15 @@ async function ensureAnnouncementsTable() {
 
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
-  async listUsers(params: { userType?: string; isActive?: boolean; search?: string; page?: number; limit?: number } = {}) {
+  async listUsers(
+    params: {
+      userType?: string;
+      isActive?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    } = {},
+  ) {
     const { userType, isActive, search, page = 1, limit = 100 } = params;
     const offset = (page - 1) * limit;
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
@@ -543,12 +551,20 @@ class DatabaseAdapter {
         const q = search.toLowerCase();
         list = list.filter(
           (u) =>
-            String(u.email || "").toLowerCase().includes(q) ||
-            String(u.firstName || "").toLowerCase().includes(q) ||
-            String(u.lastName || "").toLowerCase().includes(q),
+            String(u.email || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(u.firstName || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(u.lastName || "")
+              .toLowerCase()
+              .includes(q),
         );
       }
-      list.sort((a: any, b: any) => (b.createdAt as any) - (a.createdAt as any));
+      list.sort(
+        (a: any, b: any) => (b.createdAt as any) - (a.createdAt as any),
+      );
       return list.slice(offset, offset + limit);
     }
     if (MODE === "postgres" && pgPool) {
@@ -564,7 +580,7 @@ class DatabaseAdapter {
       }
       if (search) {
         where.push(
-          '(LOWER(email) LIKE $' +
+          "(LOWER(email) LIKE $" +
             (vals.length + 1) +
             ' OR LOWER("firstName") LIKE $' +
             (vals.length + 2) +
@@ -572,9 +588,13 @@ class DatabaseAdapter {
             (vals.length + 3) +
             ")",
         );
-        vals.push(`%${search.toLowerCase()}%`, `%${search.toLowerCase()}%`, `%${search.toLowerCase()}%`);
+        vals.push(
+          `%${search.toLowerCase()}%`,
+          `%${search.toLowerCase()}%`,
+          `%${search.toLowerCase()}%`,
+        );
       }
-      const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+      const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
       const result = await pgPool.query(
         `SELECT id, email, "firstName", "lastName", phone, "userType", "isActive", "emailVerified", "createdAt", "updatedAt" FROM users ${whereSql} ORDER BY "createdAt" DESC OFFSET $${vals.length + 1} LIMIT $${vals.length + 2}`,
         [...vals, offset, limit],
@@ -592,7 +612,9 @@ class DatabaseAdapter {
       vals.push(isActive ? 1 : 0);
     }
     if (search) {
-      where.push("(LOWER(email) LIKE ? OR LOWER(firstName) LIKE ? OR LOWER(lastName) LIKE ?)");
+      where.push(
+        "(LOWER(email) LIKE ? OR LOWER(firstName) LIKE ? OR LOWER(lastName) LIKE ?)",
+      );
       const like = `%${search.toLowerCase()}%`;
       vals.push(like, like, like);
     }
@@ -1383,15 +1405,26 @@ class DatabaseAdapter {
     return (rows as any[])[0];
   }
 
-  async updateApplication(id: number, data: { status?: string; assignedReviewerId?: number | null; score?: number | null; amountAwarded?: number | null; reviewNotes?: string | null }) {
+  async updateApplication(
+    id: number,
+    data: {
+      status?: string;
+      assignedReviewerId?: number | null;
+      score?: number | null;
+      amountAwarded?: number | null;
+      reviewNotes?: string | null;
+    },
+  ) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
       const idx = memory.applications.findIndex((a: any) => a.id === id);
       if (idx === -1) return null;
       const next = { ...memory.applications[idx] } as any;
       if (data.status) next.status = data.status;
-      if ("assignedReviewerId" in data) next.assignedReviewerId = data.assignedReviewerId ?? null;
+      if ("assignedReviewerId" in data)
+        next.assignedReviewerId = data.assignedReviewerId ?? null;
       if ("score" in data) next.score = data.score ?? null;
-      if ("amountAwarded" in data) next.amountAwarded = data.amountAwarded ?? null;
+      if ("amountAwarded" in data)
+        next.amountAwarded = data.amountAwarded ?? null;
       if ("reviewNotes" in data) next.reviewNotes = data.reviewNotes ?? null;
       next.updatedAt = new Date();
       memory.applications[idx] = next;
@@ -1423,7 +1456,10 @@ class DatabaseAdapter {
         vals.push(data.reviewNotes);
       }
       if (!sets.length) {
-        const res = await pgPool.query("SELECT * FROM applications WHERE id = $1", [id]);
+        const res = await pgPool.query(
+          "SELECT * FROM applications WHERE id = $1",
+          [id],
+        );
         return (res.rows as any[])[0] || null;
       }
       const sql = `UPDATE applications SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
@@ -1454,14 +1490,20 @@ class DatabaseAdapter {
       vals.push(data.reviewNotes);
     }
     if (!cols.length) {
-      const [rows] = await pool.execute("SELECT * FROM applications WHERE id = ?", [id]);
+      const [rows] = await pool.execute(
+        "SELECT * FROM applications WHERE id = ?",
+        [id],
+      );
       return (rows as any[])[0] || null;
     }
     await pool.execute(
       `UPDATE applications SET ${cols.join(", ")}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
       [...vals, id],
     );
-    const [rows] = await pool.execute("SELECT * FROM applications WHERE id = ?", [id]);
+    const [rows] = await pool.execute(
+      "SELECT * FROM applications WHERE id = ?",
+      [id],
+    );
     return (rows as any[])[0] || null;
   }
 }

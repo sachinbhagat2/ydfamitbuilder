@@ -44,8 +44,14 @@ const AdminDashboard = () => {
   const [appPage, setAppPage] = useState(1);
   const [appTotal, setAppTotal] = useState(0);
   const [reviewers, setReviewers] = useState<any[]>([]);
-  const [assignState, setAssignState] = useState<{ open: boolean; appId?: number; reviewerId?: number | "" }>({ open: false });
-  const [sortBy, setSortBy] = useState<"submittedAt" | "status" | "studentName" | "scholarshipTitle">("submittedAt");
+  const [assignState, setAssignState] = useState<{
+    open: boolean;
+    appId?: number;
+    reviewerId?: number | "";
+  }>({ open: false });
+  const [sortBy, setSortBy] = useState<
+    "submittedAt" | "status" | "studentName" | "scholarshipTitle"
+  >("submittedAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
@@ -203,7 +209,9 @@ const AdminDashboard = () => {
   const reviewerName = (id?: number | null) => {
     if (!id) return "Unassigned";
     const r = reviewers.find((u: any) => Number(u.id) === Number(id));
-    return r ? `${r.firstName || ""} ${r.lastName || ""}`.trim() || r.email : `#${id}`;
+    return r
+      ? `${r.firstName || ""} ${r.lastName || ""}`.trim() || r.email
+      : `#${id}`;
   };
 
   const updateApplication = async (id: number, payload: any) => {
@@ -988,19 +996,70 @@ const AdminDashboard = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-ydf-light-gray">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("id" as any); setSortDir(sortBy === ("id" as any) && sortDir === "asc" ? "desc" : "asc"); }}>
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("id" as any);
+                              setSortDir(
+                                sortBy === ("id" as any) && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             ID
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("scholarshipTitle"); setSortDir(sortBy === "scholarshipTitle" && sortDir === "asc" ? "desc" : "asc"); }}>
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("scholarshipTitle");
+                              setSortDir(
+                                sortBy === "scholarshipTitle" &&
+                                  sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Scholarship
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("studentName"); setSortDir(sortBy === "studentName" && sortDir === "asc" ? "desc" : "asc"); }}>
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("studentName");
+                              setSortDir(
+                                sortBy === "studentName" && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Student
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("status"); setSortDir(sortBy === "status" && sortDir === "asc" ? "desc" : "asc"); }}>
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("status");
+                              setSortDir(
+                                sortBy === "status" && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Status
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setSortBy("submittedAt"); setSortDir(sortBy === "submittedAt" && sortDir === "asc" ? "desc" : "asc"); }}>
+                          <th
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            onClick={() => {
+                              setSortBy("submittedAt");
+                              setSortDir(
+                                sortBy === "submittedAt" && sortDir === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                            }}
+                          >
                             Submitted
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1026,30 +1085,30 @@ const AdminDashboard = () => {
                             return 0;
                           })
                           .map((a) => (
-                          <tr key={a.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.id}
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.scholarshipTitle || `#${a.scholarshipId}`}
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.studentName || `#${a.studentId}`}
-                            </td>
-                            <td className="px-6 py-3">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
-                              >
-                                {a.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-3 text-sm text-gray-900">
-                              {a.submittedAt
-                                ? new Date(a.submittedAt).toLocaleString()
-                                : ""}
-                            </td>
-                          </tr>
-                        ))}
+                            <tr key={a.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.id}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.scholarshipTitle || `#${a.scholarshipId}`}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.studentName || `#${a.studentId}`}
+                              </td>
+                              <td className="px-6 py-3">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
+                                >
+                                  {a.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {a.submittedAt
+                                  ? new Date(a.submittedAt).toLocaleString()
+                                  : ""}
+                              </td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>

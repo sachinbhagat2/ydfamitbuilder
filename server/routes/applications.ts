@@ -280,9 +280,13 @@ router.patch(
 
       if (
         status &&
-        !["submitted", "under_review", "approved", "rejected", "waitlisted"].includes(
-          String(status),
-        )
+        ![
+          "submitted",
+          "under_review",
+          "approved",
+          "rejected",
+          "waitlisted",
+        ].includes(String(status))
       ) {
         return res
           .status(400)
@@ -292,7 +296,9 @@ router.patch(
       const updated = await (mockDatabase as any).updateApplication(id, {
         status,
         assignedReviewerId:
-          assignedReviewerId === undefined ? undefined : Number(assignedReviewerId) || null,
+          assignedReviewerId === undefined
+            ? undefined
+            : Number(assignedReviewerId) || null,
         score: score === undefined ? undefined : Number(score),
         amountAwarded:
           amountAwarded === undefined ? undefined : Number(amountAwarded),
@@ -311,9 +317,7 @@ router.patch(
       });
     } catch (error) {
       console.error("Update application error:", error);
-      res
-        .status(500)
-        .json({ success: false, error: "Internal server error" });
+      res.status(500).json({ success: false, error: "Internal server error" });
     }
   },
 );

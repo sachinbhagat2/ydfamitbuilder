@@ -400,12 +400,10 @@ router.post(
       }
       const { currentPassword, newPassword } = req.body || {};
       if (!currentPassword || !newPassword) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "currentPassword and newPassword are required",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "currentPassword and newPassword are required",
+        });
       }
       const validation = isValidPassword(newPassword);
       if (!validation.valid) {
@@ -648,8 +646,13 @@ router.get(
   authorize("admin"),
   async (req, res) => {
     try {
-      const { userType, search, isActive, page = 1, limit = 100 } =
-        req.query as any;
+      const {
+        userType,
+        search,
+        isActive,
+        page = 1,
+        limit = 100,
+      } = req.query as any;
       const result = await (mockDatabase as any).listUsers({
         userType,
         search,
