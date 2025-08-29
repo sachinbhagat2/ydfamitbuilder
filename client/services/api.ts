@@ -227,6 +227,20 @@ class ApiService {
     return this.handleResponse(res);
   }
 
+  // Announcements
+  async listAnnouncements(limit = 5) {
+    const res = await fetch(`${API_BASE_URL}/announcements?limit=${limit}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async getAnnouncement(id: number) {
+    const res = await fetch(`${API_BASE_URL}/announcements/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+
   async changePassword(payload: {
     currentPassword: string;
     newPassword: string;

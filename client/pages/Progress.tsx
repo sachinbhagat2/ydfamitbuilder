@@ -31,8 +31,8 @@ const Progress = () => {
       try {
         const api = (await import("../services/api")).default;
         const [appsRes, schRes] = await Promise.all([
-          api.listMyApplications({ limit: 100 }),
-          api.listScholarships({ status: "active", limit: 200 }),
+          api.listMyApplications({ limit: 1000 }),
+          api.listScholarships({ status: "all", limit: 2000 }),
         ]);
         if (appsRes.success) setApps(appsRes.data || []);
         if (schRes.success) {
@@ -76,6 +76,7 @@ const Progress = () => {
             : "Initial Review";
       return {
         id: a.id,
+        scholarshipId: Number(a.scholarshipId),
         scholarship: name,
         amount,
         appliedDate: a.submittedAt
@@ -160,9 +161,12 @@ const Progress = () => {
     const matchesFilter =
       activeFilter === "all" ||
       app.status.toLowerCase().replace(" ", "-") === activeFilter;
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      searchQuery === "" ||
-      app.scholarship.toLowerCase().includes(searchQuery.toLowerCase());
+      q === "" ||
+      app.scholarship.toLowerCase().includes(q) ||
+      (app.amount || "").toLowerCase().includes(q) ||
+      (app.category || "").toLowerCase().includes(q);
     return matchesFilter && matchesSearch;
   });
 
@@ -432,13 +436,45 @@ const Progress = () => {
                       <span>Application ID: #{application.id}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                      <Link
+                        to={`/scholarships/${application.scholarshipId}`}
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
                         <Eye className="h-4 w-4" />
                         <span>View Details</span>
-                      </button>
-                      <button className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                      </Link>
+                      <button
+                        onClick={() => {
+                          const raw = apps.find((a) => a.id === application.id);
+                          const sch = schMap.get(Number(raw?.scholarshipId));
+                          const w = window.open("", "_blank");
+                          if (!w) return;
+                          const html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Application #${application.id}</title>
+                          <style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 8px}h2{font-size:16px;margin:16px 0 8px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left}small{color:#666}</style></head><body>
+                          <h1>Application #${application.id}</h1>
+                          <small>Generated on ${new Date().toLocaleString()}</small>
+                          <h2>Scholarship</h2>
+                          <table><tr><th>Name</th><td>${application.scholarship}</td></tr>
+                          <tr><th>Amount</th><td>${application.amount}</td></tr>
+                          <tr><th>Deadline</th><td>${application.deadline}</td></tr>
+                          <tr><th>Category</th><td>${application.category}</td></tr></table>
+                          <h2>Status</h2>
+                          <table><tr><th>Status</th><td>${application.status}</td></tr>
+                          <tr><th>Applied</th><td>${application.appliedDate}</td></tr>
+                          <tr><th>Next Step</th><td>${application.nextStep}</td></tr>
+                          </table>
+                          <h2>Details</h2>
+                          <pre style=\"white-space:pre-wrap;background:#f7f7f7;padding:12px;border:1px solid #eee;border-radius:6px;\">${JSON.stringify({ application: raw, scholarship: sch }, null, 2)}</pre>
+                          <script>window.onload=()=>{setTimeout(()=>{window.print();}, 100);}</script>
+                          </body></html>`;
+                          w.document.open();
+                          w.document.write(html);
+                          w.document.close();
+                        }}
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
                         <Download className="h-4 w-4" />
-                        <span>Download</span>
+                        <span>Download PDF</span>
                       </button>
                       <Link
                         to="/support"

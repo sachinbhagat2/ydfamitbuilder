@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "../hooks/use-toast";
@@ -32,6 +32,8 @@ const Scholarships = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState("deadline");
+  const [appliedIds, setAppliedIds] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -42,6 +44,20 @@ const Scholarships = () => {
           limit: 100,
         });
         if (res.success) setRemoteScholarships(res.data);
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const api = (await import("../services/api")).default;
+        const res = await api.listMyApplications({ limit: 1000 });
+        if (res.success) {
+          setAppliedIds(
+            (res.data || []).map((a: any) => Number(a.scholarshipId)),
+          );
+        }
       } catch {}
     })();
   }, []);
@@ -240,15 +256,14 @@ const Scholarships = () => {
     },
   ];
 
-  const categories = [
-    "all",
-    "Academic Excellence",
-    "Gender Equity",
-    "Technology",
-    "Arts & Culture",
-    "Disability Support",
-    "Sports",
-  ];
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    (remoteScholarships || []).forEach((s: any) => {
+      if (Array.isArray(s?.tags))
+        s.tags.forEach((t: any) => set.add(String(t)));
+    });
+    return ["all", ...Array.from(set)];
+  }, [remoteScholarships]);
 
   const amountRanges = [
     { value: "all", label: "All Amounts" },
@@ -298,7 +313,8 @@ const Scholarships = () => {
           name: s.title,
           organization: "Youth Dreamers Foundation",
           amount: `₹${s.amount}`,
-          category: "General",
+          category:
+            Array.isArray(s.tags) && s.tags.length ? s.tags[0] : "General",
           deadline: s.applicationDeadline
             ? new Date(s.applicationDeadline).toISOString().slice(0, 10)
             : "",
@@ -324,15 +340,43 @@ const Scholarships = () => {
       : fallbackScholarships;
 
   const filteredScholarships = scholarships.filter((scholarship) => {
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      searchQuery === "" ||
-      scholarship.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      scholarship.organization
+      q === "" ||
+      scholarship.name.toLowerCase().includes(q) ||
+      scholarship.organization.toLowerCase().includes(q) ||
+      (scholarship.tags || []).some((t: any) =>
+        String(t).toLowerCase().includes(q),
+      ) ||
+      String(scholarship.category || "")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+        .includes(q) ||
+      String(scholarship.amount)
+        .replace(/[^0-9]/g, "")
+        .includes(q.replace(/[^0-9]/g, ""));
 
-    const matchesCategory =
-      selectedCategory === "all" || scholarship.category === selectedCategory;
+    const matchesCategory = (() => {
+      if (selectedCategory === "all") return true;
+      const tags = (scholarship.tags || []) as any[];
+      return Array.isArray(tags)
+        ? tags.some((t) => String(t) === String(selectedCategory))
+        : false;
+    })();
+
+    const matchesDeadline = () => {
+      if (selectedDeadline === "all") return true;
+      if (!scholarship.deadline) return false;
+      const now = new Date();
+      const d = new Date(scholarship.deadline);
+      const diffDays = Math.ceil(
+        (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (diffDays < 0) return false;
+      if (selectedDeadline === "week") return diffDays <= 7;
+      if (selectedDeadline === "month") return diffDays <= 30;
+      if (selectedDeadline === "quarter") return diffDays <= 90;
+      return true;
+    };
 
     const matchesAmount = () => {
       if (selectedAmount === "all") return true;
@@ -351,7 +395,9 @@ const Scholarships = () => {
       }
     };
 
-    return matchesSearch && matchesCategory && matchesAmount();
+    return (
+      matchesSearch && matchesCategory && matchesAmount() && matchesDeadline()
+    );
   });
 
   const ApplicationModal = ({ scholarship, onClose }: any) => {
@@ -633,17 +679,47 @@ const Scholarships = () => {
           </p>
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <span>Sort by:</span>
-            <select className="border border-ydf-light-gray rounded px-2 py-1">
-              <option>Deadline</option>
-              <option>Amount</option>
-              <option>Relevance</option>
+            <select
+              className="border border-ydf-light-gray rounded px-2 py-1"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="deadline">Deadline</option>
+              <option value="amount">Amount</option>
+              <option value="applicants">Applicants</option>
             </select>
           </div>
         </div>
 
         {/* Scholarships Grid */}
         <div className="grid gap-6">
-          {filteredScholarships.map((scholarship, index) => (
+          {useMemo(() => {
+            const arr = [...filteredScholarships];
+            if (sortBy === "deadline") {
+              arr.sort((a: any, b: any) => {
+                const da = a.deadline
+                  ? new Date(a.deadline).getTime()
+                  : Infinity;
+                const db = b.deadline
+                  ? new Date(b.deadline).getTime()
+                  : Infinity;
+                return da - db;
+              });
+            } else if (sortBy === "amount") {
+              arr.sort((a: any, b: any) => {
+                const aa =
+                  parseInt(String(a.amount).replace(/[^0-9]/g, "")) || 0;
+                const bb =
+                  parseInt(String(b.amount).replace(/[^0-9]/g, "")) || 0;
+                return bb - aa;
+              });
+            } else if (sortBy === "applicants") {
+              arr.sort(
+                (a: any, b: any) => (b.applicants || 0) - (a.applicants || 0),
+              );
+            }
+            return arr;
+          }, [filteredScholarships, sortBy]).map((scholarship, index) => (
             <motion.div
               key={scholarship.id}
               initial={{ opacity: 0, y: 20 }}
@@ -768,13 +844,19 @@ const Scholarships = () => {
                     <button className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors">
                       <Heart className="h-4 w-4" />
                     </button>
-                    <button
-                      onClick={() => setSelectedScholarship(scholarship)}
-                      className="bg-ydf-deep-blue text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors"
-                    >
-                      <span>Apply Now</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    {appliedIds.includes(Number(scholarship.id)) ? (
+                      <span className="px-3 py-2 text-sm rounded-lg bg-green-100 text-green-700">
+                        Applied
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedScholarship(scholarship)}
+                        className="bg-ydf-deep-blue text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors"
+                      >
+                        <span>Apply Now</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -226,6 +226,53 @@ class InMemoryStore {
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
     },
   ];
+  public announcements: any[] = [
+    {
+      id: 1,
+      title: "Application Deadline Extended",
+      content:
+        "The deadline for the Merit Excellence Scholarship has been extended by one week.",
+      type: "deadline",
+      targetAudience: ["student"],
+      isActive: true,
+      priority: "high",
+      validFrom: new Date(),
+      validTo: null,
+      createdBy: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      title: "Maintenance Notice",
+      content:
+        "Scheduled maintenance on Sunday 10 PM - 12 AM. Portal access may be intermittent.",
+      type: "maintenance",
+      targetAudience: ["student", "reviewer", "admin", "donor"],
+      isActive: true,
+      priority: "normal",
+      validFrom: new Date(),
+      validTo: null,
+      createdBy: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 3,
+      title: "Results Published",
+      content:
+        "Results for the first round of the Technical Innovation Fund have been published.",
+      type: "result",
+      targetAudience: ["student"],
+      isActive: true,
+      priority: "urgent",
+      validFrom: new Date(),
+      validTo: null,
+      createdBy: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
 }
 
 const memory = new InMemoryStore();
@@ -437,6 +484,46 @@ async function ensureApplicationsTable() {
       INDEX idx_app_scholarship (scholarshipId),
       INDEX idx_app_student (studentId),
       INDEX idx_app_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
+async function ensureAnnouncementsTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id BIGSERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        type TEXT DEFAULT 'general',
+        "targetAudience" JSONB,
+        "isActive" BOOLEAN DEFAULT TRUE,
+        priority TEXT DEFAULT 'normal',
+        "validFrom" TIMESTAMPTZ DEFAULT NOW(),
+        "validTo" TIMESTAMPTZ,
+        "createdBy" BIGINT,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      type VARCHAR(20) DEFAULT 'general',
+      targetAudience JSON NULL,
+      isActive TINYINT(1) DEFAULT 1,
+      priority VARCHAR(10) DEFAULT 'normal',
+      validFrom DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      validTo DATETIME NULL,
+      createdBy INT NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 }
@@ -858,6 +945,55 @@ class DatabaseAdapter {
     return true;
   }
 
+  // Announcements
+  async getAnnouncements(
+    params: { limit?: number; activeOnly?: boolean } = {},
+  ) {
+    const limit = params.limit ?? 5;
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let list = [...memory.announcements];
+      if (params.activeOnly) list = list.filter((a: any) => a.isActive);
+      list.sort(
+        (a: any, b: any) => (b.createdAt as any) - (a.createdAt as any),
+      );
+      return list.slice(0, limit);
+    }
+    await ensureAnnouncementsTable();
+    if (MODE === "postgres" && pgPool) {
+      const where = params.activeOnly ? 'WHERE "isActive" = TRUE' : "";
+      const result = await pgPool.query(
+        `SELECT * FROM announcements ${where} ORDER BY "createdAt" DESC LIMIT $1`,
+        [limit],
+      );
+      return result.rows as any[];
+    }
+    const where = params.activeOnly ? "WHERE isActive = 1" : "";
+    const [rows] = await pool.execute(
+      `SELECT * FROM announcements ${where} ORDER BY createdAt DESC LIMIT ?`,
+      [limit],
+    );
+    return rows as any[];
+  }
+
+  async getAnnouncementById(id: number) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      return memory.announcements.find((a: any) => a.id === id) || null;
+    }
+    await ensureAnnouncementsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        "SELECT * FROM announcements WHERE id = $1 LIMIT 1",
+        [id],
+      );
+      return (result.rows as any[])[0] || null;
+    }
+    const [rows] = await pool.execute(
+      "SELECT * FROM announcements WHERE id = ? LIMIT 1",
+      [id],
+    );
+    return (rows as any[])[0] || null;
+  }
+
   // Applications
   async getApplications(params: {
     page?: number;
@@ -971,6 +1107,14 @@ class DatabaseAdapter {
       const total = memory.applications.length;
       const by = (st: string) =>
         memory.applications.filter((a) => a.status === st).length;
+      const totalAppliedAmount = memory.applications.reduce((acc, a) => {
+        const s = memory.scholarships.find(
+          (x: any) => x.id === a.scholarshipId,
+        );
+        const amt =
+          s && s.amount ? Number(String(s.amount).replace(/[^0-9.]/g, "")) : 0;
+        return acc + (isNaN(amt) ? 0 : amt);
+      }, 0);
       return {
         total,
         submitted: by("submitted"),
@@ -978,6 +1122,7 @@ class DatabaseAdapter {
         approved: by("approved"),
         rejected: by("rejected"),
         waitlisted: by("waitlisted"),
+        total_applied_amount: totalAppliedAmount,
       };
     }
     await ensureApplicationsTable();
@@ -996,8 +1141,17 @@ class DatabaseAdapter {
         approved: 0,
         rejected: 0,
         waitlisted: 0,
+        total_applied_amount: 0,
       };
       for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
+      try {
+        const sumRes = await pgPool.query(
+          'SELECT COALESCE(SUM(s.amount)::numeric,0) as total FROM applications a JOIN scholarships s ON s.id = a."scholarshipId"',
+        );
+        const sumVal = (sumRes.rows as any[])[0]?.total;
+        map.total_applied_amount =
+          typeof sumVal === "string" ? parseFloat(sumVal) : Number(sumVal || 0);
+      } catch {}
       return map;
     }
     const [totalRows] = await pool.execute(
@@ -1014,8 +1168,16 @@ class DatabaseAdapter {
       approved: 0,
       rejected: 0,
       waitlisted: 0,
+      total_applied_amount: 0,
     };
     for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
+    try {
+      const [sumRows] = await pool.execute(
+        "SELECT COALESCE(SUM(s.amount),0) as total FROM applications a JOIN scholarships s ON s.id = a.scholarshipId",
+      );
+      const sumVal = (sumRows as any[])[0]?.total;
+      map.total_applied_amount = Number(sumVal || 0);
+    } catch {}
     return map;
   }
 
@@ -1212,12 +1374,14 @@ export async function initializeDatabase() {
       await ensureUsersTable();
       await ensureScholarshipsTable();
       await ensureApplicationsTable();
+      await ensureAnnouncementsTable();
       return { success: true };
     }
     if (!pool) return { success: true };
     await ensureUsersTable();
     await ensureScholarshipsTable();
     await ensureApplicationsTable();
+    await ensureAnnouncementsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);

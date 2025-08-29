@@ -18,9 +18,14 @@ import authRoutes from "./routes/auth";
 import scholarshipRoutes from "./routes/scholarships";
 import surveysRoutes from "./routes/surveys";
 import applicationsRoutes from "./routes/applications";
+import announcementsRoutes from "./routes/announcements";
 import createDefaultScholarships from "./config/seed-scholarships";
 
-const IS_SERVERLESS = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const IS_SERVERLESS = Boolean(
+  process.env.NETLIFY ||
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME,
+);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -68,6 +73,7 @@ app.use("/api/scholarships", scholarshipRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/surveys", surveysRoutes);
 app.use("/api/applications", applicationsRoutes);
+app.use("/api/announcements", announcementsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
