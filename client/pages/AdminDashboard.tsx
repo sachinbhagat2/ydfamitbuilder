@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("schemes");
+  const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [appStats, setAppStats] = useState<any>(null);
@@ -64,6 +64,12 @@ const AdminDashboard = () => {
     ];
     if (tab && allowed.includes(tab) && tab !== activeTab) {
       setActiveTab(tab);
+    } else if (!tab) {
+      params.set("tab", "overview");
+      navigate({
+        pathname: "/admin-dashboard",
+        search: `?${params.toString()}`,
+      });
     }
   }, [location.search]);
 
@@ -283,13 +289,14 @@ const AdminDashboard = () => {
   const recentApplications = recentApps.length
     ? recentApps.map((a: any) => ({
         id: a.id,
-        applicant: `Student #${a.studentId}`,
-        scheme: `Scheme #${a.scholarshipId}`,
+        applicant: a.studentName || `Student #${a.studentId}`,
+        scheme: a.scholarshipTitle || `Scheme #${a.scholarshipId}`,
         status: a.status,
         submittedDate: a.submittedAt
           ? new Date(a.submittedAt).toLocaleDateString()
           : "",
         score: a.score ?? "-",
+        scholarshipId: a.scholarshipId,
       }))
     : [];
 
@@ -488,7 +495,10 @@ const AdminDashboard = () => {
                     >
                       {app.status}
                     </span>
-                    <button className="p-1 hover:bg-gray-200 rounded">
+                    <button
+                      onClick={() => openViewScholarship(app.scholarshipId)}
+                      className="p-1 hover:bg-gray-200 rounded"
+                    >
                       <Eye className="h-4 w-4 text-gray-600" />
                     </button>
                   </div>
@@ -576,13 +586,33 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900">
           Scholarship Schemes
         </h2>
-        <button
-          onClick={openCreate}
-          className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create Scheme</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              const api = (await import("../services/api")).default;
+              const blob = await api.exportScholarshipsCSV();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "scholarships.csv";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
+          >
+            <Download className="h-4 w-4" />
+            <span>Export Schemes</span>
+          </button>
+          <button
+            onClick={openCreate}
+            className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Scheme</span>
+          </button>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -671,7 +701,10 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <button className="p-1 hover:bg-gray-200 rounded">
+                        <button
+                          onClick={() => openViewScholarship(scheme.id)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
                           <Eye className="h-4 w-4 text-gray-600" />
                         </button>
                         <button
@@ -691,6 +724,33 @@ const AdminDashboard = () => {
                           className="p-1 hover:bg-red-100 rounded"
                         >
                           <Trash className="h-4 w-4 text-red-600" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const api = (await import("../services/api"))
+                              .default;
+                            const blob = await api.exportApplicationsCSV({
+                              scholarshipId: scheme.id,
+                            });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            const name = (
+                              scheme.title ||
+                              scheme.name ||
+                              `scheme-${scheme.id}`
+                            )
+                              .toString()
+                              .replace(/[^a-z0-9-_]+/gi, "-");
+                            a.download = `applications_${name}.csv`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Download className="h-4 w-4 text-gray-600" />
                         </button>
                         <button className="p-1 hover:bg-gray-200 rounded">
                           <MoreVertical className="h-4 w-4 text-gray-600" />
@@ -775,6 +835,20 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+
+  const [viewScholarship, setViewScholarship] = useState<any | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const openViewScholarship = async (id: number) => {
+    try {
+      setViewLoading(true);
+      const api = (await import("../services/api")).default;
+      const res = await api.getScholarship(id);
+      if (res.success) setViewScholarship(res.data);
+    } catch (e) {
+    } finally {
+      setViewLoading(false);
+    }
+  };
 
   return (
     <>
@@ -902,10 +976,10 @@ const AdminDashboard = () => {
                               {a.id}
                             </td>
                             <td className="px-6 py-3 text-sm text-gray-900">
-                              #{a.scholarshipId}
+                              {a.scholarshipTitle || `#${a.scholarshipId}`}
                             </td>
                             <td className="px-6 py-3 text-sm text-gray-900">
-                              #{a.studentId}
+                              {a.studentName || `#${a.studentId}`}
                             </td>
                             <td className="px-6 py-3">
                               <span
@@ -952,6 +1026,93 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {viewScholarship && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{viewScholarship.title}</h3>
+              <button
+                onClick={() => setViewScholarship(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <XCircle className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {viewScholarship.description}
+            </p>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-gray-500">Amount</div>
+                <div className="font-medium">₹{viewScholarship.amount}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Status</div>
+                <div>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(viewScholarship.status)}`}
+                  >
+                    {viewScholarship.status}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500">Application Deadline</div>
+                <div className="font-medium">
+                  {viewScholarship.applicationDeadline
+                    ? new Date(
+                        viewScholarship.applicationDeadline,
+                      ).toLocaleString()
+                    : "-"}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500">Selection Deadline</div>
+                <div className="font-medium">
+                  {viewScholarship.selectionDeadline
+                    ? new Date(
+                        viewScholarship.selectionDeadline,
+                      ).toLocaleString()
+                    : "-"}
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-sm mb-1">Eligibility</div>
+              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                {(Array.isArray(viewScholarship.eligibilityCriteria)
+                  ? viewScholarship.eligibilityCriteria
+                  : []
+                ).map((e: any, i: number) => (
+                  <li key={i}>{String(e)}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="text-gray-500 text-sm mb-1">
+                Required Documents
+              </div>
+              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                {(Array.isArray(viewScholarship.requiredDocuments)
+                  ? viewScholarship.requiredDocuments
+                  : []
+                ).map((d: any, i: number) => (
+                  <li key={i}>{String(d)}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => setViewScholarship(null)}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

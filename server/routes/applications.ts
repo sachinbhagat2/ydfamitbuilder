@@ -27,9 +27,29 @@ router.get("/", authenticateToken, authorize("admin"), async (req, res) => {
       scholarshipId: scholarshipId ? Number(scholarshipId) : undefined,
     });
 
+    const enriched = await Promise.all(
+      (result.data as any[]).map(async (r: any) => {
+        try {
+          const [u, s] = await Promise.all([
+            mockDatabase.findUserById(r.studentId),
+            mockDatabase.getScholarshipById(r.scholarshipId),
+          ]);
+          return {
+            ...r,
+            studentName: u
+              ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+              : null,
+            scholarshipTitle: s ? s.title : null,
+          };
+        } catch {
+          return r;
+        }
+      }),
+    );
+
     const response: PaginatedResponse<Application> = {
       success: true,
-      data: result.data,
+      data: enriched as any,
       pagination: result.pagination,
       message: "Applications retrieved successfully",
     };
@@ -70,9 +90,28 @@ router.get(
     try {
       const limit = Number((req.query.limit as any) || 5);
       const recent = await mockDatabase.getRecentApplications(limit);
+      const enriched = await Promise.all(
+        (recent as any[]).map(async (r: any) => {
+          try {
+            const [u, s] = await Promise.all([
+              mockDatabase.findUserById(r.studentId),
+              mockDatabase.getScholarshipById(r.scholarshipId),
+            ]);
+            return {
+              ...r,
+              studentName: u
+                ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+                : null,
+              scholarshipTitle: s ? s.title : null,
+            };
+          } catch {
+            return r;
+          }
+        }),
+      );
       const response: ApiResponse<Application[]> = {
         success: true,
-        data: recent,
+        data: enriched as any,
         message: "Recent applications",
       };
       res.json(response);
@@ -90,17 +129,40 @@ router.get(
   authorize("admin"),
   async (req, res) => {
     try {
-      const { status } = req.query as any;
+      const { status, scholarshipId, studentId } = req.query as any;
       const all = await mockDatabase.getApplications({
         page: 1,
         limit: 10000,
         status: status as any,
+        scholarshipId: scholarshipId ? Number(scholarshipId) : undefined,
+        studentId: studentId ? Number(studentId) : undefined,
       });
-      const rows = all.data as any[];
+      const rowsRaw = all.data as any[];
+      const rows = await Promise.all(
+        rowsRaw.map(async (r) => {
+          try {
+            const [u, s] = await Promise.all([
+              mockDatabase.findUserById(r.studentId),
+              mockDatabase.getScholarshipById(r.scholarshipId),
+            ]);
+            return {
+              ...r,
+              studentName: u
+                ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+                : "",
+              scholarshipTitle: s ? s.title : "",
+            };
+          } catch {
+            return { ...r, studentName: "", scholarshipTitle: "" };
+          }
+        }),
+      );
       const headers = [
         "id",
-        "scholarshipId",
         "studentId",
+        "studentName",
+        "scholarshipId",
+        "scholarshipTitle",
         "status",
         "score",
         "amountAwarded",
@@ -113,7 +175,7 @@ router.get(
           rows.map((r) =>
             headers
               .map((h) => {
-                const v = r[h] != null ? r[h] : "";
+                const v = (r as any)[h] != null ? (r as any)[h] : "";
                 if (v instanceof Date) return new Date(v).toISOString();
                 const s = String(v).replace(/"/g, '""');
                 return /[",\n]/.test(s) ? `"${s}"` : s;

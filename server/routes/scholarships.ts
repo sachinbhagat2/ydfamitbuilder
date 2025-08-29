@@ -125,9 +125,24 @@ router.get("/", async (req, res) => {
     const offset = (Number(page) - 1) * Number(limit);
     const list = filtered.slice(offset, offset + Number(limit));
 
+    const withCounts = await Promise.all(
+      (list as any[]).map(async (s: any) => {
+        try {
+          const apps = await mockDatabase.getApplications({
+            page: 1,
+            limit: 1,
+            scholarshipId: s.id,
+          });
+          return { ...s, currentApplications: apps.pagination?.total || 0 };
+        } catch {
+          return { ...s, currentApplications: s.currentApplications ?? 0 };
+        }
+      }),
+    );
+
     const response: PaginatedResponse<Scholarship> = {
       success: true,
-      data: list as any,
+      data: withCounts as any,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -200,12 +215,10 @@ router.post(
 
       const deadline = new Date(applicationDeadline);
       if (deadline <= new Date()) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Application deadline must be in the future",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Application deadline must be in the future",
+        });
       }
 
       const created = await mockDatabase.createScholarship(
@@ -292,6 +305,78 @@ router.delete(
       res.json({ success: true, message: "Scholarship deleted successfully" });
     } catch (error) {
       console.error("Delete scholarship error:", error);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  },
+);
+
+// Export scholarships as CSV (admin only)
+router.get(
+  "/export",
+  authenticateToken,
+  authorize("admin"),
+  async (req, res) => {
+    try {
+      const { status = "all" } = req.query as any;
+      const all = await mockDatabase.getAllScholarships();
+      let filtered = all as any[];
+      if (status && status !== "all") {
+        filtered = filtered.filter(
+          (s) =>
+            String(s.status || "").toLowerCase() ===
+            String(status).toLowerCase(),
+        );
+      }
+      const withCounts = await Promise.all(
+        filtered.map(async (s) => {
+          try {
+            const apps = await mockDatabase.getApplications({
+              page: 1,
+              limit: 1,
+              scholarshipId: s.id,
+            });
+            return { ...s, currentApplications: apps.pagination?.total || 0 };
+          } catch {
+            return { ...s, currentApplications: s.currentApplications ?? 0 };
+          }
+        }),
+      );
+      const headers = [
+        "id",
+        "title",
+        "status",
+        "amount",
+        "currency",
+        "applicationDeadline",
+        "selectionDeadline",
+        "maxApplications",
+        "currentApplications",
+        "createdAt",
+        "updatedAt",
+      ];
+      const csv = [headers.join(",")]
+        .concat(
+          withCounts.map((r: any) =>
+            headers
+              .map((h) => {
+                const v = r[h] != null ? r[h] : "";
+                const val =
+                  v instanceof Date ? new Date(v).toISOString() : String(v);
+                const s = val.replace(/"/g, '""');
+                return /[",\n]/.test(s) ? `"${s}"` : s;
+              })
+              .join(","),
+          ),
+        )
+        .join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="scholarships.csv"',
+      );
+      res.send(csv);
+    } catch (error) {
+      console.error("Export scholarships error:", error);
       res.status(500).json({ success: false, error: "Internal server error" });
     }
   },
