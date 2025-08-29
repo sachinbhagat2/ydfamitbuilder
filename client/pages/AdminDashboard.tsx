@@ -68,8 +68,8 @@ const AdminDashboard = () => {
       "overview",
       "schemes",
       "applications",
-      "analytics",
       "users",
+      "analytics",
       "settings",
     ];
     if (tab && allowed.includes(tab) && tab !== activeTab) {
