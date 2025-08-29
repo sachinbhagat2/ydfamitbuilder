@@ -33,6 +33,12 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("schemes");
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [appStats, setAppStats] = useState<any>(null);
+  const [recentApps, setRecentApps] = useState<any[]>([]);
+  const [appStatusFilter, setAppStatusFilter] = useState<string>('all');
+  const [applications, setApplications] = useState<any[]>([]);
+  const [appPage, setAppPage] = useState(1);
+  const [appTotal, setAppTotal] = useState(0);
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
