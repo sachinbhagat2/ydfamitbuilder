@@ -163,6 +163,15 @@ class ApiService {
     return this.handleResponse(res);
   }
 
+  async exportScholarshipsCSV(params?: Record<string, any>) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const res = await fetch(`${API_BASE_URL}/scholarships/export${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error("Export failed");
+    return await res.blob();
+  }
+
   // Applications endpoints (admin)
   async listApplications(params?: Record<string, any>) {
     const qs = params
