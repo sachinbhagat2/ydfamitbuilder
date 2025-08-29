@@ -231,6 +231,61 @@ class ApiService {
     return blob;
   }
 
+  // Reviewer endpoints
+  async listReviewerApplications(params?: Record<string, any>) {
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/reviewer/applications${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async getReviewerStats() {
+    const res = await fetch(`${API_BASE_URL}/reviewer/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+  async updateMyAssignedApplication(
+    id: number,
+    payload: Partial<{
+      status: string;
+      score: number | null;
+      reviewNotes: string | null;
+    }>,
+  ) {
+    const res = await fetch(`${API_BASE_URL}/reviewer/applications/${id}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+  async createReview(payload: {
+    applicationId: number;
+    criteria?: any;
+    overallScore?: number | null;
+    comments?: string | null;
+    recommendation?: string | null;
+  }) {
+    const res = await fetch(`${API_BASE_URL}/reviewer/reviews`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
+  async listMyReviews(params?: { applicationId?: number }) {
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    const res = await fetch(`${API_BASE_URL}/reviewer/reviews${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
+  }
+
   // Admin: list users
   async listUsers(params?: Record<string, any>) {
     const qs = params

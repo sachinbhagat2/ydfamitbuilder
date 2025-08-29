@@ -459,12 +459,21 @@ async function ensureApplicationsTable() {
         score INT,
         amountAwarded NUMERIC(10,2),
         assignedReviewerId BIGINT,
+        reviewNotes TEXT,
         formData JSONB,
         documents JSONB,
         submittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
+    // Ensure reviewNotes column exists
+    try {
+      await pgPool.query(
+        'ALTER TABLE applications ADD COLUMN IF NOT EXISTS "reviewNotes" TEXT',
+      );
+    } catch {
+      /* ignore */
+    }
     return;
   }
   if (!pool) return;
@@ -473,10 +482,11 @@ async function ensureApplicationsTable() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       scholarshipId INT NOT NULL,
       studentId INT NOT NULL,
-      status ENUM('draft','submitted','under_review','approved','rejected') NOT NULL DEFAULT 'submitted',
+      status ENUM('draft','submitted','under_review','approved','rejected','waitlisted') NOT NULL DEFAULT 'submitted',
       score INT NULL,
       amountAwarded DECIMAL(10,2) NULL,
       assignedReviewerId INT NULL,
+      reviewNotes TEXT NULL,
       formData JSON NULL,
       documents JSON NULL,
       submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -486,6 +496,19 @@ async function ensureApplicationsTable() {
       INDEX idx_app_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+  // Ensure columns exist on older DBs
+  try {
+    const [cols]: any = await pool.execute(
+      "SHOW COLUMNS FROM applications LIKE 'reviewNotes'",
+    );
+    if (!(cols as any[])[0]) {
+      await pool.execute(
+        "ALTER TABLE applications ADD COLUMN reviewNotes TEXT NULL AFTER assignedReviewerId",
+      );
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function ensureAnnouncementsTable() {
@@ -524,6 +547,44 @@ async function ensureAnnouncementsTable() {
       createdBy INT NULL,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
+async function ensureReviewsTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS application_reviews (
+        id BIGSERIAL PRIMARY KEY,
+        "applicationId" BIGINT NOT NULL,
+        "reviewerId" BIGINT NOT NULL,
+        criteria JSONB,
+        "overallScore" INT,
+        comments TEXT,
+        recommendation TEXT,
+        "isComplete" BOOLEAN DEFAULT TRUE,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS application_reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      applicationId INT NOT NULL,
+      reviewerId INT NOT NULL,
+      criteria JSON NULL,
+      overallScore INT NULL,
+      comments TEXT NULL,
+      recommendation ENUM('approve','reject','conditionally_approve') NULL,
+      isComplete TINYINT(1) DEFAULT 1,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_rev_app (applicationId),
+      INDEX idx_rev_reviewer (reviewerId)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 }
@@ -1097,6 +1158,7 @@ class DatabaseAdapter {
     status?: string;
     studentId?: number;
     scholarshipId?: number;
+    reviewerId?: number;
   }) {
     const page = params.page || 1;
     const limit = params.limit || 10;
@@ -1114,6 +1176,8 @@ class DatabaseAdapter {
         );
       if (params.studentId)
         list = list.filter((a) => a.studentId === params.studentId);
+      if (params.reviewerId)
+        list = list.filter((a) => a.assignedReviewerId === params.reviewerId);
       if (params.scholarshipId)
         list = list.filter((a) => a.scholarshipId === params.scholarshipId);
       const pageData = list.slice(offset, offset + limit);
@@ -1138,6 +1202,10 @@ class DatabaseAdapter {
       if (params.studentId) {
         where.push('"studentId" = $' + (vals.length + 1));
         vals.push(params.studentId);
+      }
+      if (params.reviewerId) {
+        where.push('"assignedReviewerId" = $' + (vals.length + 1));
+        vals.push(params.reviewerId);
       }
       if (params.scholarshipId) {
         where.push('"scholarshipId" = $' + (vals.length + 1));
@@ -1172,6 +1240,10 @@ class DatabaseAdapter {
     if (params.studentId) {
       where.push("studentId = ?");
       vals.push(params.studentId);
+    }
+    if (params.reviewerId) {
+      where.push("assignedReviewerId = ?");
+      vals.push(params.reviewerId);
     }
     if (params.scholarshipId) {
       where.push("scholarshipId = ?");
@@ -1343,6 +1415,74 @@ class DatabaseAdapter {
     return map;
   }
 
+  async getApplicationStatsForReviewer(reviewerId: number) {
+    if (!reviewerId)
+      return {
+        total: 0,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      const arr = memory.applications.filter(
+        (a) => a.assignedReviewerId === reviewerId,
+      );
+      const total = arr.length;
+      const by = (st: string) => arr.filter((a) => a.status === st).length;
+      return {
+        total,
+        submitted: by("submitted"),
+        under_review: by("under_review"),
+        approved: by("approved"),
+        rejected: by("rejected"),
+        waitlisted: by("waitlisted"),
+      };
+    }
+    await ensureApplicationsTable();
+    if (MODE === "postgres" && pgPool) {
+      const totalRes = await pgPool.query(
+        'SELECT COUNT(*)::int as cnt FROM applications WHERE "assignedReviewerId" = $1',
+        [reviewerId],
+      );
+      const groupRes = await pgPool.query(
+        'SELECT status, COUNT(*)::int as cnt FROM applications WHERE "assignedReviewerId" = $1 GROUP BY status',
+        [reviewerId],
+      );
+      const total = (totalRes.rows as any[])[0]?.cnt || 0;
+      const map: any = {
+        total,
+        submitted: 0,
+        under_review: 0,
+        approved: 0,
+        rejected: 0,
+        waitlisted: 0,
+      };
+      for (const r of groupRes.rows as any[]) map[r.status] = r.cnt;
+      return map;
+    }
+    const [totalRows] = await pool.execute(
+      "SELECT COUNT(*) as cnt FROM applications WHERE assignedReviewerId = ?",
+      [reviewerId],
+    );
+    const [groupRows] = await pool.execute(
+      "SELECT status, COUNT(*) as cnt FROM applications WHERE assignedReviewerId = ? GROUP BY status",
+      [reviewerId],
+    );
+    const total = (totalRows as any[])[0]?.cnt || 0;
+    const map: any = {
+      total,
+      submitted: 0,
+      under_review: 0,
+      approved: 0,
+      rejected: 0,
+      waitlisted: 0,
+    };
+    for (const r of groupRows as any[]) map[r.status] = Number(r.cnt || 0);
+    return map;
+  }
+
   async createApplication(
     input: { scholarshipId: number; applicationData?: any; documents?: any },
     studentId?: number,
@@ -1469,23 +1609,23 @@ class DatabaseAdapter {
     }
     const cols: string[] = [];
     const vals: any[] = [];
-    if (data.status) {
+    if (data.status !== undefined) {
       cols.push("status = ?");
       vals.push(data.status);
     }
-    if ("assignedReviewerId" in data) {
+    if (data.assignedReviewerId !== undefined) {
       cols.push("assignedReviewerId = ?");
       vals.push(data.assignedReviewerId);
     }
-    if ("score" in data) {
+    if (data.score !== undefined) {
       cols.push("score = ?");
       vals.push(data.score);
     }
-    if ("amountAwarded" in data) {
+    if (data.amountAwarded !== undefined) {
       cols.push("amountAwarded = ?");
       vals.push(data.amountAwarded);
     }
-    if ("reviewNotes" in data) {
+    if (data.reviewNotes !== undefined) {
       cols.push("reviewNotes = ?");
       vals.push(data.reviewNotes);
     }
@@ -1573,6 +1713,7 @@ export async function initializeDatabase() {
       await ensureScholarshipsTable();
       await ensureApplicationsTable();
       await ensureAnnouncementsTable();
+      await ensureReviewsTable();
       return { success: true };
     }
     if (!pool) return { success: true };
@@ -1580,6 +1721,7 @@ export async function initializeDatabase() {
     await ensureScholarshipsTable();
     await ensureApplicationsTable();
     await ensureAnnouncementsTable();
+    await ensureReviewsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);

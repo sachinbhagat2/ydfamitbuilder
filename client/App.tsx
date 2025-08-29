@@ -23,6 +23,7 @@ import ScholarshipDetails from "./pages/ScholarshipDetails";
 import Support from "./pages/Support";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
+import ReviewerApplications from "./pages/ReviewerApplications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +69,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={["reviewer"]}>
                       <ReviewerDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reviewer/applications"
+                  element={
+                    <ProtectedRoute allowedRoles={["reviewer"]}>
+                      <ReviewerApplications />
                     </ProtectedRoute>
                   }
                 />

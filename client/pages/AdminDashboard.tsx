@@ -25,6 +25,7 @@ import {
   Calendar,
   Trash,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -49,6 +50,7 @@ const AdminDashboard = () => {
     appId?: number;
     reviewerId?: number | "";
   }>({ open: false });
+  const [assignSaving, setAssignSaving] = useState(false);
   const [sortBy, setSortBy] = useState<
     "submittedAt" | "status" | "studentName" | "scholarshipTitle"
   >("submittedAt");
@@ -242,10 +244,17 @@ const AdminDashboard = () => {
   };
 
   const updateApplication = async (id: number, payload: any) => {
-    const api = (await import("../services/api")).default;
-    const res = await api.updateApplication(id, payload);
-    if (res.success) {
-      await fetchApplications(appPage, appStatusFilter);
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.updateApplication(id, payload);
+      if (res.success) {
+        await fetchApplications(appPage, appStatusFilter);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Assign reviewer failed:", e);
+      return false;
     }
   };
 
@@ -1373,19 +1382,39 @@ const AdminDashboard = () => {
                 Cancel
               </button>
               <button
-                disabled={!assignState.reviewerId}
+                disabled={!assignState.reviewerId || assignSaving}
                 onClick={async () => {
-                  if (assignState.appId && assignState.reviewerId) {
-                    await updateApplication(assignState.appId, {
-                      assignedReviewerId: assignState.reviewerId,
-                      status: "under_review",
-                    });
+                  if (!assignState.appId || !assignState.reviewerId) return;
+                  setAssignSaving(true);
+                  const appId = assignState.appId;
+                  const reviewerId = assignState.reviewerId as number;
+                  const ok = await updateApplication(appId, {
+                    assignedReviewerId: reviewerId,
+                    status: "under_review",
+                  });
+                  setAssignSaving(false);
+                  if (ok) {
+                    // Optimistic UI update
+                    setApplications((prev) =>
+                      prev.map((a) =>
+                        a.id === appId
+                          ? {
+                              ...a,
+                              assignedReviewerId: reviewerId,
+                              status: "under_review",
+                            }
+                          : a,
+                      ),
+                    );
+                    toast.success("Reviewer assigned successfully");
+                    setAssignState({ open: false });
+                  } else {
+                    toast.error("Failed to assign reviewer. Please try again.");
                   }
-                  setAssignState({ open: false });
                 }}
                 className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
               >
-                Save
+                {assignSaving ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
