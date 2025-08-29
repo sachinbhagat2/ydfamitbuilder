@@ -347,6 +347,14 @@ const AdminDashboard = () => {
             color: "bg-red-500",
             filter: 'rejected',
           },
+          {
+            title: "Total Applied Amount",
+            value: appStats?.total_applied_amount ? `₹${Number(appStats.total_applied_amount).toLocaleString("en-IN")}` : "₹0",
+            change: "",
+            icon: DollarSign,
+            color: "bg-purple-500",
+            filter: 'all',
+          },
         ].map((stat, index) => (
           <motion.div
             key={stat.title}
