@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "../contexts/AuthContext";
 import { toast } from "../hooks/use-toast";
 import {
   ArrowLeft,
@@ -48,6 +49,20 @@ const Scholarships = () => {
       } catch {}
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!isAuthenticated) return;
+      try {
+        const api = (await import("../services/api")).default;
+        const res = await api.listMyApplications({ limit: 500 });
+        if (res.success) {
+          const ids = (res.data || []).map((a: any) => Number(a.scholarshipId));
+          setAppliedIds(ids);
+        }
+      } catch {}
+    })();
+  }, [isAuthenticated]);
 
   const fallbackScholarships = [
     {
