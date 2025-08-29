@@ -192,6 +192,28 @@ const AdminDashboard = () => {
     } catch (e) {}
   };
 
+  const fetchReviewers = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.listUsers({ userType: "reviewer", limit: 100 });
+      if (res.success) setReviewers(res.data || []);
+    } catch (e) {}
+  };
+
+  const reviewerName = (id?: number | null) => {
+    if (!id) return "Unassigned";
+    const r = reviewers.find((u: any) => Number(u.id) === Number(id));
+    return r ? `${r.firstName || ""} ${r.lastName || ""}`.trim() || r.email : `#${id}`;
+  };
+
+  const updateApplication = async (id: number, payload: any) => {
+    const api = (await import("../services/api")).default;
+    const res = await api.updateApplication(id, payload);
+    if (res.success) {
+      await fetchApplications(appPage, appStatusFilter);
+    }
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm({
