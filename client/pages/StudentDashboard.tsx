@@ -165,7 +165,7 @@ const StudentDashboard = () => {
                   <GraduationCap className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
+                  <p className="text-2xl font-bold text-gray-900">{(myStats?.submitted || 0) + (myStats?.under_review || 0)}</p>
                   <p className="text-sm text-gray-600">Active Applications</p>
                 </div>
               </div>
