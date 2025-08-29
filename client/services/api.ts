@@ -163,6 +163,28 @@ class ApiService {
     return this.handleResponse(res);
   }
 
+  // Applications endpoints (admin)
+  async listApplications(params?: Record<string, any>) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/applications${qs}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async getApplicationStats() {
+    const res = await fetch(`${API_BASE_URL}/applications/stats`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async getRecentApplications(limit = 5) {
+    const res = await fetch(`${API_BASE_URL}/applications/recent?limit=${limit}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async exportApplicationsCSV(params?: Record<string, any>) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/applications/export${qs}`, { headers: this.getAuthHeaders() });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    return blob;
+  }
+
   async verifyToken(): Promise<ApiResponse<User>> {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: "GET",
