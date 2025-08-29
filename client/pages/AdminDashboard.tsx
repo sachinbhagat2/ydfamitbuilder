@@ -1099,10 +1099,16 @@ const AdminDashboard = () => {
                                 <select
                                   className={`px-2 py-1 border rounded text-xs ${getStatusColor(a.status)}`}
                                   value={a.status}
-                                  onChange={(e) => updateApplication(a.id, { status: e.target.value })}
+                                  onChange={(e) =>
+                                    updateApplication(a.id, {
+                                      status: e.target.value,
+                                    })
+                                  }
                                 >
                                   <option value="submitted">submitted</option>
-                                  <option value="under_review">under_review</option>
+                                  <option value="under_review">
+                                    under_review
+                                  </option>
                                   <option value="approved">approved</option>
                                   <option value="rejected">rejected</option>
                                   <option value="waitlisted">waitlisted</option>
@@ -1119,14 +1125,26 @@ const AdminDashboard = () => {
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 {!a.assignedReviewerId ? (
                                   <button
-                                    onClick={() => setAssignState({ open: true, appId: a.id, reviewerId: "" })}
+                                    onClick={() =>
+                                      setAssignState({
+                                        open: true,
+                                        appId: a.id,
+                                        reviewerId: "",
+                                      })
+                                    }
                                     className="px-3 py-1 rounded bg-ydf-deep-blue text-white"
                                   >
                                     Assign Reviewer
                                   </button>
                                 ) : (
                                   <button
-                                    onClick={() => setAssignState({ open: true, appId: a.id, reviewerId: a.assignedReviewerId })}
+                                    onClick={() =>
+                                      setAssignState({
+                                        open: true,
+                                        appId: a.id,
+                                        reviewerId: a.assignedReviewerId,
+                                      })
+                                    }
                                     className="px-3 py-1 rounded border"
                                   >
                                     Change Reviewer
@@ -1165,7 +1183,7 @@ const AdminDashboard = () => {
             {activeTab === "analytics" && renderAnalytics()}
           </div>
         </div>
-  </div>
+      </div>
 
       {assignState.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -1176,7 +1194,12 @@ const AdminDashboard = () => {
               <select
                 className="w-full border rounded px-3 py-2 mt-1"
                 value={assignState.reviewerId as any}
-                onChange={(e) => setAssignState((s) => ({ ...s, reviewerId: e.target.value ? Number(e.target.value) : "" }))}
+                onChange={(e) =>
+                  setAssignState((s) => ({
+                    ...s,
+                    reviewerId: e.target.value ? Number(e.target.value) : "",
+                  }))
+                }
               >
                 <option value="">Select reviewer</option>
                 {reviewers.map((r: any) => (
@@ -1197,7 +1220,10 @@ const AdminDashboard = () => {
                 disabled={!assignState.reviewerId}
                 onClick={async () => {
                   if (assignState.appId && assignState.reviewerId) {
-                    await updateApplication(assignState.appId, { assignedReviewerId: assignState.reviewerId, status: "under_review" });
+                    await updateApplication(assignState.appId, {
+                      assignedReviewerId: assignState.reviewerId,
+                      status: "under_review",
+                    });
                   }
                   setAssignState({ open: false });
                 }}
