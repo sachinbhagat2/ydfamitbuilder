@@ -1658,6 +1658,7 @@ export async function initializeDatabase() {
     await ensureScholarshipsTable();
     await ensureApplicationsTable();
     await ensureAnnouncementsTable();
+    await ensureReviewsTable();
     return { success: true };
   } catch (error) {
     console.error("Database initialization failed:", error);
