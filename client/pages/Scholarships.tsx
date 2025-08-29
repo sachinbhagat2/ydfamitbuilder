@@ -367,6 +367,16 @@ const Scholarships = () => {
       String(scholarship.type || "")
         .toLowerCase()
         .includes(q) ||
+      String(scholarship.status || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(scholarship.deadline || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(scholarship.applicants || "")
+        .toString()
+        .toLowerCase()
+        .includes(q) ||
       String(scholarship.amount)
         .replace(/[^0-9]/g, "")
         .includes(q.replace(/[^0-9]/g, ""));
