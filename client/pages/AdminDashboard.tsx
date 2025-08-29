@@ -1095,24 +1095,12 @@ const AdminDashboard = () => {
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 {a.studentName || `#${a.studentId}`}
                               </td>
-                              <td className="px-6 py-3">
-                                <select
-                                  className={`px-2 py-1 border rounded text-xs ${getStatusColor(a.status)}`}
-                                  value={a.status}
-                                  onChange={(e) =>
-                                    updateApplication(a.id, {
-                                      status: e.target.value,
-                                    })
-                                  }
+                                  <td className="px-6 py-3">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
                                 >
-                                  <option value="submitted">submitted</option>
-                                  <option value="under_review">
-                                    under_review
-                                  </option>
-                                  <option value="approved">approved</option>
-                                  <option value="rejected">rejected</option>
-                                  <option value="waitlisted">waitlisted</option>
-                                </select>
+                                  {a.status}
+                                </span>
                               </td>
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 {a.submittedAt
