@@ -72,6 +72,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/reviewer/applications"
+                  element={
+                    <ProtectedRoute allowedRoles={["reviewer"]}>
+                      {React.createElement((await import("./pages/ReviewerApplications")).default)}
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/donor-dashboard"
                   element={
                     <ProtectedRoute allowedRoles={["donor"]}>
