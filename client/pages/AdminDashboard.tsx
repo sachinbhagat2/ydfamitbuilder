@@ -25,6 +25,7 @@ import {
   Calendar,
   Trash,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -1385,12 +1386,25 @@ const AdminDashboard = () => {
                 onClick={async () => {
                   if (!assignState.appId || !assignState.reviewerId) return;
                   setAssignSaving(true);
-                  const ok = await updateApplication(assignState.appId, {
-                    assignedReviewerId: assignState.reviewerId,
+                  const appId = assignState.appId;
+                  const reviewerId = assignState.reviewerId as number;
+                  const ok = await updateApplication(appId, {
+                    assignedReviewerId: reviewerId,
                     status: "under_review",
                   });
                   setAssignSaving(false);
-                  if (ok) setAssignState({ open: false });
+                  if (ok) {
+                    // Optimistic UI update
+                    setApplications((prev) =>
+                      prev.map((a) =>
+                        a.id === appId ? { ...a, assignedReviewerId: reviewerId, status: "under_review" } : a,
+                      ),
+                    );
+                    toast.success("Reviewer assigned successfully");
+                    setAssignState({ open: false });
+                  } else {
+                    toast.error("Failed to assign reviewer. Please try again.");
+                  }
                 }}
                 className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
               >
