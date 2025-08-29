@@ -258,6 +258,25 @@ class ApiService {
     return result;
   }
 
+  // Profile documents
+  async listMyDocuments() {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, { headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async uploadMyDocument(payload: { name: string; size?: number; type?: string; content: string }) {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+    return this.handleResponse(res);
+  }
+  async deleteMyDocument(id: number) {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents/${id}`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    return this.handleResponse(res);
+  }
+  async downloadMyDocument(id: number) {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents/${id}/download`, { headers: this.getAuthHeaders() });
+    if (!res.ok) throw new Error('Download failed');
+    return await res.blob();
+  }
+
   // Surveys (surveyor staff module)
   async getMyVerifications() {
     const response = await fetch(`${API_BASE_URL}/surveys/my`, {
