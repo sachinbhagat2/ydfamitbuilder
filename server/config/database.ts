@@ -226,6 +226,53 @@ class InMemoryStore {
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
     },
   ];
+  public announcements: any[] = [
+    {
+      id: 1,
+      title: "Application Deadline Extended",
+      content:
+        "The deadline for the Merit Excellence Scholarship has been extended by one week.",
+      type: "deadline",
+      targetAudience: ["student"],
+      isActive: true,
+      priority: "high",
+      validFrom: new Date(),
+      validTo: null,
+      createdBy: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      title: "Maintenance Notice",
+      content:
+        "Scheduled maintenance on Sunday 10 PM - 12 AM. Portal access may be intermittent.",
+      type: "maintenance",
+      targetAudience: ["student", "reviewer", "admin", "donor"],
+      isActive: true,
+      priority: "normal",
+      validFrom: new Date(),
+      validTo: null,
+      createdBy: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 3,
+      title: "Results Published",
+      content:
+        "Results for the first round of the Technical Innovation Fund have been published.",
+      type: "result",
+      targetAudience: ["student"],
+      isActive: true,
+      priority: "urgent",
+      validFrom: new Date(),
+      validTo: null,
+      createdBy: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
 }
 
 const memory = new InMemoryStore();
