@@ -24,48 +24,69 @@ import {
 
 const ReviewerDashboard = () => {
   const { user } = useAuth();
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("all");
+  const [schemeFilter, setSchemeFilter] = useState<string>("all");
 
-  const [pendingApplications, setPendingApplications] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [filtered, setFiltered] = useState<any[]>([]);
+  const [selectedApp, setSelectedApp] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const reload = async () => {
+    setLoading(true);
+    try {
+      const res = await api.listReviewerApplications({ page: 1, limit: 100 });
+      if (res.success) {
+        const mapped = (res.data || []).map((a: any) => ({
+          id: a.id,
+          raw: a,
+          applicant: {
+            name: a.studentName || `Student #${a.studentId}`,
+            age: a?.formData?.age || "",
+            location: a?.formData?.location || "",
+            email: a?.formData?.email || "",
+            phone: a?.formData?.phone || "",
+            course: a?.formData?.course || "",
+            year: a?.formData?.year || "",
+          },
+          scheme: a.scholarshipTitle || `Scholarship #${a.scholarshipId}`,
+          amount: a.amountAwarded ? `₹${a.amountAwarded}` : "",
+          submittedDate: a.submittedAt,
+          score: a.score == null ? "" : a.score,
+          status: a.status,
+          documents: Array.isArray(a.documents) ? a.documents : [],
+          priority: "medium",
+        }));
+        setItems(mapped);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.listReviewerApplications({ page: 1, limit: 5 });
-        if (res.success) {
-          // Normalize to match UI expectations
-          const mapped = (res.data || []).map((a: any) => ({
-            id: a.id,
-            applicant: {
-              name: a.studentName || `Student #${a.studentId}`,
-              age: a?.formData?.age || "",
-              location: a?.formData?.location || "",
-              email: a?.formData?.email || "",
-              phone: a?.formData?.phone || "",
-              course: a?.formData?.course || "",
-              year: a?.formData?.year || "",
-            },
-            scheme: a.scholarshipTitle || `Scholarship #${a.scholarshipId}`,
-            amount: a.amountAwarded ? `₹${a.amountAwarded}` : "",
-            submittedDate: a.submittedAt,
-            score: a.score ?? "",
-            status:
-              a.status === "under_review"
-                ? "Under Review"
-                : a.status === "submitted"
-                  ? "Submitted"
-                  : a.status,
-            documents: Array.isArray(a.documents) ? a.documents : [],
-            priority: "medium",
-            region: "",
-          }));
-          setPendingApplications(mapped);
-        }
-      } catch {}
-    })();
+    reload();
   }, []);
+
+  useEffect(() => {
+    let data = [...items];
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      data = data.filter(
+        (d) =>
+          d.applicant.name.toLowerCase().includes(q) ||
+          String(d.scheme || "").toLowerCase().includes(q),
+      );
+    }
+    if (statusFilter !== "all") {
+      data = data.filter((d) => d.status === statusFilter);
+    }
+    if (schemeFilter !== "all") {
+      data = data.filter((d) => d.scheme === schemeFilter);
+    }
+    setFiltered(data);
+  }, [items, searchQuery, statusFilter, schemeFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
