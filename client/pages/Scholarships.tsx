@@ -54,7 +54,9 @@ const Scholarships = () => {
         const api = (await import("../services/api")).default;
         const res = await api.listMyApplications({ limit: 1000 });
         if (res.success) {
-          setAppliedIds((res.data || []).map((a: any) => Number(a.scholarshipId)));
+          setAppliedIds(
+            (res.data || []).map((a: any) => Number(a.scholarshipId)),
+          );
         }
       } catch {}
     })();
@@ -346,7 +348,9 @@ const Scholarships = () => {
       (scholarship.tags || []).some((t: any) =>
         String(t).toLowerCase().includes(q),
       ) ||
-      String(scholarship.category || "").toLowerCase().includes(q) ||
+      String(scholarship.category || "")
+        .toLowerCase()
+        .includes(q) ||
       String(scholarship.amount)
         .replace(/[^0-9]/g, "")
         .includes(q.replace(/[^0-9]/g, ""));
@@ -841,7 +845,9 @@ const Scholarships = () => {
                       <Heart className="h-4 w-4" />
                     </button>
                     {appliedIds.includes(Number(scholarship.id)) ? (
-                      <span className="px-3 py-2 text-sm rounded-lg bg-green-100 text-green-700">Applied</span>
+                      <span className="px-3 py-2 text-sm rounded-lg bg-green-100 text-green-700">
+                        Applied
+                      </span>
                     ) : (
                       <button
                         onClick={() => setSelectedScholarship(scholarship)}

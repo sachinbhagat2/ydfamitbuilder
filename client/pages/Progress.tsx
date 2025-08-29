@@ -447,7 +447,7 @@ const Progress = () => {
                         onClick={() => {
                           const raw = apps.find((a) => a.id === application.id);
                           const sch = schMap.get(Number(raw?.scholarshipId));
-                          const w = window.open('', '_blank');
+                          const w = window.open("", "_blank");
                           if (!w) return;
                           const html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Application #${application.id}</title>
                           <style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 8px}h2{font-size:16px;margin:16px 0 8px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left}small{color:#666}</style></head><body>

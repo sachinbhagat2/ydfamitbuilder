@@ -208,7 +208,9 @@ const ScholarshipDetails = () => {
                     </div>
                   </div>
                   {alreadyApplied ? (
-                    <span className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-green-100 text-green-700">Already Applied</span>
+                    <span className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-green-100 text-green-700">
+                      Already Applied
+                    </span>
                   ) : (
                     <button
                       onClick={handleApply}
