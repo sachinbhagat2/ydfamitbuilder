@@ -530,6 +530,80 @@ async function ensureAnnouncementsTable() {
 
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
+  async listUsers(params: { userType?: string; isActive?: boolean; search?: string; page?: number; limit?: number } = {}) {
+    const { userType, isActive, search, page = 1, limit = 100 } = params;
+    const offset = (page - 1) * limit;
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let list = [...memory.users];
+      if (userType)
+        list = list.filter((u) => String(u.userType) === String(userType));
+      if (typeof isActive === "boolean")
+        list = list.filter((u) => !!u.isActive === isActive);
+      if (search) {
+        const q = search.toLowerCase();
+        list = list.filter(
+          (u) =>
+            String(u.email || "").toLowerCase().includes(q) ||
+            String(u.firstName || "").toLowerCase().includes(q) ||
+            String(u.lastName || "").toLowerCase().includes(q),
+        );
+      }
+      list.sort((a: any, b: any) => (b.createdAt as any) - (a.createdAt as any));
+      return list.slice(offset, offset + limit);
+    }
+    if (MODE === "postgres" && pgPool) {
+      const where: string[] = [];
+      const vals: any[] = [];
+      if (userType) {
+        where.push('"userType" = $' + (vals.length + 1));
+        vals.push(userType);
+      }
+      if (typeof isActive === "boolean") {
+        where.push('"isActive" = $' + (vals.length + 1));
+        vals.push(isActive);
+      }
+      if (search) {
+        where.push(
+          '(LOWER(email) LIKE $' +
+            (vals.length + 1) +
+            ' OR LOWER("firstName") LIKE $' +
+            (vals.length + 2) +
+            ' OR LOWER("lastName") LIKE $' +
+            (vals.length + 3) +
+            ")",
+        );
+        vals.push(`%${search.toLowerCase()}%`, `%${search.toLowerCase()}%`, `%${search.toLowerCase()}%`);
+      }
+      const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+      const result = await pgPool.query(
+        `SELECT id, email, "firstName", "lastName", phone, "userType", "isActive", "emailVerified", "createdAt", "updatedAt" FROM users ${whereSql} ORDER BY "createdAt" DESC OFFSET $${vals.length + 1} LIMIT $${vals.length + 2}`,
+        [...vals, offset, limit],
+      );
+      return result.rows as any[];
+    }
+    const where: string[] = [];
+    const vals: any[] = [];
+    if (userType) {
+      where.push("userType = ?");
+      vals.push(userType);
+    }
+    if (typeof isActive === "boolean") {
+      where.push("isActive = ?");
+      vals.push(isActive ? 1 : 0);
+    }
+    if (search) {
+      where.push("(LOWER(email) LIKE ? OR LOWER(firstName) LIKE ? OR LOWER(lastName) LIKE ?)");
+      const like = `%${search.toLowerCase()}%`;
+      vals.push(like, like, like);
+    }
+    const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+    const [rows] = await pool.execute(
+      `SELECT id, email, firstName, lastName, phone, userType, isActive, emailVerified, createdAt, updatedAt FROM users ${whereSql} ORDER BY createdAt DESC LIMIT ? OFFSET ?`,
+      [...vals, limit, offset],
+    );
+    return rows as any[];
+  }
+
   async findUserByEmail(email: string) {
     const normalized = String(email || "")
       .trim()
