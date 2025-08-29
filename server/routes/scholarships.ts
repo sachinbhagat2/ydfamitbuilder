@@ -128,12 +128,16 @@ router.get("/", async (req, res) => {
     const withCounts = await Promise.all(
       (list as any[]).map(async (s: any) => {
         try {
-          const apps = await mockDatabase.getApplications({ page: 1, limit: 1, scholarshipId: s.id });
+          const apps = await mockDatabase.getApplications({
+            page: 1,
+            limit: 1,
+            scholarshipId: s.id,
+          });
           return { ...s, currentApplications: apps.pagination?.total || 0 };
         } catch {
           return { ...s, currentApplications: s.currentApplications ?? 0 };
         }
-      })
+      }),
     );
 
     const response: PaginatedResponse<Scholarship> = {
@@ -211,12 +215,10 @@ router.post(
 
       const deadline = new Date(applicationDeadline);
       if (deadline <= new Date()) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Application deadline must be in the future",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Application deadline must be in the future",
+        });
       }
 
       const created = await mockDatabase.createScholarship(
@@ -320,18 +322,24 @@ router.get(
       let filtered = all as any[];
       if (status && status !== "all") {
         filtered = filtered.filter(
-          (s) => String(s.status || "").toLowerCase() === String(status).toLowerCase(),
+          (s) =>
+            String(s.status || "").toLowerCase() ===
+            String(status).toLowerCase(),
         );
       }
       const withCounts = await Promise.all(
         filtered.map(async (s) => {
           try {
-            const apps = await mockDatabase.getApplications({ page: 1, limit: 1, scholarshipId: s.id });
+            const apps = await mockDatabase.getApplications({
+              page: 1,
+              limit: 1,
+              scholarshipId: s.id,
+            });
             return { ...s, currentApplications: apps.pagination?.total || 0 };
           } catch {
             return { ...s, currentApplications: s.currentApplications ?? 0 };
           }
-        })
+        }),
       );
       const headers = [
         "id",
@@ -352,7 +360,8 @@ router.get(
             headers
               .map((h) => {
                 const v = r[h] != null ? r[h] : "";
-                const val = v instanceof Date ? new Date(v).toISOString() : String(v);
+                const val =
+                  v instanceof Date ? new Date(v).toISOString() : String(v);
                 const s = val.replace(/"/g, '""');
                 return /[",\n]/.test(s) ? `"${s}"` : s;
               })

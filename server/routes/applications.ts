@@ -36,13 +36,15 @@ router.get("/", authenticateToken, authorize("admin"), async (req, res) => {
           ]);
           return {
             ...r,
-            studentName: u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : null,
+            studentName: u
+              ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+              : null,
             scholarshipTitle: s ? s.title : null,
           };
         } catch {
           return r;
         }
-      })
+      }),
     );
 
     const response: PaginatedResponse<Application> = {
@@ -97,13 +99,15 @@ router.get(
             ]);
             return {
               ...r,
-              studentName: u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : null,
+              studentName: u
+                ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+                : null,
               scholarshipTitle: s ? s.title : null,
             };
           } catch {
             return r;
           }
-        })
+        }),
       );
       const response: ApiResponse<Application[]> = {
         success: true,
@@ -143,13 +147,15 @@ router.get(
             ]);
             return {
               ...r,
-              studentName: u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "",
+              studentName: u
+                ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+                : "",
               scholarshipTitle: s ? s.title : "",
             };
           } catch {
             return { ...r, studentName: "", scholarshipTitle: "" };
           }
-        })
+        }),
       );
       const headers = [
         "id",

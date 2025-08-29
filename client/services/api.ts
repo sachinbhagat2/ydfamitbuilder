@@ -164,7 +164,9 @@ class ApiService {
   }
 
   async exportScholarshipsCSV(params?: Record<string, any>) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     const res = await fetch(`${API_BASE_URL}/scholarships/export${qs}`, {
       headers: this.getAuthHeaders(),
     });

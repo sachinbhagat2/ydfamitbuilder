@@ -66,7 +66,10 @@ const AdminDashboard = () => {
       setActiveTab(tab);
     } else if (!tab) {
       params.set("tab", "overview");
-      navigate({ pathname: "/admin-dashboard", search: `?${params.toString()}` });
+      navigate({
+        pathname: "/admin-dashboard",
+        search: `?${params.toString()}`,
+      });
     }
   }, [location.search]);
 
@@ -492,7 +495,10 @@ const AdminDashboard = () => {
                     >
                       {app.status}
                     </span>
-                    <button onClick={() => openViewScholarship(app.scholarshipId)} className="p-1 hover:bg-gray-200 rounded">
+                    <button
+                      onClick={() => openViewScholarship(app.scholarshipId)}
+                      className="p-1 hover:bg-gray-200 rounded"
+                    >
                       <Eye className="h-4 w-4 text-gray-600" />
                     </button>
                   </div>
@@ -695,7 +701,10 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <button onClick={() => openViewScholarship(scheme.id)} className="p-1 hover:bg-gray-200 rounded">
+                        <button
+                          onClick={() => openViewScholarship(scheme.id)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
                           <Eye className="h-4 w-4 text-gray-600" />
                         </button>
                         <button
@@ -718,12 +727,21 @@ const AdminDashboard = () => {
                         </button>
                         <button
                           onClick={async () => {
-                            const api = (await import("../services/api")).default;
-                            const blob = await api.exportApplicationsCSV({ scholarshipId: scheme.id });
+                            const api = (await import("../services/api"))
+                              .default;
+                            const blob = await api.exportApplicationsCSV({
+                              scholarshipId: scheme.id,
+                            });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement("a");
                             a.href = url;
-                            const name = (scheme.title || scheme.name || `scheme-${scheme.id}`).toString().replace(/[^a-z0-9-_]+/gi, "-");
+                            const name = (
+                              scheme.title ||
+                              scheme.name ||
+                              `scheme-${scheme.id}`
+                            )
+                              .toString()
+                              .replace(/[^a-z0-9-_]+/gi, "-");
                             a.download = `applications_${name}.csv`;
                             document.body.appendChild(a);
                             a.click();
@@ -826,8 +844,10 @@ const AdminDashboard = () => {
       const api = (await import("../services/api")).default;
       const res = await api.getScholarship(id);
       if (res.success) setViewScholarship(res.data);
-    } catch (e) {}
-    finally { setViewLoading(false); }
+    } catch (e) {
+    } finally {
+      setViewLoading(false);
+    }
   };
 
   return (
@@ -1012,11 +1032,16 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">{viewScholarship.title}</h3>
-              <button onClick={() => setViewScholarship(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button
+                onClick={() => setViewScholarship(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
                 <XCircle className="h-5 w-5 text-gray-600" />
               </button>
             </div>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{viewScholarship.description}</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {viewScholarship.description}
+            </p>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="text-gray-500">Amount</div>
@@ -1025,36 +1050,65 @@ const AdminDashboard = () => {
               <div>
                 <div className="text-gray-500">Status</div>
                 <div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(viewScholarship.status)}`}>{viewScholarship.status}</span>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(viewScholarship.status)}`}
+                  >
+                    {viewScholarship.status}
+                  </span>
                 </div>
               </div>
               <div>
                 <div className="text-gray-500">Application Deadline</div>
-                <div className="font-medium">{viewScholarship.applicationDeadline ? new Date(viewScholarship.applicationDeadline).toLocaleString() : "-"}</div>
+                <div className="font-medium">
+                  {viewScholarship.applicationDeadline
+                    ? new Date(
+                        viewScholarship.applicationDeadline,
+                      ).toLocaleString()
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Selection Deadline</div>
-                <div className="font-medium">{viewScholarship.selectionDeadline ? new Date(viewScholarship.selectionDeadline).toLocaleString() : "-"}</div>
+                <div className="font-medium">
+                  {viewScholarship.selectionDeadline
+                    ? new Date(
+                        viewScholarship.selectionDeadline,
+                      ).toLocaleString()
+                    : "-"}
+                </div>
               </div>
             </div>
             <div>
               <div className="text-gray-500 text-sm mb-1">Eligibility</div>
               <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
-                {(Array.isArray(viewScholarship.eligibilityCriteria) ? viewScholarship.eligibilityCriteria : []).map((e: any, i: number) => (
+                {(Array.isArray(viewScholarship.eligibilityCriteria)
+                  ? viewScholarship.eligibilityCriteria
+                  : []
+                ).map((e: any, i: number) => (
                   <li key={i}>{String(e)}</li>
                 ))}
               </ul>
             </div>
             <div>
-              <div className="text-gray-500 text-sm mb-1">Required Documents</div>
+              <div className="text-gray-500 text-sm mb-1">
+                Required Documents
+              </div>
               <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
-                {(Array.isArray(viewScholarship.requiredDocuments) ? viewScholarship.requiredDocuments : []).map((d: any, i: number) => (
+                {(Array.isArray(viewScholarship.requiredDocuments)
+                  ? viewScholarship.requiredDocuments
+                  : []
+                ).map((d: any, i: number) => (
                   <li key={i}>{String(d)}</li>
                 ))}
               </ul>
             </div>
             <div className="text-right">
-              <button onClick={() => setViewScholarship(null)} className="px-4 py-2 rounded bg-ydf-deep-blue text-white">Close</button>
+              <button
+                onClick={() => setViewScholarship(null)}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
