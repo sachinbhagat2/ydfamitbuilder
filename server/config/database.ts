@@ -945,6 +945,51 @@ class DatabaseAdapter {
     return true;
   }
 
+  // Announcements
+  async getAnnouncements(params: { limit?: number; activeOnly?: boolean } = {}) {
+    const limit = params.limit ?? 5;
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      let list = [...memory.announcements];
+      if (params.activeOnly) list = list.filter((a: any) => a.isActive);
+      list.sort((a: any, b: any) => (b.createdAt as any) - (a.createdAt as any));
+      return list.slice(0, limit);
+    }
+    await ensureAnnouncementsTable();
+    if (MODE === "postgres" && pgPool) {
+      const where = params.activeOnly ? 'WHERE "isActive" = TRUE' : '';
+      const result = await pgPool.query(
+        `SELECT * FROM announcements ${where} ORDER BY "createdAt" DESC LIMIT $1`,
+        [limit]
+      );
+      return result.rows as any[];
+    }
+    const where = params.activeOnly ? 'WHERE isActive = 1' : '';
+    const [rows] = await pool.execute(
+      `SELECT * FROM announcements ${where} ORDER BY createdAt DESC LIMIT ?`,
+      [limit]
+    );
+    return rows as any[];
+  }
+
+  async getAnnouncementById(id: number) {
+    if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      return memory.announcements.find((a: any) => a.id === id) || null;
+    }
+    await ensureAnnouncementsTable();
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query(
+        'SELECT * FROM announcements WHERE id = $1 LIMIT 1',
+        [id]
+      );
+      return (result.rows as any[])[0] || null;
+    }
+    const [rows] = await pool.execute(
+      'SELECT * FROM announcements WHERE id = ? LIMIT 1',
+      [id]
+    );
+    return (rows as any[])[0] || null;
+  }
+
   // Applications
   async getApplications(params: {
     page?: number;
