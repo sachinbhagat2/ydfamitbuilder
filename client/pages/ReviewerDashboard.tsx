@@ -4,8 +4,6 @@ import { useAuth } from "../contexts/AuthContext";
 import RoleBasedNavigation from "../components/RoleBasedNavigation";
 import api from "../services/api";
 import {
-  FileText,
-  Filter,
   Search,
   CheckCircle,
   XCircle,
@@ -15,7 +13,6 @@ import {
   MapPin,
   Star,
   Calendar,
-  User,
   GraduationCap,
   Phone,
   Mail,
