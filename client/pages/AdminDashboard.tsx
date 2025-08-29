@@ -1165,7 +1165,50 @@ const AdminDashboard = () => {
             {activeTab === "analytics" && renderAnalytics()}
           </div>
         </div>
-      </div>
+  </div>
+
+      {assignState.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Assign Reviewer</h3>
+            <div>
+              <label className="text-sm text-gray-600">Reviewer</label>
+              <select
+                className="w-full border rounded px-3 py-2 mt-1"
+                value={assignState.reviewerId as any}
+                onChange={(e) => setAssignState((s) => ({ ...s, reviewerId: e.target.value ? Number(e.target.value) : "" }))}
+              >
+                <option value="">Select reviewer</option>
+                {reviewers.map((r: any) => (
+                  <option key={r.id} value={r.id}>
+                    {(r.firstName || "") + " " + (r.lastName || "")} ({r.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setAssignState({ open: false })}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!assignState.reviewerId}
+                onClick={async () => {
+                  if (assignState.appId && assignState.reviewerId) {
+                    await updateApplication(assignState.appId, { assignedReviewerId: assignState.reviewerId, status: "under_review" });
+                  }
+                  setAssignState({ open: false });
+                }}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewScholarship && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
