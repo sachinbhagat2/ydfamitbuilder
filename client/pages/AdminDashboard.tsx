@@ -49,6 +49,7 @@ const AdminDashboard = () => {
     appId?: number;
     reviewerId?: number | "";
   }>({ open: false });
+  const [assignSaving, setAssignSaving] = useState(false);
   const [sortBy, setSortBy] = useState<
     "submittedAt" | "status" | "studentName" | "scholarshipTitle"
   >("submittedAt");
