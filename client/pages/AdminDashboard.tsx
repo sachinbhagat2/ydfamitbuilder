@@ -35,6 +35,8 @@ const AdminDashboard = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [appStats, setAppStats] = useState<any>(null);
   const [recentApps, setRecentApps] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
   const [appStatusFilter, setAppStatusFilter] = useState<string>('all');
   const [applications, setApplications] = useState<any[]>([]);
   const [appPage, setAppPage] = useState(1);
