@@ -144,48 +144,40 @@ const Profile = () => {
     })();
   }, []);
 
-  const handleSave = async () => {
-    // Validation
-    if (!profileData.firstName.trim() || !profileData.lastName.trim()) {
-      toast({
-        title: "Name is required",
-        description: "Please enter first and last name",
-      });
-      return;
-    }
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email);
-    if (!emailOk) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-      });
-      return;
-    }
-    const phoneOk = /^\+?\d[\d\s-]{7,}$/.test(profileData.phone);
-    if (!phoneOk) {
-      toast({
-        title: "Invalid phone",
-        description: "Please enter a valid phone number",
-      });
-      return;
-    }
-    if (profileData.pincode && !/^\d{5,6}$/.test(profileData.pincode)) {
-      toast({
-        title: "Invalid pincode",
-        description: "Pincode must be 5-6 digits",
-      });
-      return;
-    }
+  const validateProfile = (data: typeof profileData) => {
+    const e: Record<string, string> = {};
+    if (!data.firstName.trim()) e.firstName = "First name is required";
+    if (!data.lastName.trim()) e.lastName = "Last name is required";
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
+    if (!emailOk) e.email = "Enter a valid email";
+    const phoneOk = /^\+?\d[\d\s-]{7,}$/.test(data.phone);
+    if (!data.phone.trim()) e.phone = "Phone number is required";
+    else if (!phoneOk) e.phone = "Enter a valid phone number";
+    if (!data.address.trim()) e.address = "Address is required";
+    if (!data.city.trim()) e.city = "City is required";
+    if (!data.state.trim()) e.state = "State is required";
+    if (!data.pincode.trim()) e.pincode = "Pincode is required";
+    else if (!/^\d{5,6}$/.test(data.pincode)) e.pincode = "Pincode must be 5-6 digits";
+    if (!data.course.trim()) e.course = "Course is required";
+    if (!data.college.trim()) e.college = "College/University is required";
+    if (!data.year.trim()) e.year = "Current year is required";
+    if (!data.rollNumber.trim()) e.rollNumber = "Roll number is required";
+    if (!data.category.trim()) e.category = "Category is required";
+    if (!data.familyIncome.trim()) e.familyIncome = "Annual family income is required";
     if (
-      profileData.cgpa &&
-      (isNaN(Number(profileData.cgpa)) ||
-        Number(profileData.cgpa) < 0 ||
-        Number(profileData.cgpa) > 10)
+      data.cgpa &&
+      (isNaN(Number(data.cgpa)) || Number(data.cgpa) < 0 || Number(data.cgpa) > 10)
     ) {
-      toast({
-        title: "Invalid CGPA",
-        description: "CGPA must be between 0 and 10",
-      });
+      e.cgpa = "CGPA must be between 0 and 10";
+    }
+    return e;
+  };
+
+  const handleSave = async () => {
+    const e = validateProfile(profileData);
+    if (Object.keys(e).length) {
+      setErrors(e);
+      toast({ title: "Please fix the highlighted fields" });
       return;
     }
 
