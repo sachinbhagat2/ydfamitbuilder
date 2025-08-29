@@ -146,6 +146,16 @@ const AdminDashboard = () => {
     fetchOverviewData();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "applications") {
+      fetchApplications(1, appStatusFilter);
+      fetchReviewers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const fetchSchemes = async () => {
     try {
       const api = (await import("../services/api")).default;
