@@ -35,26 +35,39 @@ const ReviewerDashboard = () => {
     try {
       const res = await api.listReviewerApplications({ page: 1, limit: 100 });
       if (res.success) {
-        const mapped = (res.data || []).map((a: any) => ({
-          id: a.id,
-          raw: a,
-          applicant: {
-            name: a.studentName || `Student #${a.studentId}`,
-            age: a?.formData?.age || "",
-            location: a?.formData?.location || "",
-            email: a?.formData?.email || "",
-            phone: a?.formData?.phone || "",
-            course: a?.formData?.course || "",
-            year: a?.formData?.year || "",
-          },
-          scheme: a.scholarshipTitle || `Scholarship #${a.scholarshipId}`,
-          amount: a.amountAwarded ? `₹${a.amountAwarded}` : "",
-          submittedDate: a.submittedAt,
-          score: a.score == null ? "" : a.score,
-          status: a.status,
-          documents: Array.isArray(a.documents) ? a.documents : [],
-          priority: "medium",
-        }));
+        const mapped = (res.data || []).map((a: any) => {
+          const formData = typeof a.formData === "string" ? (() => { try { return JSON.parse(a.formData); } catch { return {}; } })() : (a.formData || {});
+          const documents = Array.isArray(a.documents)
+            ? a.documents
+            : typeof a.documents === "string"
+              ? (() => { try { const v = JSON.parse(a.documents); return Array.isArray(v) ? v : []; } catch { return []; } })()
+              : [];
+          const currency = (a.scholarshipCurrency || "INR").toUpperCase();
+          const amtStr = a.amountAwarded != null ? String(a.amountAwarded) : (a.scholarshipAmount != null ? String(a.scholarshipAmount) : "");
+          const displayAmount = amtStr
+            ? (currency === "INR" ? `₹${amtStr}` : `${currency} ${amtStr}`)
+            : "";
+          return {
+            id: a.id,
+            raw: a,
+            applicant: {
+              name: a.studentName || `Student #${a.studentId}`,
+              age: formData.age || "",
+              location: formData.location || "",
+              email: a.studentEmail || formData.email || "",
+              phone: a.studentPhone || formData.phone || "",
+              course: formData.course || (a.studentProfile?.course ?? ""),
+              year: formData.year || (a.studentProfile?.year ?? ""),
+            },
+            scheme: a.scholarshipTitle || `Scholarship #${a.scholarshipId}`,
+            amount: displayAmount,
+            submittedDate: a.submittedAt,
+            score: a.score == null ? "" : a.score,
+            status: a.status,
+            documents,
+            priority: "medium",
+          };
+        });
         setItems(mapped);
       }
     } finally {
