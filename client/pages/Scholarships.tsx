@@ -33,6 +33,7 @@ const Scholarships = () => {
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState("deadline");
+  const [appliedIds, setAppliedIds] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -43,6 +44,18 @@ const Scholarships = () => {
           limit: 100,
         });
         if (res.success) setRemoteScholarships(res.data);
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const api = (await import("../services/api")).default;
+        const res = await api.listMyApplications({ limit: 1000 });
+        if (res.success) {
+          setAppliedIds((res.data || []).map((a: any) => Number(a.scholarshipId)));
+        }
       } catch {}
     })();
   }, []);
@@ -826,13 +839,17 @@ const Scholarships = () => {
                     <button className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors">
                       <Heart className="h-4 w-4" />
                     </button>
-                    <button
-                      onClick={() => setSelectedScholarship(scholarship)}
-                      className="bg-ydf-deep-blue text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors"
-                    >
-                      <span>Apply Now</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    {appliedIds.includes(Number(scholarship.id)) ? (
+                      <span className="px-3 py-2 text-sm rounded-lg bg-green-100 text-green-700">Applied</span>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedScholarship(scholarship)}
+                        className="bg-ydf-deep-blue text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors"
+                      >
+                        <span>Apply Now</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
