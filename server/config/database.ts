@@ -1599,23 +1599,23 @@ class DatabaseAdapter {
     }
     const cols: string[] = [];
     const vals: any[] = [];
-    if (data.status) {
+    if (data.status !== undefined) {
       cols.push("status = ?");
       vals.push(data.status);
     }
-    if ("assignedReviewerId" in data) {
+    if (data.assignedReviewerId !== undefined) {
       cols.push("assignedReviewerId = ?");
       vals.push(data.assignedReviewerId);
     }
-    if ("score" in data) {
+    if (data.score !== undefined) {
       cols.push("score = ?");
       vals.push(data.score);
     }
-    if ("amountAwarded" in data) {
+    if (data.amountAwarded !== undefined) {
       cols.push("amountAwarded = ?");
       vals.push(data.amountAwarded);
     }
-    if ("reviewNotes" in data) {
+    if (data.reviewNotes !== undefined) {
       cols.push("reviewNotes = ?");
       vals.push(data.reviewNotes);
     }
