@@ -342,7 +342,8 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray"
+            className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray cursor-pointer"
+            onClick={() => { setTab('applications'); setAppStatusFilter(stat.filter as any); fetchApplications(1, stat.filter as any); }}
           >
             <div className="flex items-center justify-between">
               <div>
