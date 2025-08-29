@@ -125,11 +125,13 @@ router.get(
   authorize("admin"),
   async (req, res) => {
     try {
-      const { status } = req.query as any;
+      const { status, scholarshipId, studentId } = req.query as any;
       const all = await mockDatabase.getApplications({
         page: 1,
         limit: 10000,
         status: status as any,
+        scholarshipId: scholarshipId ? Number(scholarshipId) : undefined,
+        studentId: studentId ? Number(studentId) : undefined,
       });
       const rowsRaw = all.data as any[];
       const rows = await Promise.all(
