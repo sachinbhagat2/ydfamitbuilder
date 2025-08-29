@@ -155,8 +155,10 @@ function EditableRow({ row, onSaved }: { row: any; onSaved: () => void }) {
   );
   const [notes, setNotes] = useState<string>(row.reviewNotes || "");
   const [saving, setSaving] = useState(false);
+  const isFinal = row.status === "approved" || row.status === "rejected";
 
   const save = async () => {
+    if (isFinal) return; // do nothing when already finalized
     setSaving(true);
     try {
       const payload: any = { status, reviewNotes: notes };
