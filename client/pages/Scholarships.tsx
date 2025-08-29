@@ -27,6 +27,7 @@ import {
 const Scholarships = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
   const [selectedAmount, setSelectedAmount] = useState("all");
   const [selectedDeadline, setSelectedDeadline] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -306,7 +307,7 @@ const Scholarships = () => {
     }
   };
 
-  const scholarships =
+  const scholarshipsRaw =
     remoteScholarships && remoteScholarships.length
       ? remoteScholarships.map((s: any) => ({
           id: s.id,
@@ -339,21 +340,48 @@ const Scholarships = () => {
         }))
       : fallbackScholarships;
 
+  const scholarships = (scholarshipsRaw as any[]).map((s: any) => {
+    const tags = Array.isArray(s.tags) ? s.tags : [];
+    const inferredType = s.type
+      ? s.type
+      : tags.some((t: any) => /merit/i.test(String(t)))
+        ? "Merit-based"
+        : tags.some((t: any) => /(need|income)/i.test(String(t)))
+          ? "Need-based"
+          : "General";
+    return { ...s, type: inferredType };
+  });
+
   const filteredScholarships = scholarships.filter((scholarship) => {
     const q = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      q === "" ||
-      scholarship.name.toLowerCase().includes(q) ||
-      scholarship.organization.toLowerCase().includes(q) ||
-      (scholarship.tags || []).some((t: any) =>
-        String(t).toLowerCase().includes(q),
-      ) ||
-      String(scholarship.category || "")
-        .toLowerCase()
-        .includes(q) ||
-      String(scholarship.amount)
-        .replace(/[^0-9]/g, "")
-        .includes(q.replace(/[^0-9]/g, ""));
+    const matchesSearch = (() => {
+      if (q === "") return true;
+      const tokens = q.split(/\s+/).filter(Boolean);
+      const fields = [
+        String(scholarship.name || "").toLowerCase(),
+        String(scholarship.organization || "").toLowerCase(),
+        String(scholarship.category || "").toLowerCase(),
+        String(scholarship.type || "").toLowerCase(),
+        String(scholarship.status || "").toLowerCase(),
+        String(scholarship.deadline || "").toLowerCase(),
+        String(scholarship.applicants || "").toLowerCase(),
+        (scholarship.tags || [])
+          .map((t: any) => String(t).toLowerCase())
+          .join(" "),
+      ];
+      const amountDigits = String(scholarship.amount || "").replace(
+        /[^0-9]/g,
+        "",
+      );
+      return tokens.every((tok) => {
+        const t = tok.toLowerCase();
+        const tDigits = t.replace(/[^0-9]/g, "");
+        return (
+          fields.some((f) => f.includes(t)) ||
+          (!!tDigits && amountDigits.includes(tDigits))
+        );
+      });
+    })();
 
     const matchesCategory = (() => {
       if (selectedCategory === "all") return true;
@@ -361,6 +389,14 @@ const Scholarships = () => {
       return Array.isArray(tags)
         ? tags.some((t) => String(t) === String(selectedCategory))
         : false;
+    })();
+
+    const matchesType = (() => {
+      if (selectedType === "all") return true;
+      return (
+        String(scholarship.type || "").toLowerCase() ===
+        String(selectedType).toLowerCase()
+      );
     })();
 
     const matchesDeadline = () => {
@@ -396,7 +432,11 @@ const Scholarships = () => {
     };
 
     return (
-      matchesSearch && matchesCategory && matchesAmount() && matchesDeadline()
+      matchesSearch &&
+      matchesCategory &&
+      matchesType &&
+      matchesAmount() &&
+      matchesDeadline()
     );
   });
 
@@ -576,7 +616,7 @@ const Scholarships = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search scholarships..."
+                placeholder="Search by name, amount, category, type..."
                 className="w-full pl-10 pr-4 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -593,6 +633,29 @@ const Scholarships = () => {
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {category === "all" ? "All Categories" : category}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="px-3 py-2 border border-ydf-light-gray rounded-lg focus:ring-2 focus:ring-ydf-deep-blue focus:border-transparent"
+              >
+                {(
+                  [
+                    "all",
+                    ...Array.from(
+                      new Set(
+                        (scholarships || []).map(
+                          (s: any) => s.type || "General",
+                        ),
+                      ),
+                    ),
+                  ] as string[]
+                ).map((t) => (
+                  <option key={t} value={t}>
+                    {t === "all" ? "All Types" : t}
                   </option>
                 ))}
               </select>
@@ -657,6 +720,7 @@ const Scholarships = () => {
                   <button
                     onClick={() => {
                       setSelectedCategory("all");
+                      setSelectedType("all");
                       setSelectedAmount("all");
                       setSelectedDeadline("all");
                       setSearchQuery("");
@@ -802,7 +866,7 @@ const Scholarships = () => {
                     <Award className="h-4 w-4 text-gray-500" />
                     <div>
                       <span className="text-gray-600">Type</span>
-                      <div className="font-medium">Merit-based</div>
+                      <div className="font-medium">{scholarship.type}</div>
                     </div>
                   </div>
                 </div>
@@ -876,6 +940,7 @@ const Scholarships = () => {
             <button
               onClick={() => {
                 setSelectedCategory("all");
+                setSelectedType("all");
                 setSelectedAmount("all");
                 setSelectedDeadline("all");
                 setSearchQuery("");

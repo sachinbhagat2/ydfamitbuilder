@@ -450,9 +450,17 @@ const Progress = () => {
                           const w = window.open("", "_blank");
                           if (!w) return;
                           const html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Application #${application.id}</title>
-                          <style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 8px}h2{font-size:16px;margin:16px 0 8px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left}small{color:#666}</style></head><body>
+                          <style>
+                          body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#111}
+                          h1{font-size:20px;margin:0 0 8px}
+                          h2{font-size:16px;margin:16px 0 8px}
+                          table{border-collapse:collapse;width:100%;margin-bottom:12px}
+                          td,th{border:1px solid #ddd;padding:8px;text-align:left}
+                          small{color:#666}
+                          .muted{color:#555;font-size:12px;margin-bottom:8px}
+                          </style></head><body>
                           <h1>Application #${application.id}</h1>
-                          <small>Generated on ${new Date().toLocaleString()}</small>
+                          <div class=\"muted\">Generated on ${new Date().toLocaleString()}</div>
                           <h2>Scholarship</h2>
                           <table><tr><th>Name</th><td>${application.scholarship}</td></tr>
                           <tr><th>Amount</th><td>${application.amount}</td></tr>
@@ -463,9 +471,7 @@ const Progress = () => {
                           <tr><th>Applied</th><td>${application.appliedDate}</td></tr>
                           <tr><th>Next Step</th><td>${application.nextStep}</td></tr>
                           </table>
-                          <h2>Details</h2>
-                          <pre style=\"white-space:pre-wrap;background:#f7f7f7;padding:12px;border:1px solid #eee;border-radius:6px;\">${JSON.stringify({ application: raw, scholarship: sch }, null, 2)}</pre>
-                          <script>window.onload=()=>{setTimeout(()=>{window.print();}, 100);}</script>
+                          <script>window.onload=()=>{setTimeout(()=>{window.print(); setTimeout(()=>window.close(), 300);}, 100);}</script>
                           </body></html>`;
                           w.document.open();
                           w.document.write(html);
