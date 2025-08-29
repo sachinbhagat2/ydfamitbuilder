@@ -1103,6 +1103,11 @@ class DatabaseAdapter {
       const total = memory.applications.length;
       const by = (st: string) =>
         memory.applications.filter((a) => a.status === st).length;
+      const totalAppliedAmount = memory.applications.reduce((acc, a) => {
+        const s = memory.scholarships.find((x: any) => x.id === a.scholarshipId);
+        const amt = s && s.amount ? Number(String(s.amount).replace(/[^0-9.]/g, "")) : 0;
+        return acc + (isNaN(amt) ? 0 : amt);
+      }, 0);
       return {
         total,
         submitted: by("submitted"),
@@ -1110,6 +1115,7 @@ class DatabaseAdapter {
         approved: by("approved"),
         rejected: by("rejected"),
         waitlisted: by("waitlisted"),
+        total_applied_amount: totalAppliedAmount,
       };
     }
     await ensureApplicationsTable();
