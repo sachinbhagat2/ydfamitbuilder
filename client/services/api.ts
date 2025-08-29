@@ -189,6 +189,14 @@ class ApiService {
     });
     return this.handleResponse(res);
   }
+  async updateApplication(id: number, payload: Partial<{ status: string; assignedReviewerId: number | null; score: number | null; amountAwarded: number | null; reviewNotes: string | null }>) {
+    const res = await fetch(`${API_BASE_URL}/applications/${id}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return this.handleResponse(res);
+  }
   async getApplicationStats() {
     const res = await fetch(`${API_BASE_URL}/applications/stats`, {
       headers: this.getAuthHeaders(),
@@ -212,6 +220,15 @@ class ApiService {
     if (!res.ok) throw new Error("Export failed");
     const blob = await res.blob();
     return blob;
+  }
+
+  // Admin: list users
+  async listUsers(params?: Record<string, any>) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const res = await fetch(`${API_BASE_URL}/auth/users${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(res);
   }
 
   // Student applications
