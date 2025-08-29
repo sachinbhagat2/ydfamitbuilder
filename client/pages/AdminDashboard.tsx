@@ -1096,16 +1096,42 @@ const AdminDashboard = () => {
                                 {a.studentName || `#${a.studentId}`}
                               </td>
                               <td className="px-6 py-3">
-                                <span
-                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}
+                                <select
+                                  className={`px-2 py-1 border rounded text-xs ${getStatusColor(a.status)}`}
+                                  value={a.status}
+                                  onChange={(e) => updateApplication(a.id, { status: e.target.value })}
                                 >
-                                  {a.status}
-                                </span>
+                                  <option value="submitted">submitted</option>
+                                  <option value="under_review">under_review</option>
+                                  <option value="approved">approved</option>
+                                  <option value="rejected">rejected</option>
+                                  <option value="waitlisted">waitlisted</option>
+                                </select>
                               </td>
                               <td className="px-6 py-3 text-sm text-gray-900">
                                 {a.submittedAt
                                   ? new Date(a.submittedAt).toLocaleString()
                                   : ""}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {reviewerName(a.assignedReviewerId)}
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {!a.assignedReviewerId ? (
+                                  <button
+                                    onClick={() => setAssignState({ open: true, appId: a.id, reviewerId: "" })}
+                                    className="px-3 py-1 rounded bg-ydf-deep-blue text-white"
+                                  >
+                                    Assign Reviewer
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => setAssignState({ open: true, appId: a.id, reviewerId: a.assignedReviewerId })}
+                                    className="px-3 py-1 rounded border"
+                                  >
+                                    Change Reviewer
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           ))}
