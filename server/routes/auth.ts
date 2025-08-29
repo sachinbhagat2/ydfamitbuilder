@@ -385,6 +385,34 @@ router.put("/profile", authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Change password
+router.post("/change-password", authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "User not authenticated" });
+    }
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: "currentPassword and newPassword are required" });
+    }
+    const validation = isValidPassword(newPassword);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, error: validation.message });
+    }
+    const user = await mockDatabase.findUserById(userId);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    const ok = await comparePassword(currentPassword, user.password);
+    if (!ok) return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    const hashed = await hashPassword(newPassword);
+    await mockDatabase.updateUser(userId, { password: hashed, updatedAt: new Date() });
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
 // Logout (client-side token removal, but we can log it server-side)
 router.post("/logout", authenticateToken, async (req: AuthRequest, res) => {
   try {
