@@ -428,55 +428,95 @@ const AdminDashboard = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray">
-        <div className="p-6 border-b border-ydf-light-gray">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Recent Applications
-          </h3>
-        </div>
-        <div className="divide-y divide-ydf-light-gray">
-          {recentApplications.map((app) => (
-            <div key={app.id} className="p-4 hover:bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-ydf-deep-blue rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {app.applicant
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {app.applicant}
-                      </p>
-                      <p className="text-sm text-gray-600">{app.scheme}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray">
+          <div className="p-6 border-b border-ydf-light-gray">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Applications</h3>
+          </div>
+          <div className="divide-y divide-ydf-light-gray">
+            {recentApplications.map((app) => (
+              <div key={app.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-ydf-deep-blue rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {app.applicant
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{app.applicant}</p>
+                        <p className="text-sm text-gray-600">{app.scheme}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
-                      Score: {app.score}
-                    </p>
-                    <p className="text-xs text-gray-600">{app.submittedDate}</p>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">Score: {app.score}</p>
+                      <p className="text-xs text-gray-600">{app.submittedDate}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
+                      {app.status}
+                    </span>
+                    <button className="p-1 hover:bg-gray-200 rounded">
+                      <Eye className="h-4 w-4 text-gray-600" />
+                    </button>
                   </div>
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}
-                  >
-                    {app.status}
-                  </span>
-                  <button className="p-1 hover:bg-gray-200 rounded">
-                    <Eye className="h-4 w-4 text-gray-600" />
-                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Latest Announcements */}
+        <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray">
+          <div className="p-6 border-b border-ydf-light-gray">
+            <h3 className="text-lg font-semibold text-gray-900">Latest Announcements</h3>
+          </div>
+          <div className="divide-y divide-ydf-light-gray">
+            {announcements.map((a) => (
+              <button key={a.id} onClick={() => setSelectedAnnouncement(a)} className="w-full text-left p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">{a.title}</p>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{a.content}</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${a.priority === 'urgent' ? 'bg-red-100 text-red-800' : a.priority === 'high' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {a.type}
+                  </span>
+                </div>
+              </button>
+            ))}
+            {!announcements.length && (
+              <div className="p-4 text-sm text-gray-600">No announcements</div>
+            )}
+          </div>
         </div>
       </div>
+
+      {selectedAnnouncement && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{selectedAnnouncement.title}</h3>
+              <button onClick={() => setSelectedAnnouncement(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <XCircle className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">{selectedAnnouncement.content}</div>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Type: {selectedAnnouncement.type}</span>
+              <span>Priority: {selectedAnnouncement.priority}</span>
+            </div>
+            <div className="text-right">
+              <button onClick={() => setSelectedAnnouncement(null)} className="px-4 py-2 rounded bg-ydf-deep-blue text-white">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
