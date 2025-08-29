@@ -52,7 +52,7 @@ const Profile = () => {
     familyIncome: "",
   });
 
-  const [documents, setDocuments] = useState([
+  const [documents, setDocuments] = useState<any[]>([
     {
       id: 1,
       name: "Aadhaar Card",
@@ -420,9 +420,12 @@ const Profile = () => {
   const renderEducationInfo = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-lg p-6 shadow-sm border border-ydf-light-gray">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          Educational Information
-        </h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Educational Information</h3>
+          <button onClick={() => (isEditing ? handleSave() : setIsEditing(true))} className="flex items-center space-x-2 px-4 py-2 bg-ydf-deep-blue text-white rounded-lg hover:bg-opacity-90 transition-colors">
+            {isEditing ? (<><Save className="h-4 w-4" /><span>Save</span></>) : (<><Edit className="h-4 w-4" /><span>Edit</span></>)}
+          </button>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -537,21 +540,39 @@ const Profile = () => {
     <div className="space-y-6">
       <div className="bg-white rounded-lg p-6 shadow-sm border border-ydf-light-gray">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Uploaded Documents
-          </h3>
-          <button className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors">
-            <Upload className="h-4 w-4" />
-            <span>Upload New</span>
-          </button>
+          <h3 className="text-lg font-semibold text-gray-900">Uploaded Documents</h3>
+          <div>
+            <input id="doc-file" type="file" className="hidden" onChange={async (e)=>{
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                const reader = new FileReader();
+                reader.onload = async () => {
+                  const base64 = String(reader.result || '');
+                  const res = await api.uploadMyDocument({ name: file.name, size: file.size, type: file.type, content: base64 });
+                  if (res.success) {
+                    const list = await api.listMyDocuments();
+                    if (list.success) setDocuments(list.data || []);
+                    toast({ title:'Uploaded', description:file.name });
+                  }
+                };
+                reader.readAsDataURL(file);
+              } catch (err:any) {
+                toast({ title:'Upload failed', description:String(err?.message||err) });
+              } finally {
+                (e.target as HTMLInputElement).value = '';
+              }
+            }} />
+            <label htmlFor="doc-file" className="cursor-pointer bg-ydf-deep-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors">
+              <Upload className="h-4 w-4" />
+              <span>Upload New</span>
+            </label>
+          </div>
         </div>
 
         <div className="space-y-4">
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="flex items-center justify-between p-4 border border-ydf-light-gray rounded-lg hover:bg-gray-50 transition-colors"
-            >
+          {documents.map((doc: any) => (
+            <div key={doc.id} className="flex items-center justify-between p-4 border border-ydf-light-gray rounded-lg hover:bg-gray-50 transition-colors">
               <div className="flex items-center space-x-4">
                 <div className="w-10 h-10 bg-ydf-teal-green rounded-lg flex items-center justify-center">
                   <FileText className="h-5 w-5 text-white" />
@@ -560,30 +581,23 @@ const Profile = () => {
                   <h4 className="font-medium text-gray-900">{doc.name}</h4>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
                     <span>Uploaded: {doc.uploadDate}</span>
-                    <span>Size: {doc.size}</span>
+                    <span>Size: {doc.size ? `${Math.round((Number(doc.size)||0)/1024)} KB` : '-'}</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${getDocumentStatusColor(doc.status)}`}
-                >
-                  {doc.status}
-                </span>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getDocumentStatusColor(doc.status)}`}>{doc.status}</span>
                 <div className="flex items-center space-x-1">
-                  <button className="p-1 hover:bg-gray-200 rounded">
-                    <Eye className="h-4 w-4 text-gray-600" />
-                  </button>
-                  <button className="p-1 hover:bg-gray-200 rounded">
-                    <Download className="h-4 w-4 text-gray-600" />
-                  </button>
-                  <button className="p-1 hover:bg-gray-200 rounded">
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </button>
+                  <button onClick={async ()=>{ try { const blob = await api.downloadMyDocument(Number(doc.id)); const url = URL.createObjectURL(blob); window.open(url, '_blank'); } catch(e:any){ toast({ title:'Open failed', description:String(e?.message||e) }); } }} className="p-1 hover:bg-gray-200 rounded"><Eye className="h-4 w-4 text-gray-600" /></button>
+                  <button onClick={async ()=>{ try { const blob = await api.downloadMyDocument(Number(doc.id)); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = doc.name || 'document'; a.click(); } catch(e:any){ toast({ title:'Download failed', description:String(e?.message||e) }); } }} className="p-1 hover:bg-gray-200 rounded"><Download className="h-4 w-4 text-gray-600" /></button>
+                  <button onClick={async ()=>{ try { const res = await api.deleteMyDocument(Number(doc.id)); if (res.success) { setDocuments((prev)=> prev.filter((d:any)=> Number(d.id) !== Number(doc.id))); } } catch(e:any){ toast({ title:'Delete failed', description:String(e?.message||e) }); } }} className="p-1 hover:bg-gray-200 rounded"><Trash2 className="h-4 w-4 text-red-600" /></button>
                 </div>
               </div>
             </div>
           ))}
+          {(!documents || documents.length === 0) && (
+            <div className="text-sm text-gray-600">No documents uploaded yet.</div>
+          )}
         </div>
       </div>
     </div>
