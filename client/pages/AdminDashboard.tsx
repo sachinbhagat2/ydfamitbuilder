@@ -243,10 +243,17 @@ const AdminDashboard = () => {
   };
 
   const updateApplication = async (id: number, payload: any) => {
-    const api = (await import("../services/api")).default;
-    const res = await api.updateApplication(id, payload);
-    if (res.success) {
-      await fetchApplications(appPage, appStatusFilter);
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.updateApplication(id, payload);
+      if (res.success) {
+        await fetchApplications(appPage, appStatusFilter);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Assign reviewer failed:", e);
+      return false;
     }
   };
 
