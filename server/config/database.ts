@@ -1115,6 +1115,8 @@ class DatabaseAdapter {
         );
       if (params.studentId)
         list = list.filter((a) => a.studentId === params.studentId);
+      if (params.reviewerId)
+        list = list.filter((a) => a.assignedReviewerId === params.reviewerId);
       if (params.scholarshipId)
         list = list.filter((a) => a.scholarshipId === params.scholarshipId);
       const pageData = list.slice(offset, offset + limit);
