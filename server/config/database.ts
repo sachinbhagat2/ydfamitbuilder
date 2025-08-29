@@ -488,6 +488,46 @@ async function ensureApplicationsTable() {
   `);
 }
 
+async function ensureAnnouncementsTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id BIGSERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        type TEXT DEFAULT 'general',
+        "targetAudience" JSONB,
+        "isActive" BOOLEAN DEFAULT TRUE,
+        priority TEXT DEFAULT 'normal',
+        "validFrom" TIMESTAMPTZ DEFAULT NOW(),
+        "validTo" TIMESTAMPTZ,
+        "createdBy" BIGINT,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      type VARCHAR(20) DEFAULT 'general',
+      targetAudience JSON NULL,
+      isActive TINYINT(1) DEFAULT 1,
+      priority VARCHAR(10) DEFAULT 'normal',
+      validFrom DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      validTo DATETIME NULL,
+      createdBy INT NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async findUserByEmail(email: string) {
