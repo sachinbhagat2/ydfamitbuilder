@@ -431,6 +431,82 @@ router.post("/logout", authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Profile documents - list
+router.get('/profile/documents', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success:false, error:'User not authenticated' });
+    const user = await mockDatabase.findUserById(userId);
+    if (!user) return res.status(404).json({ success:false, error:'User not found' });
+    const docs = Array.isArray(user.profileData?.documents) ? user.profileData.documents : [];
+    return res.json({ success:true, data: docs, message:'Documents retrieved' });
+  } catch (e) {
+    console.error('List documents error:', e);
+    return res.status(500).json({ success:false, error:'Internal server error' });
+  }
+});
+
+// Upload document (base64 content)
+router.post('/profile/documents', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success:false, error:'User not authenticated' });
+    const { name, size, type, content } = req.body || {};
+    if (!name || !content) return res.status(400).json({ success:false, error:'name and content are required' });
+    const user = await mockDatabase.findUserById(userId);
+    if (!user) return res.status(404).json({ success:false, error:'User not found' });
+    const docs = Array.isArray(user.profileData?.documents) ? user.profileData.documents : [];
+    const id = docs.length ? Math.max(...docs.map((d:any)=> Number(d.id)||0)) + 1 : 1;
+    const doc = { id, name, size: size ?? null, type: type ?? 'application/octet-stream', uploadDate: new Date().toISOString().slice(0,10), status: 'Pending', content };
+    const nextProfile = { ...(user.profileData||{}), documents: [...docs, doc] };
+    const updated = await mockDatabase.updateUser(userId, { profileData: nextProfile });
+    return res.status(201).json({ success:true, data: doc, message:'Uploaded' });
+  } catch (e) {
+    console.error('Upload document error:', e);
+    return res.status(500).json({ success:false, error:'Internal server error' });
+  }
+});
+
+// Delete document
+router.delete('/profile/documents/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success:false, error:'User not authenticated' });
+    const id = Number(req.params.id);
+    const user = await mockDatabase.findUserById(userId);
+    if (!user) return res.status(404).json({ success:false, error:'User not found' });
+    const docs = Array.isArray(user.profileData?.documents) ? user.profileData.documents : [];
+    const next = docs.filter((d:any)=> Number(d.id) !== id);
+    const updated = await mockDatabase.updateUser(userId, { profileData: { ...(user.profileData||{}), documents: next } });
+    return res.json({ success:true, message:'Deleted' });
+  } catch (e) {
+    console.error('Delete document error:', e);
+    return res.status(500).json({ success:false, error:'Internal server error' });
+  }
+});
+
+// Download document
+router.get('/profile/documents/:id/download', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success:false, error:'User not authenticated' });
+    const id = Number(req.params.id);
+    const user = await mockDatabase.findUserById(userId);
+    if (!user) return res.status(404).json({ success:false, error:'User not found' });
+    const docs = Array.isArray(user.profileData?.documents) ? user.profileData.documents : [];
+    const doc = docs.find((d:any)=> Number(d.id) === id);
+    if (!doc) return res.status(404).json({ success:false, error:'Document not found' });
+    const base64 = String(doc.content||'');
+    const buffer = Buffer.from(base64.split(',').pop() || '', 'base64');
+    res.setHeader('Content-Type', doc.type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${doc.name}"`);
+    return res.end(buffer);
+  } catch (e) {
+    console.error('Download document error:', e);
+    return res.status(500).json({ success:false, error:'Internal server error' });
+  }
+});
+
 // Verify token endpoint
 router.get("/verify", authenticateToken, async (req: AuthRequest, res) => {
   try {
