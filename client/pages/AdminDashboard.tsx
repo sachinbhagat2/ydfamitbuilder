@@ -43,6 +43,10 @@ const AdminDashboard = () => {
   const [applications, setApplications] = useState<any[]>([]);
   const [appPage, setAppPage] = useState(1);
   const [appTotal, setAppTotal] = useState(0);
+  const [reviewers, setReviewers] = useState<any[]>([]);
+  const [assignState, setAssignState] = useState<{ open: boolean; appId?: number; reviewerId?: number | "" }>({ open: false });
+  const [sortBy, setSortBy] = useState<"submittedAt" | "status" | "studentName" | "scholarshipTitle">("submittedAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
