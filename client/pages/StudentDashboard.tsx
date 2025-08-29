@@ -58,35 +58,16 @@ const StudentDashboard = () => {
     setShowOnboarding(false);
   };
 
-  const scholarships = [
-    {
-      id: 1,
-      name: "Merit Excellence Scholarship",
-      amount: "₹50,000",
-      deadline: "15 Mar 2024",
-      status: "Applied",
-      category: "Academic",
-      color: "bg-ydf-deep-blue",
-    },
-    {
-      id: 2,
-      name: "Rural Development Grant",
-      amount: "₹25,000",
-      deadline: "22 Mar 2024",
-      status: "Eligible",
-      category: "Rural",
-      color: "bg-ydf-teal-green",
-    },
-    {
-      id: 3,
-      name: "Technical Innovation Fund",
-      amount: "₹75,000",
-      deadline: "30 Mar 2024",
-      status: "Under Review",
-      category: "Technology",
-      color: "bg-purple-600",
-    },
-  ];
+  const appliedSet = new Set(myApps.map((a:any)=> a.scholarshipId));
+  const scholarships = activeScholarships.slice(0,3).map((s:any) => ({
+    id: s.id,
+    name: s.title,
+    amount: `₹${s.amount}`,
+    deadline: s.applicationDeadline ? new Date(s.applicationDeadline).toLocaleDateString() : '-',
+    status: appliedSet.has(s.id) ? 'Applied' : 'Eligible',
+    category: Array.isArray(s.tags) ? s.tags.join(', ') : 'General',
+    color: appliedSet.has(s.id) ? 'bg-ydf-deep-blue' : 'bg-ydf-teal-green',
+  }));
 
   const announcements = [
     {
