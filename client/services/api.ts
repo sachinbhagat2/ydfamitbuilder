@@ -227,9 +227,12 @@ class ApiService {
     return this.handleResponse(res);
   }
 
-  async changePassword(payload: { currentPassword: string; newPassword: string }) {
+  async changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }) {
     const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
-      method: 'POST',
+      method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(payload),
     });
@@ -260,20 +263,37 @@ class ApiService {
 
   // Profile documents
   async listMyDocuments() {
-    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, { headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
-  async uploadMyDocument(payload: { name: string; size?: number; type?: string; content: string }) {
-    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+  async uploadMyDocument(payload: {
+    name: string;
+    size?: number;
+    type?: string;
+    content: string;
+  }) {
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
     return this.handleResponse(res);
   }
   async deleteMyDocument(id: number) {
-    const res = await fetch(`${API_BASE_URL}/auth/profile/documents/${id}`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/auth/profile/documents/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async downloadMyDocument(id: number) {
-    const res = await fetch(`${API_BASE_URL}/auth/profile/documents/${id}/download`, { headers: this.getAuthHeaders() });
-    if (!res.ok) throw new Error('Download failed');
+    const res = await fetch(
+      `${API_BASE_URL}/auth/profile/documents/${id}/download`,
+      { headers: this.getAuthHeaders() },
+    );
+    if (!res.ok) throw new Error("Download failed");
     return await res.blob();
   }
 
