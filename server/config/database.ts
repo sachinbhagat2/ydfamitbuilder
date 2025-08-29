@@ -1097,6 +1097,7 @@ class DatabaseAdapter {
     status?: string;
     studentId?: number;
     scholarshipId?: number;
+    reviewerId?: number;
   }) {
     const page = params.page || 1;
     const limit = params.limit || 10;
