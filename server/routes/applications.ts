@@ -293,17 +293,19 @@ router.patch(
           .json({ success: false, error: "Invalid status value" });
       }
 
-      const updated = await (mockDatabase as any).updateApplication(id, {
-        status,
-        assignedReviewerId:
-          assignedReviewerId === undefined
-            ? undefined
-            : Number(assignedReviewerId) || null,
-        score: score === undefined ? undefined : Number(score),
-        amountAwarded:
-          amountAwarded === undefined ? undefined : Number(amountAwarded),
-        reviewNotes: reviewNotes ?? undefined,
-      });
+      const updatePayload: any = {};
+      if (status !== undefined) updatePayload.status = status;
+      if (assignedReviewerId !== undefined)
+        updatePayload.assignedReviewerId = Number(assignedReviewerId) || null;
+      if (score !== undefined) updatePayload.score = Number(score);
+      if (amountAwarded !== undefined)
+        updatePayload.amountAwarded = Number(amountAwarded);
+      if (reviewNotes !== undefined) updatePayload.reviewNotes = reviewNotes;
+
+      const updated = await (mockDatabase as any).updateApplication(
+        id,
+        updatePayload,
+      );
 
       if (!updated)
         return res
