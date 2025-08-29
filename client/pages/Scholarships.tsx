@@ -35,7 +35,6 @@ const Scholarships = () => {
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState("deadline");
   const { isAuthenticated } = useAuth();
-  const [appliedIds, setAppliedIds] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -50,19 +49,6 @@ const Scholarships = () => {
     })();
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      if (!isAuthenticated) return;
-      try {
-        const api = (await import("../services/api")).default;
-        const res = await api.listMyApplications({ limit: 500 });
-        if (res.success) {
-          const ids = (res.data || []).map((a: any) => Number(a.scholarshipId));
-          setAppliedIds(ids);
-        }
-      } catch {}
-    })();
-  }, [isAuthenticated]);
 
   const fallbackScholarships = [
     {
@@ -386,9 +372,7 @@ const Scholarships = () => {
       }
     };
 
-    const appliedSet = new Set(appliedIds);
-    const notApplied = !appliedSet.has(Number(scholarship.id));
-    return matchesSearch && matchesCategory && matchesAmount() && matchesDeadline() && notApplied;
+    return matchesSearch && matchesCategory && matchesAmount() && matchesDeadline();
   });
 
   const ApplicationModal = ({ scholarship, onClose }: any) => {
