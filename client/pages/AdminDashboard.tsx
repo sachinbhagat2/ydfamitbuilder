@@ -384,10 +384,26 @@ const AdminDashboard = () => {
           ].map((action, index) => (
             <button
               key={action.label}
-              onClick={() => {
+              onClick={async () => {
                 if (action.label === "Create Scheme") {
                   setTab("schemes");
                   openCreate();
+                } else if (action.label === "Review Apps") {
+                  setTab('applications');
+                  await fetchApplications(1, 'all');
+                } else if (action.label === "Export Data") {
+                  const api = (await import("../services/api")).default;
+                  const blob = await api.exportApplicationsCSV(appStatusFilter !== 'all' ? { status: appStatusFilter } : undefined);
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'applications.csv';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } else if (action.label === "Settings") {
+                  setTab('settings');
                 }
               }}
               className={`${action.color} text-white p-4 rounded-lg flex flex-col items-center space-y-2 hover:opacity-90 transition-opacity`}
