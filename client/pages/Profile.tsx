@@ -101,6 +101,11 @@ const Profile = () => {
       ...prev,
       [field]: value,
     }));
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
   };
 
   useEffect(() => {
