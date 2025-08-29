@@ -1397,7 +1397,13 @@ const AdminDashboard = () => {
                     // Optimistic UI update
                     setApplications((prev) =>
                       prev.map((a) =>
-                        a.id === appId ? { ...a, assignedReviewerId: reviewerId, status: "under_review" } : a,
+                        a.id === appId
+                          ? {
+                              ...a,
+                              assignedReviewerId: reviewerId,
+                              status: "under_review",
+                            }
+                          : a,
                       ),
                     );
                     toast.success("Reviewer assigned successfully");

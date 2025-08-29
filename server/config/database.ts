@@ -468,8 +468,12 @@ async function ensureApplicationsTable() {
     `);
     // Ensure reviewNotes column exists
     try {
-      await pgPool.query('ALTER TABLE applications ADD COLUMN IF NOT EXISTS "reviewNotes" TEXT');
-    } catch { /* ignore */ }
+      await pgPool.query(
+        'ALTER TABLE applications ADD COLUMN IF NOT EXISTS "reviewNotes" TEXT',
+      );
+    } catch {
+      /* ignore */
+    }
     return;
   }
   if (!pool) return;
@@ -494,11 +498,17 @@ async function ensureApplicationsTable() {
   `);
   // Ensure columns exist on older DBs
   try {
-    const [cols]: any = await pool.execute("SHOW COLUMNS FROM applications LIKE 'reviewNotes'");
+    const [cols]: any = await pool.execute(
+      "SHOW COLUMNS FROM applications LIKE 'reviewNotes'",
+    );
     if (!(cols as any[])[0]) {
-      await pool.execute("ALTER TABLE applications ADD COLUMN reviewNotes TEXT NULL AFTER assignedReviewerId");
+      await pool.execute(
+        "ALTER TABLE applications ADD COLUMN reviewNotes TEXT NULL AFTER assignedReviewerId",
+      );
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function ensureAnnouncementsTable() {
