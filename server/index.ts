@@ -77,6 +77,7 @@ app.use("/api/surveys", surveysRoutes);
 app.use("/api/applications", applicationsRoutes);
 app.use("/api/announcements", announcementsRoutes);
 app.use("/api/reviewer", reviewerRoutes);
+app.use("/api/roles", rolesRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
