@@ -167,6 +167,12 @@ async function startServer() {
         "⚠️ Database connection failed, using mock database:",
         connectionTest.error,
       );
+      
+      // In production, ensure we can still serve the app with mock data
+      if (process.env.NODE_ENV === 'production') {
+        console.log("🔄 Production fallback: using mock database");
+        process.env.USE_MOCK_DB = 'true';
+      }
     }
 
     // Initialize database tables
@@ -176,6 +182,12 @@ async function startServer() {
         "⚠️ Database initialization failed, using mock database:",
         dbInit.error,
       );
+      
+      // In production, ensure we can still serve the app
+      if (process.env.NODE_ENV === 'production') {
+        console.log("🔄 Production fallback: database initialization using mock data");
+        process.env.USE_MOCK_DB = 'true';
+      }
     }
 
     // Create default users
