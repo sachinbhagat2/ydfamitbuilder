@@ -605,6 +605,63 @@ async function ensureReviewsTable() {
   `);
 }
 
+// Roles tables
+async function ensureRolesTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id BIGSERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        description TEXT,
+        permissions JSONB,
+        "isSystem" BOOLEAN DEFAULT FALSE,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS roles (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) UNIQUE NOT NULL,
+      description TEXT NULL,
+      permissions JSON NULL,
+      isSystem TINYINT(1) DEFAULT 0,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
+async function ensureUserRolesTable() {
+  if (USE_MOCK) return;
+  if (MODE === "postgres" && pgPool) {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS user_roles (
+        id BIGSERIAL PRIMARY KEY,
+        "userId" BIGINT NOT NULL,
+        "roleId" BIGINT NOT NULL,
+        UNIQUE("userId","roleId")
+      );
+    `);
+    return;
+  }
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS user_roles (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      userId INT NOT NULL,
+      roleId INT NOT NULL,
+      UNIQUE KEY uq_user_role (userId, roleId),
+      INDEX idx_user (userId),
+      INDEX idx_role (roleId)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+}
+
 // Adapter to provide the same interface used by routes
 class DatabaseAdapter {
   async listUsers(
