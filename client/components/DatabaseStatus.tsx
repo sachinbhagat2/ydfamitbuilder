@@ -3,16 +3,33 @@ import { AlertCircle, CheckCircle, Database, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Button } from "./ui/button";
 
+type TestConnectionResult = {
+  success: boolean;
+  error?: string;
+  results?: {
+    database?: {
+      status?: string;
+      host?: string;
+      error?: string;
+    };
+  };
+};
+
 const DatabaseStatus = () => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [details, setDetails] = useState<{
+    dbHost?: string;
+    error?: string;
+    egressIp?: string;
+  }>({});
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const response = await fetch("/api/test/connection");
-        let result: any = {};
+        let result: TestConnectionResult = { success: false };
         try {
           result = await response.json();
         } catch {}
@@ -22,6 +39,20 @@ const DatabaseStatus = () => {
         // Consider any HTTP response as API reachable (even 4xx/5xx)
         setIsConnected(true);
         setDbConnected(!!dbOk);
+
+        if (!dbOk) {
+          const host = result?.results?.database?.host;
+          const errMsg = result?.error || result?.results?.database?.error;
+          try {
+            const ipRes = await fetch("/api/test/egress-ip");
+            const ipJson = await ipRes.json();
+            setDetails({ dbHost: host, error: errMsg || undefined, egressIp: ipJson?.ip || undefined });
+          } catch {
+            setDetails({ dbHost: host, error: errMsg || undefined });
+          }
+        } else {
+          setDetails({});
+        }
       } catch (error) {
         // Network failure => API unreachable
         setIsConnected(false);
@@ -61,7 +92,18 @@ const DatabaseStatus = () => {
       <Alert className="border-orange-200 bg-orange-50">
         <AlertCircle className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700">
-          Live database not connected. Please try again shortly or contact support.
+          <div className="space-y-2">
+            <p>Live database not connected. Please try again shortly or contact support.</p>
+            {details.dbHost && (
+              <p className="text-xs">Database host: <span className="font-medium">{details.dbHost}</span></p>
+            )}
+            {details.egressIp && (
+              <p className="text-xs">Server egress IP: <span className="font-medium">{details.egressIp}</span> (add to your DB allowlist)</p>
+            )}
+            {details.error && (
+              <p className="text-xs">Issue: {details.error}</p>
+            )}
+          </div>
         </AlertDescription>
       </Alert>
     );
