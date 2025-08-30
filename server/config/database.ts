@@ -2211,6 +2211,49 @@ export async function testConnection() {
   }
 }
 
+export function getDbStatus() {
+  let parsedPg: { host?: string; database?: string; user?: string } = {};
+  if (MODE === "postgres" && PG_URL) {
+    try {
+      const u = new URL(PG_URL);
+      parsedPg = {
+        host: u.hostname,
+        database: u.pathname.replace(/^\//, ""),
+        user: decodeURIComponent(u.username || ""),
+      };
+    } catch {
+      parsedPg = {};
+    }
+  }
+  const missingEnv: string[] = [];
+  if (!PG_URL) {
+    if (!DB_HOST) missingEnv.push("DB_HOST");
+    if (!DB_USER) missingEnv.push("DB_USER");
+    if (!DB_NAME) missingEnv.push("DB_NAME");
+  }
+  return {
+    mode: dbHealth.mode,
+    useMock: dbHealth.useMock,
+    engine: dbHealth.mode,
+    hasCredentials: !!PG_URL || hasCreds,
+    host: dbHealth.mode === "postgres" ? parsedPg.host || null : DB_HOST || null,
+    database: dbHealth.mode === "postgres" ? parsedPg.database || null : DB_NAME || null,
+    user: dbHealth.mode === "postgres" ? parsedPg.user || null : DB_USER || null,
+    ssl: dbHealth.mode === "postgres" ? true : String(process.env.DB_SSL || "").toLowerCase() === "true",
+    env: {
+      hasDATABASE_URL: !!PG_URL,
+      hasDB_HOST: !!DB_HOST,
+      hasDB_USER: !!DB_USER,
+      hasDB_NAME: !!DB_NAME,
+      missing: missingEnv,
+    },
+    lastError: dbHealth.lastError,
+    lastErrorAt: dbHealth.lastErrorAt,
+    lastSuccessAt: dbHealth.lastSuccessAt,
+    recentErrors: dbHealth.recentErrors,
+  };
+}
+
 export async function initializeDatabase() {
   try {
     if (USE_MOCK) {
