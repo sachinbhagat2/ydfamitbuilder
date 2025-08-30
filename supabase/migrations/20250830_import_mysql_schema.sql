@@ -1,124 +1,140 @@
 
--- Youth Dreamers Foundation PostgreSQL Schema
--- Converted from MySQL dump for sparsind_ydf_ngo database
+-- Import MySQL schema converted to PostgreSQL format
+-- Based on the provided MySQL dump for sparsind_ydf_ngo database
 
--- Create user type enum
+-- Enable necessary extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Create ENUM types for PostgreSQL
 DO $$ BEGIN
     CREATE TYPE user_type AS ENUM ('student','admin','reviewer','donor','surveyor');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- Create users table
+DO $$ BEGIN
+    CREATE TYPE application_status AS ENUM ('draft','submitted','under_review','approved','rejected','waitlisted');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE recommendation_type AS ENUM ('approve','reject','conditionally_approve');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Users table
 CREATE TABLE IF NOT EXISTS users (
-  id BIGSERIAL PRIMARY KEY,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  password TEXT NOT NULL,
-  "firstName" VARCHAR(100) NOT NULL,
-  "lastName" VARCHAR(100) NOT NULL,
-  phone VARCHAR(50),
-  "userType" user_type NOT NULL,
-  "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
-  "emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
-  "profileData" JSONB,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+    phone TEXT,
+    "userType" user_type NOT NULL,
+    "isActive" BOOLEAN DEFAULT TRUE,
+    "emailVerified" BOOLEAN DEFAULT FALSE,
+    "profileData" JSONB,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create announcements table
+-- Announcements table
 CREATE TABLE IF NOT EXISTS announcements (
-  id BIGSERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  content TEXT NOT NULL,
-  type VARCHAR(20) DEFAULT 'general',
-  "targetAudience" JSONB DEFAULT NULL,
-  "isActive" BOOLEAN DEFAULT TRUE,
-  priority VARCHAR(10) DEFAULT 'normal',
-  "validFrom" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "validTo" TIMESTAMPTZ DEFAULT NULL,
-  "createdBy" BIGINT DEFAULT NULL,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    type TEXT DEFAULT 'general',
+    "targetAudience" JSONB,
+    "isActive" BOOLEAN DEFAULT TRUE,
+    priority TEXT DEFAULT 'normal',
+    "validFrom" TIMESTAMPTZ DEFAULT NOW(),
+    "validTo" TIMESTAMPTZ,
+    "createdBy" BIGINT,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create scholarships table
-CREATE TABLE IF NOT EXISTS scholarships (
-  id BIGSERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  amount NUMERIC(10,2) NOT NULL,
-  currency VARCHAR(10) DEFAULT 'INR',
-  "eligibilityCriteria" JSONB NOT NULL,
-  "requiredDocuments" JSONB NOT NULL,
-  "applicationDeadline" TIMESTAMPTZ NOT NULL,
-  "selectionDeadline" TIMESTAMPTZ NULL,
-  "maxApplications" INTEGER NULL,
-  "currentApplications" INTEGER DEFAULT 0,
-  status VARCHAR(20) DEFAULT 'active',
-  "createdBy" BIGINT NULL,
-  tags JSONB NULL,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Create applications table
+-- Applications table
 CREATE TABLE IF NOT EXISTS applications (
-  id BIGSERIAL PRIMARY KEY,
-  "scholarshipId" BIGINT NOT NULL,
-  "studentId" BIGINT NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'submitted',
-  score INTEGER DEFAULT NULL,
-  "amountAwarded" DECIMAL(10,2) DEFAULT NULL,
-  "assignedReviewerId" BIGINT DEFAULT NULL,
-  "reviewNotes" TEXT,
-  "formData" JSONB DEFAULT NULL,
-  documents JSONB DEFAULT NULL,
-  "submittedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CHECK (status IN ('draft','submitted','under_review','approved','rejected','waitlisted'))
+    id BIGSERIAL PRIMARY KEY,
+    "scholarshipId" BIGINT NOT NULL,
+    "studentId" BIGINT NOT NULL,
+    status application_status DEFAULT 'submitted',
+    score INTEGER,
+    "amountAwarded" NUMERIC(10,2),
+    "assignedReviewerId" BIGINT,
+    "reviewNotes" TEXT,
+    "formData" JSONB,
+    documents JSONB,
+    "submittedAt" TIMESTAMPTZ DEFAULT NOW(),
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create roles table
+-- Scholarships table
+CREATE TABLE IF NOT EXISTS scholarships (
+    id BIGSERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    amount NUMERIC(10,2) NOT NULL,
+    currency TEXT DEFAULT 'INR',
+    "eligibilityCriteria" JSONB NOT NULL,
+    "requiredDocuments" JSONB NOT NULL,
+    "applicationDeadline" TIMESTAMPTZ NOT NULL,
+    "selectionDeadline" TIMESTAMPTZ,
+    "maxApplications" INTEGER,
+    "currentApplications" INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    "createdBy" BIGINT,
+    tags JSONB,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Roles table
 CREATE TABLE IF NOT EXISTS roles (
-  id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL,
-  description TEXT,
-  permissions JSONB,
-  "isSystem" BOOLEAN DEFAULT FALSE,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    permissions JSONB,
+    "isSystem" BOOLEAN DEFAULT FALSE,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create user_roles table
+-- User roles junction table
 CREATE TABLE IF NOT EXISTS user_roles (
-  id BIGSERIAL PRIMARY KEY,
-  "userId" BIGINT NOT NULL,
-  "roleId" BIGINT NOT NULL,
-  UNIQUE("userId","roleId")
+    id BIGSERIAL PRIMARY KEY,
+    "userId" BIGINT NOT NULL,
+    "roleId" BIGINT NOT NULL,
+    UNIQUE("userId", "roleId")
 );
 
--- Create application_reviews table
+-- Application reviews table
 CREATE TABLE IF NOT EXISTS application_reviews (
-  id BIGSERIAL PRIMARY KEY,
-  "applicationId" BIGINT NOT NULL,
-  "reviewerId" BIGINT NOT NULL,
-  criteria JSONB,
-  "overallScore" INTEGER,
-  comments TEXT,
-  recommendation VARCHAR(30),
-  "isComplete" BOOLEAN DEFAULT TRUE,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    "applicationId" BIGINT NOT NULL,
+    "reviewerId" BIGINT NOT NULL,
+    criteria JSONB,
+    "overallScore" INTEGER,
+    comments TEXT,
+    recommendation recommendation_type,
+    "isComplete" BOOLEAN DEFAULT TRUE,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert default roles
-INSERT INTO roles (name, description, "isSystem") VALUES
-('admin', 'System administrator', TRUE),
-('student', 'Student user', TRUE),
-('reviewer', 'Application reviewer', TRUE),
-('donor', 'Donor user', TRUE),
-('surveyor', 'Field surveyor', TRUE)
-ON CONFLICT (name) DO NOTHING;
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_type ON users("userType");
+CREATE INDEX IF NOT EXISTS idx_applications_scholarship ON applications("scholarshipId");
+CREATE INDEX IF NOT EXISTS idx_applications_student ON applications("studentId");
+CREATE INDEX IF NOT EXISTS idx_applications_status ON applications(status);
+CREATE INDEX IF NOT EXISTS idx_applications_reviewer ON applications("assignedReviewerId");
+CREATE INDEX IF NOT EXISTS idx_scholarships_status ON scholarships(status);
+CREATE INDEX IF NOT EXISTS idx_reviews_application ON application_reviews("applicationId");
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON application_reviews("reviewerId");
 
 -- Insert default users with bcrypt hashed passwords
 -- All passwords are: Student123!, Admin123!, Reviewer123!, Donor123!, Surveyor123!
@@ -130,27 +146,86 @@ INSERT INTO users (email, password, "firstName", "lastName", phone, "userType", 
 ('surveyor@ydf.org', '$2a$12$LQv3c1yqBw2YwjVVRRp0Oe6slHh9UNdCHbyBgTcbZ2fP0S5w7/5gS', 'Demo', 'Surveyor', '+91 9876543214', 'surveyor', TRUE, TRUE, '{"department": "Field Verification"}')
 ON CONFLICT (email) DO NOTHING;
 
--- Link users to roles
-INSERT INTO user_roles ("userId", "roleId")
-SELECT u.id, r.id FROM users u, roles r 
-WHERE (u.email = 'admin@ydf.org' AND r.name = 'admin')
-   OR (u.email = 'student@ydf.org' AND r.name = 'student')
-   OR (u.email = 'reviewer@ydf.org' AND r.name = 'reviewer')
-   OR (u.email = 'donor@ydf.org' AND r.name = 'donor')
-   OR (u.email = 'surveyor@ydf.org' AND r.name = 'surveyor')
-ON CONFLICT DO NOTHING;
+-- Insert default roles
+INSERT INTO roles (name, description, "isSystem") VALUES
+('admin', 'System administrator', TRUE),
+('student', 'Student', TRUE),
+('reviewer', 'Application reviewer', TRUE),
+('donor', 'Donor', TRUE),
+('surveyor', 'Field surveyor', TRUE)
+ON CONFLICT (name) DO NOTHING;
 
 -- Insert sample scholarships
-INSERT INTO scholarships (title, description, amount, "eligibilityCriteria", "requiredDocuments", "applicationDeadline", "maxApplications", "createdBy") VALUES
-('Merit Excellence Scholarship', 'Supporting academically excellent students', 50000.00, '["CGPA above 8.5", "Income < 5L"]', '["Transcripts", "Income certificate"]', NOW() + INTERVAL '60 days', 1000, 2),
-('Rural Girls Education Grant', 'Empowering rural girls through education', 35000.00, '["Female candidates", "Rural residence"]', '["Income certificate", "Residence proof"]', NOW() + INTERVAL '45 days', 800, 2),
-('Technical Innovation Fund', 'Funding innovative tech projects', 75000.00, '["Engineering students", "Project proposal"]', '["Proposal", "Transcripts"]', NOW() + INTERVAL '90 days', 500, 2),
-('Arts & Culture Scholarship', 'Preserving arts and culture', 30000.00, '["Arts students", "Portfolio"]', '["Portfolio", "Income certificate"]', NOW() + INTERVAL '25 days', 400, 2)
+INSERT INTO scholarships (title, description, amount, currency, "eligibilityCriteria", "requiredDocuments", "applicationDeadline", "selectionDeadline", "maxApplications", "currentApplications", status, "createdBy", tags) VALUES
+(
+    'Merit Excellence Scholarship',
+    'Supporting academically excellent students pursuing higher education',
+    50000.00,
+    'INR',
+    '["CGPA above 8.5", "Income < 5L per annum", "Regular student"]',
+    '["Academic transcripts", "Income certificate", "ID proof"]',
+    NOW() + INTERVAL '60 days',
+    NOW() + INTERVAL '75 days',
+    1000,
+    0,
+    'active',
+    2,
+    '["Academic", "Merit", "Higher Education"]'
+),
+(
+    'Rural Girls Education Grant',
+    'Empowering rural girls through quality education opportunities',
+    35000.00,
+    'INR',
+    '["Female candidates only", "Rural residence proof", "Family income < 3L"]',
+    '["Income certificate", "Residence proof", "Educational certificates"]',
+    NOW() + INTERVAL '45 days',
+    NULL,
+    800,
+    0,
+    'active',
+    2,
+    '["Gender Equality", "Rural Development", "Education"]'
+),
+(
+    'Technical Innovation Fund',
+    'Supporting innovative technology projects and research',
+    75000.00,
+    'INR',
+    '["Engineering/Technical students", "Innovation project proposal", "CGPA > 7.5"]',
+    '["Project proposal", "Academic records", "Innovation portfolio"]',
+    NOW() + INTERVAL '90 days',
+    NOW() + INTERVAL '120 days',
+    500,
+    0,
+    'active',
+    2,
+    '["Technology", "Innovation", "Research", "Engineering"]'
+)
 ON CONFLICT DO NOTHING;
 
--- Insert sample announcements
-INSERT INTO announcements (title, content, type, "targetAudience", priority, "createdBy") VALUES
-('Application Deadline Extended', 'The deadline for the Merit Excellence Scholarship has been extended by one week.', 'deadline', '["student"]', 'high', 2),
-('Maintenance Notice', 'Scheduled maintenance on Sunday 10 PM - 12 AM. Portal access may be intermittent.', 'maintenance', '["student", "reviewer", "admin", "donor"]', 'normal', 2),
-('Results Published', 'Results for the first round of the Technical Innovation Fund have been published.', 'result', '["student"]', 'urgent', 2)
+-- Create some sample announcements
+INSERT INTO announcements (title, content, type, "targetAudience", "isActive", priority, "validFrom", "validTo", "createdBy") VALUES
+(
+    'Welcome to Youth Dreamers Foundation',
+    'Welcome to our scholarship management platform. Students can apply for various scholarships, track their applications, and receive updates.',
+    'general',
+    '["student", "admin", "reviewer", "donor"]',
+    TRUE,
+    'normal',
+    NOW(),
+    NULL,
+    2
+),
+(
+    'Application Deadline Reminder',
+    'Reminder: Merit Excellence Scholarship applications close in 30 days. Submit your complete application before the deadline.',
+    'deadline',
+    '["student"]',
+    TRUE,
+    'high',
+    NOW(),
+    NOW() + INTERVAL '30 days',
+    2
+)
 ON CONFLICT DO NOTHING;
