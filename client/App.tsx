@@ -88,14 +88,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/scholarships"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <Scholarships />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/scholarships" element={<Scholarships />} />
                 <Route
                   path="/scholarships/:id"
                   element={
