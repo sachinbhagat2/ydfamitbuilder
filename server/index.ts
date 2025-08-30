@@ -240,21 +240,36 @@ async function startServer() {
     console.log("🔍 Environment check:");
     console.log("  NODE_ENV:", process.env.NODE_ENV);
     console.log("  DATABASE_URL exists:", !!process.env.DATABASE_URL);
+    console.log("  REPLIT_DB_URL exists:", !!process.env.REPLIT_DB_URL);
+    console.log("  REPL_ID exists:", !!process.env.REPL_ID);
     console.log("  PORT:", process.env.PORT);
+    
+    // Ensure proper database connection for production
+    if (process.env.NODE_ENV === 'production') {
+      // Wait a bit for Replit database to be ready
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
     
     const connectionTest = await testConnection();
     if (!connectionTest.success) {
-      console.warn(
-        "⚠️ Database connection failed:",
+      console.error(
+        "❌ Database connection failed:",
         connectionTest.error,
       );
       
-      // In production, ensure we can still serve the app with mock data
       if (process.env.NODE_ENV === 'production') {
-        console.log("🔄 Production fallback: using mock database");
-        process.env.USE_MOCK_DB = 'true';
+        console.log("🔄 Production: Retrying database connection...");
+        // Retry once for production
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const retryTest = await testConnection();
+        if (!retryTest.success) {
+          console.error("❌ Production database retry failed, using fallback");
+          process.env.USE_MOCK_DB = 'true';
+        } else {
+          console.log("✅ Production database connection successful on retry");
+        }
       } else {
-        console.log("💡 Development mode: continuing with mock database");
+        console.log("💡 Development mode: continuing with database setup");
       }
     } else {
       console.log("✅ Database connection successful");
@@ -263,18 +278,36 @@ async function startServer() {
     // Initialize database tables
     const dbInit = await initializeDatabase();
     if (!dbInit.success) {
-      console.warn(
-        "⚠️ Database initialization failed:",
+      console.error(
+        "❌ Database initialization failed:",
         dbInit.error,
       );
       
-      // In production, ensure we can still serve the app
       if (process.env.NODE_ENV === 'production') {
-        console.log("🔄 Production fallback: database initialization using mock data");
-        process.env.USE_MOCK_DB = 'true';
+        console.log("🔄 Production fallback: retrying database initialization");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryInit = await initializeDatabase();
+        if (!retryInit.success) {
+          console.error("❌ Production database initialization retry failed");
+          process.env.USE_MOCK_DB = 'true';
+        } else {
+          console.log("✅ Production database initialization successful on retry");
+        }
       }
     } else {
       console.log("✅ Database initialization successful");
+    }
+
+    // Create default users
+    try {
+      const usersResult = await createDefaultUsers();
+      if (usersResult.success) {
+        console.log("✅ Default users created/verified");
+      } else {
+        console.warn("⚠️ Default users creation failed:", usersResult.error);
+      }
+    } catch (error) {
+      console.warn("⚠️ Error creating default users:", error);
     }
 
     // Create default users
