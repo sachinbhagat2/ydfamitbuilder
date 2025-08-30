@@ -204,6 +204,15 @@ router.post("/register", async (req, res) => {
       emailVerified: false,
     });
 
+    // Assign role based on selected userType
+    try {
+      const roles = await (mockDatabase as any).listRoles();
+      const match = (roles || []).find((r: any) => String(r.name) === String(userType));
+      if (match) {
+        await (mockDatabase as any).assignRoleToUser(newUser.id, match.id);
+      }
+    } catch {}
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = newUser;
 
