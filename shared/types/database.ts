@@ -26,6 +26,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   profileData?: any;
+  roles?: string[];
 }
 
 export interface CreateUserInput {
