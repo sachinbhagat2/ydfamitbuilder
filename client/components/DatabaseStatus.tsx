@@ -46,7 +46,11 @@ const DatabaseStatus = () => {
           try {
             const ipRes = await fetch("/api/test/egress-ip");
             const ipJson = await ipRes.json();
-            setDetails({ dbHost: host, error: errMsg || undefined, egressIp: ipJson?.ip || undefined });
+            setDetails({
+              dbHost: host,
+              error: errMsg || undefined,
+              egressIp: ipJson?.ip || undefined,
+            });
           } catch {
             setDetails({ dbHost: host, error: errMsg || undefined });
           }
@@ -93,16 +97,24 @@ const DatabaseStatus = () => {
         <AlertCircle className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700">
           <div className="space-y-2">
-            <p>Live database not connected. Please try again shortly or contact support.</p>
+            <p>
+              Live database not connected. Please try again shortly or contact
+              support.
+            </p>
             {details.dbHost && (
-              <p className="text-xs">Database host: <span className="font-medium">{details.dbHost}</span></p>
+              <p className="text-xs">
+                Database host:{" "}
+                <span className="font-medium">{details.dbHost}</span>
+              </p>
             )}
             {details.egressIp && (
-              <p className="text-xs">Server egress IP: <span className="font-medium">{details.egressIp}</span> (add to your DB allowlist)</p>
+              <p className="text-xs">
+                Server egress IP:{" "}
+                <span className="font-medium">{details.egressIp}</span> (add to
+                your DB allowlist)
+              </p>
             )}
-            {details.error && (
-              <p className="text-xs">Issue: {details.error}</p>
-            )}
+            {details.error && <p className="text-xs">Issue: {details.error}</p>}
           </div>
         </AlertDescription>
       </Alert>
