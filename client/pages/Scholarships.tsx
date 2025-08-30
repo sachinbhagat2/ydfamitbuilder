@@ -36,6 +36,7 @@ const Scholarships = () => {
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState("deadline");
+  const navigate = useNavigate();
   const [appliedIds, setAppliedIds] = useState<number[]>([]);
 
   useEffect(() => {
