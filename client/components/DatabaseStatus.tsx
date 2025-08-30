@@ -144,54 +144,74 @@ const DatabaseStatus = () => {
             <div className="text-xs space-y-1">
               {details.reason && (
                 <p>
-                  Likely cause: <span className="font-medium">{details.reason}</span>
+                  Likely cause:{" "}
+                  <span className="font-medium">{details.reason}</span>
                 </p>
               )}
               {details.error && (
                 <p>
-                  Error: <span className="font-mono break-all">{details.error}</span>
+                  Error:{" "}
+                  <span className="font-mono break-all">{details.error}</span>
                 </p>
               )}
               <p>
-                Target: <span className="font-medium">{details.engine || "db"}</span>
+                Target:{" "}
+                <span className="font-medium">{details.engine || "db"}</span>
                 {details.dbHost ? (
                   <>
-                    {" "}at <span className="font-medium">{details.dbHost}</span>
+                    {" "}
+                    at <span className="font-medium">{details.dbHost}</span>
                   </>
                 ) : null}
                 {details.dbName ? (
                   <>
-                    {" "}database <span className="font-medium">{details.dbName}</span>
+                    {" "}
+                    database{" "}
+                    <span className="font-medium">{details.dbName}</span>
                   </>
                 ) : null}
                 {details.dbUser ? (
                   <>
-                    {" "}as user <span className="font-medium">{details.dbUser}</span>
+                    {" "}
+                    as user{" "}
+                    <span className="font-medium">{details.dbUser}</span>
                   </>
                 ) : null}
               </p>
               {details.testedAt && (
                 <p>
-                  Checked at: <span className="font-medium">{new Date(details.testedAt).toLocaleString()}</span>
+                  Checked at:{" "}
+                  <span className="font-medium">
+                    {new Date(details.testedAt).toLocaleString()}
+                  </span>
                 </p>
               )}
               {details.egressIp && (
                 <p>
-                  Server egress IP: <span className="font-medium">{details.egressIp}</span> (add to your DB allowlist)
+                  Server egress IP:{" "}
+                  <span className="font-medium">{details.egressIp}</span> (add
+                  to your DB allowlist)
                 </p>
               )}
               {details?.missingEnv && details.missingEnv.length > 0 && (
                 <p>
-                  Missing env: <span className="font-medium">{details.missingEnv.join(", ")}</span>
+                  Missing env:{" "}
+                  <span className="font-medium">
+                    {details.missingEnv.join(", ")}
+                  </span>
                 </p>
               )}
               {details.recentErrors && details.recentErrors.length > 0 && (
                 <details>
-                  <summary className="cursor-pointer select-none">Recent errors</summary>
+                  <summary className="cursor-pointer select-none">
+                    Recent errors
+                  </summary>
                   <ul className="list-disc pl-4 space-y-1">
                     {details.recentErrors.slice(0, 5).map((e, idx) => (
                       <li key={idx}>
-                        <span className="text-muted-foreground">{new Date(e.at).toLocaleString()}:</span>{" "}
+                        <span className="text-muted-foreground">
+                          {new Date(e.at).toLocaleString()}:
+                        </span>{" "}
                         <span className="font-mono break-all">{e.error}</span>
                       </li>
                     ))}
@@ -202,9 +222,17 @@ const DatabaseStatus = () => {
                 <p>How to fix:</p>
                 <ul className="list-disc pl-5 space-y-0.5">
                   <li>Verify DB host, port, user, and database name</li>
-                  <li>If using a firewall, allowlist the server egress IP above</li>
-                  <li>If SSL is required, set DB_SSL=true or provide a valid certificate</li>
-                  <li>Ensure credentials are correct and user has access to the database</li>
+                  <li>
+                    If using a firewall, allowlist the server egress IP above
+                  </li>
+                  <li>
+                    If SSL is required, set DB_SSL=true or provide a valid
+                    certificate
+                  </li>
+                  <li>
+                    Ensure credentials are correct and user has access to the
+                    database
+                  </li>
                 </ul>
               </div>
             </div>

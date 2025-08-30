@@ -2236,10 +2236,18 @@ export function getDbStatus() {
     useMock: dbHealth.useMock,
     engine: dbHealth.mode,
     hasCredentials: !!PG_URL || hasCreds,
-    host: dbHealth.mode === "postgres" ? parsedPg.host || null : DB_HOST || null,
-    database: dbHealth.mode === "postgres" ? parsedPg.database || null : DB_NAME || null,
-    user: dbHealth.mode === "postgres" ? parsedPg.user || null : DB_USER || null,
-    ssl: dbHealth.mode === "postgres" ? true : String(process.env.DB_SSL || "").toLowerCase() === "true",
+    host:
+      dbHealth.mode === "postgres" ? parsedPg.host || null : DB_HOST || null,
+    database:
+      dbHealth.mode === "postgres"
+        ? parsedPg.database || null
+        : DB_NAME || null,
+    user:
+      dbHealth.mode === "postgres" ? parsedPg.user || null : DB_USER || null,
+    ssl:
+      dbHealth.mode === "postgres"
+        ? true
+        : String(process.env.DB_SSL || "").toLowerCase() === "true",
     env: {
       hasDATABASE_URL: !!PG_URL,
       hasDB_HOST: !!DB_HOST,
