@@ -21,6 +21,7 @@ import applicationsRoutes from "./routes/applications";
 import announcementsRoutes from "./routes/announcements";
 import reviewerRoutes from "./routes/reviewer";
 import rolesRoutes from "./routes/roles";
+import databaseRoutes from "./routes/database";
 import createDefaultScholarships from "./config/seed-scholarships";
 
 const IS_SERVERLESS = Boolean(
@@ -52,7 +53,7 @@ if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
   const __dirname = path.dirname(__filename);
   const staticPath = path.join(__dirname, "../spa");
   console.log("📁 Serving static files from:", staticPath);
-  
+
   // Ensure static path exists
   try {
     const fs = await import('fs');
@@ -96,6 +97,7 @@ app.use("/api/applications", applicationsRoutes);
 app.use("/api/announcements", announcementsRoutes);
 app.use("/api/reviewer", reviewerRoutes);
 app.use("/api/roles", rolesRoutes);
+app.use("/api/database", databaseRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -135,14 +137,14 @@ app.use("/api/*", (req, res) => {
 // Serve React app for all non-API routes when not running in serverless
 app.get("*", (req, res) => {
   console.log("📍 Fallback route hit:", req.path);
-  
+
   if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
     // Serve built SPA in production (non-serverless)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const staticPath = path.join(__dirname, "../spa");
     const indexPath = path.join(staticPath, "index.html");
-    
+
     try {
       const fs = require('fs');
       if (fs.existsSync(indexPath)) {
@@ -195,41 +197,35 @@ app.get("*", (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use(
-  (
-    err: any,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ) => {
-    console.error("❌ Unhandled error:", {
-      message: err.message,
-      stack: err.stack,
-      path: req.path,
+// Global error handling
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("Global error handler:", err);
+    console.error("Request details:", {
       method: req.method,
       url: req.url,
       headers: req.headers,
-      timestamp: new Date().toISOString(),
+      body: req.body
     });
-    
-    // Check if response was already sent
-    if (res.headersSent) {
-      return next(err);
-    }
-    
-    res.status(500).json({
+
+    if (res.headersSent) return next(err);
+
+    // Enhanced error response for production debugging
+    const errorResponse: any = {
       success: false,
-      error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message,
+      error: "Internal server error",
       timestamp: new Date().toISOString(),
-      path: req.path,
-      ...(process.env.NODE_ENV !== 'production' && { 
-        stack: err.stack,
-        details: err 
-      }),
-    });
-  },
-);
+      path: req.url,
+      method: req.method
+    };
+
+    if (process.env.NODE_ENV === 'production') {
+      errorResponse.details = err.message;
+      errorResponse.type = err.constructor.name;
+      if (err.code) errorResponse.code = err.code;
+    }
+
+    res.status(500).json(errorResponse);
+  });
 
 // Initialize database and start server
 async function startServer() {
@@ -241,14 +237,14 @@ async function startServer() {
     console.log("  NODE_ENV:", process.env.NODE_ENV);
     console.log("  DATABASE_URL exists:", !!process.env.DATABASE_URL);
     console.log("  PORT:", process.env.PORT);
-    
+
     const connectionTest = await testConnection();
     if (!connectionTest.success) {
       console.warn(
         "⚠️ Database connection failed:",
         connectionTest.error,
       );
-      
+
       // In production, ensure we can still serve the app with mock data
       if (process.env.NODE_ENV === 'production') {
         console.log("🔄 Production fallback: using mock database");
@@ -267,7 +263,7 @@ async function startServer() {
         "⚠️ Database initialization failed:",
         dbInit.error,
       );
-      
+
       // In production, ensure we can still serve the app
       if (process.env.NODE_ENV === 'production') {
         console.log("🔄 Production fallback: database initialization using mock data");

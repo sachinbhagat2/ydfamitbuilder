@@ -389,7 +389,17 @@ export const pgPool =
                              u.hostname.includes('helium') || 
                              u.hostname.includes('neon') ||
                              process.env.REPL_ID ||
-                             process.env.REPLIT_DB_URL;
+                             process.env.REPLIT_DB_URL ||
+                             process.env.NODE_ENV === 'production';
+
+            console.log(`🔍 PostgreSQL connection details:
+              Host: ${u.hostname}
+              Port: ${u.port || 5432}
+              Database: ${u.pathname.replace(/^\//, "")}
+              User: ${decodeURIComponent(u.username)}
+              SSL Required: ${isReplit}
+              Environment: ${process.env.NODE_ENV}
+            `);
 
             return {
               host: u.hostname,
@@ -398,18 +408,23 @@ export const pgPool =
               password: decodeURIComponent(u.password),
               database: u.pathname.replace(/^\//, ""),
               ssl: isReplit ? { require: true, rejectUnauthorized: false } : false,
-              max: 10,
+              max: 20,
               idleTimeoutMillis: 30000,
-              connectionTimeoutMillis: 5000,
+              connectionTimeoutMillis: 10000,
+              keepAlive: true,
+              keepAliveInitialDelayMillis: 10000
             } as any;
           } catch (error) {
-            console.warn("Failed to parse DATABASE_URL, using direct connection string:", error);
+            console.error("Failed to parse DATABASE_URL:", error);
+            console.log("Using direct connection string approach");
             return {
               connectionString: PG_URL,
               ssl: { require: true, rejectUnauthorized: false },
-              max: 10,
+              max: 20,
               idleTimeoutMillis: 30000,
-              connectionTimeoutMillis: 5000,
+              connectionTimeoutMillis: 10000,
+              keepAlive: true,
+              keepAliveInitialDelayMillis: 10000
             } as any;
           }
         })(),

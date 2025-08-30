@@ -29,6 +29,7 @@ import {
   X,
   LogIn,
   UserPlus,
+  Database,
 } from "lucide-react";
 
 const Homepage = () => {
@@ -36,19 +37,92 @@ const Homepage = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [featured, setFeatured] = useState<any[]>([]);
+  const [databaseData, setDatabaseData] = useState<any>({
+    users: [],
+    scholarships: [],
+    applications: [],
+    announcements: [],
+    stats: null,
+    dbStatus: null
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
+        setLoading(true);
         const api = (await import("../services/api")).default;
-        const res = await api.listScholarships({
-          status: "active",
-          limit: 4,
-          sortBy: "deadline",
-          sortOrder: "asc",
+        
+        // Fetch all data concurrently
+        const [
+          scholarshipsRes,
+          usersRes,
+          applicationsRes,
+          announcementsRes,
+          dbStatusRes
+        ] = await Promise.allSettled([
+          api.listScholarships({ status: "active", limit: 4, sortBy: "deadline", sortOrder: "asc" }),
+          fetch('/api/users').then(r => r.json()).catch(() => ({ success: false })),
+          fetch('/api/applications').then(r => r.json()).catch(() => ({ success: false })),
+          fetch('/api/announcements').then(r => r.json()).catch(() => ({ success: false })),
+          fetch('/api/test/connection').then(r => r.json()).catch(() => ({ success: false }))
+        ]);
+
+        // Extract results
+        const scholarships = scholarshipsRes.status === 'fulfilled' && scholarshipsRes.value.success 
+          ? scholarshipsRes.value.data || [] 
+          : [];
+        
+        const users = usersRes.status === 'fulfilled' && usersRes.value.success 
+          ? usersRes.value.data || [] 
+          : [];
+          
+        const applications = applicationsRes.status === 'fulfilled' && applicationsRes.value.success 
+          ? applicationsRes.value.data || [] 
+          : [];
+          
+        const announcements = announcementsRes.status === 'fulfilled' && announcementsRes.value.success 
+          ? announcementsRes.value.data || [] 
+          : [];
+          
+        const dbStatus = dbStatusRes.status === 'fulfilled' 
+          ? dbStatusRes.value 
+          : null;
+
+        // Set featured scholarships
+        setFeatured(scholarships);
+        
+        // Set comprehensive database data
+        setDatabaseData({
+          users,
+          scholarships,
+          applications,
+          announcements,
+          stats: {
+            totalUsers: users.length,
+            totalScholarships: scholarships.length,
+            totalApplications: applications.length,
+            totalAnnouncements: announcements.length,
+            usersByType: users.reduce((acc: any, user: any) => {
+              acc[user.userType] = (acc[user.userType] || 0) + 1;
+              return acc;
+            }, {}),
+            applicationsByStatus: applications.reduce((acc: any, app: any) => {
+              acc[app.status] = (acc[app.status] || 0) + 1;
+              return acc;
+            }, {}),
+            scholarshipsByStatus: scholarships.reduce((acc: any, sch: any) => {
+              acc[sch.status] = (acc[sch.status] || 0) + 1;
+              return acc;
+            }, {})
+          },
+          dbStatus
         });
-        if (res.success) setFeatured(res.data || []);
-      } catch {}
+      } catch (error) {
+        console.error('Error loading database data:', error);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -385,6 +459,342 @@ const Homepage = () => {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Database Status & Schema Explorer */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Database Schema & Live Data
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Real-time view of our database structure and current data
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ydf-deep-blue"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Database Status */}
+              <div className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">Database Status</h3>
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    databaseData.dbStatus?.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {databaseData.dbStatus?.success ? 'Connected' : 'Error'}
+                  </div>
+                </div>
+                {databaseData.dbStatus && (
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Mode:</span>
+                      <span className="text-gray-600">PostgreSQL</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Environment:</span>
+                      <span className="text-gray-600">{process.env.NODE_ENV || 'development'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Version:</span>
+                      <span className="text-gray-600">
+                        {databaseData.dbStatus.data?.[0]?.version?.split(' ')[1] || 'Unknown'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Live Statistics */}
+              <div className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Live Statistics</h3>
+                {databaseData.stats && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-ydf-deep-blue bg-opacity-10 rounded-lg">
+                      <div className="text-2xl font-bold text-ydf-deep-blue">
+                        {databaseData.stats.totalUsers}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Users</div>
+                    </div>
+                    <div className="text-center p-4 bg-ydf-teal-green bg-opacity-10 rounded-lg">
+                      <div className="text-2xl font-bold text-ydf-teal-green">
+                        {databaseData.stats.totalScholarships}
+                      </div>
+                      <div className="text-sm text-gray-600">Scholarships</div>
+                    </div>
+                    <div className="text-center p-4 bg-ydf-golden-yellow bg-opacity-20 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {databaseData.stats.totalApplications}
+                      </div>
+                      <div className="text-sm text-gray-600">Applications</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-100 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {databaseData.stats.totalAnnouncements}
+                      </div>
+                      <div className="text-sm text-gray-600">Announcements</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Database Tables Schema */}
+          <div className="mt-12 bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Database Schema Overview</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Users Table */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">users</h4>
+                  <div className="text-sm text-gray-500">
+                    {databaseData.stats?.totalUsers || 0} records
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>• id (BIGSERIAL)</div>
+                  <div>• email (TEXT, UNIQUE)</div>
+                  <div>• firstName, lastName (TEXT)</div>
+                  <div>• userType (ENUM)</div>
+                  <div>• isActive, emailVerified (BOOLEAN)</div>
+                  <div>• profileData (JSONB)</div>
+                  <div>• createdAt, updatedAt (TIMESTAMPTZ)</div>
+                </div>
+                {databaseData.stats?.usersByType && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="text-xs text-gray-500 mb-1">By Type:</div>
+                    {Object.entries(databaseData.stats.usersByType).map(([type, count]: [string, any]) => (
+                      <div key={type} className="flex justify-between text-xs">
+                        <span>{type}:</span>
+                        <span className="font-medium">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Scholarships Table */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">scholarships</h4>
+                  <div className="text-sm text-gray-500">
+                    {databaseData.stats?.totalScholarships || 0} records
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>• id (BIGSERIAL)</div>
+                  <div>• title, description (TEXT)</div>
+                  <div>• amount (NUMERIC)</div>
+                  <div>• eligibilityCriteria (JSONB)</div>
+                  <div>• requiredDocuments (JSONB)</div>
+                  <div>• applicationDeadline (TIMESTAMPTZ)</div>
+                  <div>• status, tags (TEXT/JSONB)</div>
+                </div>
+                {databaseData.stats?.scholarshipsByStatus && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="text-xs text-gray-500 mb-1">By Status:</div>
+                    {Object.entries(databaseData.stats.scholarshipsByStatus).map(([status, count]: [string, any]) => (
+                      <div key={status} className="flex justify-between text-xs">
+                        <span>{status}:</span>
+                        <span className="font-medium">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Applications Table */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">applications</h4>
+                  <div className="text-sm text-gray-500">
+                    {databaseData.stats?.totalApplications || 0} records
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>• id (BIGSERIAL)</div>
+                  <div>• studentId, scholarshipId (BIGINT)</div>
+                  <div>• status (ENUM)</div>
+                  <div>• score, amountAwarded (NUMERIC)</div>
+                  <div>• formData, documents (JSONB)</div>
+                  <div>• submittedAt, updatedAt (TIMESTAMPTZ)</div>
+                </div>
+                {databaseData.stats?.applicationsByStatus && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="text-xs text-gray-500 mb-1">By Status:</div>
+                    {Object.entries(databaseData.stats.applicationsByStatus).map(([status, count]: [string, any]) => (
+                      <div key={status} className="flex justify-between text-xs">
+                        <span>{status}:</span>
+                        <span className="font-medium">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews Table */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-3">application_reviews</h4>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>• id (BIGSERIAL)</div>
+                  <div>• applicationId, reviewerId (BIGINT)</div>
+                  <div>• criteria (JSONB)</div>
+                  <div>• overallScore (INTEGER)</div>
+                  <div>• recommendation (ENUM)</div>
+                  <div>• isComplete (BOOLEAN)</div>
+                </div>
+              </div>
+
+              {/* Announcements Table */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">announcements</h4>
+                  <div className="text-sm text-gray-500">
+                    {databaseData.stats?.totalAnnouncements || 0} records
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>• id (BIGSERIAL)</div>
+                  <div>• title, content (TEXT)</div>
+                  <div>• type, priority (TEXT)</div>
+                  <div>• targetAudience (JSONB)</div>
+                  <div>• isActive (BOOLEAN)</div>
+                  <div>• validFrom, validTo (TIMESTAMPTZ)</div>
+                </div>
+              </div>
+
+              {/* Additional Tables */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Other Tables</h4>
+                <div className="space-y-2 text-xs text-gray-600">
+                  <div className="font-medium">• roles</div>
+                  <div>  - System roles and permissions</div>
+                  <div className="font-medium">• user_roles</div>
+                  <div>  - User role assignments</div>
+                  <div className="font-medium">• documents</div>
+                  <div>  - File upload metadata</div>
+                  <div className="font-medium">• contributions</div>
+                  <div>  - Donor contribution records</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Data Preview */}
+          {!loading && (
+            <div className="mt-12 space-y-8">
+              {/* Recent Users */}
+              {databaseData.users.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Users</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4">ID</th>
+                          <th className="text-left py-3 px-4">Name</th>
+                          <th className="text-left py-3 px-4">Email</th>
+                          <th className="text-left py-3 px-4">Type</th>
+                          <th className="text-left py-3 px-4">Status</th>
+                          <th className="text-left py-3 px-4">Created</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {databaseData.users.slice(0, 5).map((user: any) => (
+                          <tr key={user.id} className="border-b border-gray-100">
+                            <td className="py-3 px-4 font-medium">{user.id}</td>
+                            <td className="py-3 px-4">{user.firstName} {user.lastName}</td>
+                            <td className="py-3 px-4 text-gray-600">{user.email}</td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.userType === 'admin' ? 'bg-red-100 text-red-800' :
+                                user.userType === 'student' ? 'bg-blue-100 text-blue-800' :
+                                user.userType === 'reviewer' ? 'bg-purple-100 text-purple-800' :
+                                user.userType === 'donor' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {user.userType}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {user.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-gray-600">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Applications */}
+              {databaseData.applications.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Applications</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4">ID</th>
+                          <th className="text-left py-3 px-4">Student</th>
+                          <th className="text-left py-3 px-4">Scholarship</th>
+                          <th className="text-left py-3 px-4">Status</th>
+                          <th className="text-left py-3 px-4">Score</th>
+                          <th className="text-left py-3 px-4">Submitted</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {databaseData.applications.slice(0, 5).map((app: any) => {
+                          const scholarship = databaseData.scholarships.find((s: any) => s.id === app.scholarshipId);
+                          const student = databaseData.users.find((u: any) => u.id === app.studentId);
+                          return (
+                            <tr key={app.id} className="border-b border-gray-100">
+                              <td className="py-3 px-4 font-medium">{app.id}</td>
+                              <td className="py-3 px-4">
+                                {student ? `${student.firstName} ${student.lastName}` : `User ${app.studentId}`}
+                              </td>
+                              <td className="py-3 px-4 text-gray-600">
+                                {scholarship?.title || `Scholarship ${app.scholarshipId}`}
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                  app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  app.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {app.status}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                {app.score ? `${app.score}/100` : '-'}
+                              </td>
+                              <td className="py-3 px-4 text-gray-600">
+                                {new Date(app.submittedAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
