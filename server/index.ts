@@ -61,7 +61,8 @@ if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
       app.use(express.static(staticPath, {
         maxAge: '1d',
         etag: true,
-        lastModified: true
+        lastModified: true,
+        fallthrough: true
       }));
     } else {
       console.warn("⚠️ Static directory not found:", staticPath);
@@ -146,13 +147,23 @@ app.get("*", (req, res) => {
       const fs = require('fs');
       if (fs.existsSync(indexPath)) {
         console.log("✅ Serving index.html from:", indexPath);
-        res.sendFile(indexPath);
+        res.sendFile(indexPath, (err) => {
+          if (err) {
+            console.error("❌ Error sending file:", err);
+            res.status(500).json({
+              success: false,
+              error: "Error serving frontend",
+              message: "Failed to serve index.html",
+              path: req.path,
+            });
+          }
+        });
       } else {
         console.warn("⚠️ index.html not found at:", indexPath);
         res.status(404).json({
           success: false,
           error: "Frontend not built",
-          message: "Run 'npm run build:client' to build the frontend",
+          message: "Application files not found. Rebuild required.",
           path: req.path,
         });
       }
@@ -162,6 +173,7 @@ app.get("*", (req, res) => {
         success: false,
         error: "Error serving frontend",
         message: error.message,
+        path: req.path,
       });
     }
   } else if (process.env.NODE_ENV === "development") {
@@ -191,15 +203,30 @@ app.use(
     res: express.Response,
     next: express.NextFunction,
   ) => {
-    console.error("Unhandled error:", err);
-    console.error("Error stack:", err.stack);
-    console.error("Request path:", req.path);
-    console.error("Request method:", req.method);
+    console.error("❌ Unhandled error:", {
+      message: err.message,
+      stack: err.stack,
+      path: req.path,
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      timestamp: new Date().toISOString(),
+    });
+    
+    // Check if response was already sent
+    if (res.headersSent) {
+      return next(err);
+    }
     
     res.status(500).json({
       success: false,
       error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message,
-      ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      ...(process.env.NODE_ENV !== 'production' && { 
+        stack: err.stack,
+        details: err 
+      }),
     });
   },
 );
