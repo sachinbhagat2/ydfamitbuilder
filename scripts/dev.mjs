@@ -1,48 +1,57 @@
-import { spawn } from "node:child_process";
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const procs = [];
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, '..');
 
-function run(name, cmd, args, opts = {}) {
-  const p = spawn(cmd, args, { stdio: "inherit", shell: false, ...opts });
-  procs.push(p);
-  p.on("exit", (code, signal) => {
-    if (code !== 0) {
-      console.error(
-        `[${name}] exited with code ${code}${signal ? ` (signal ${signal})` : ""}`,
-      );
-      shutdown(code ?? 1);
-    }
+console.log('🚀 Starting development servers...');
+
+// Start Express backend server
+const backend = spawn('node', ['server/index.ts'], {
+  cwd: rootDir,
+  stdio: ['inherit', 'inherit', 'inherit'],
+  shell: true,
+  env: { ...process.env, NODE_ENV: 'development' }
+});
+
+// Start Vite dev server after a short delay
+setTimeout(() => {
+  const vite = spawn('npx', ['vite', '--host', '0.0.0.0', '--port', '5173'], {
+    cwd: rootDir,
+    stdio: 'inherit',
+    shell: true
   });
-  return p;
-}
 
-function shutdown(code = 0) {
-  for (const p of procs) {
-    if (!p.killed) {
-      try {
-        p.kill("SIGTERM");
-      } catch {}
-    }
-  }
-  // Give children a moment to exit cleanly
-  setTimeout(() => process.exit(code), 500);
-}
+  vite.on('close', (code) => {
+    console.log(`Vite process exited with code ${code}`);
+    backend.kill();
+  });
 
-process.on("SIGINT", () => {
-  console.log("Received SIGINT, shutting down...");
-  shutdown(0);
-});
-process.on("SIGTERM", () => {
-  console.log("Received SIGTERM, shutting down...");
-  shutdown(0);
+  vite.on('error', (err) => {
+    console.error('Failed to start Vite:', err);
+    backend.kill();
+  });
+}, 2000);
+
+backend.on('close', (code) => {
+  console.log(`Backend process exited with code ${code}`);
 });
 
-// Start API server (watch mode)
-run("server", process.platform === "win32" ? "npx.cmd" : "npx", [
-  "tsx",
-  "watch",
-  "server/index.ts",
-]);
+backend.on('error', (err) => {
+  console.error('Failed to start backend:', err);
+});
 
-// Start Vite dev server
-run("vite", process.platform === "win32" ? "npx.cmd" : "npx", ["vite"]);
+// Handle process termination
+process.on('SIGINT', () => {
+  console.log('\n🛑 Shutting down development servers...');
+  backend.kill();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n🛑 Shutting down development servers...');
+  backend.kill();
+  process.exit(0);
+});

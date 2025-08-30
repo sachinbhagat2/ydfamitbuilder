@@ -541,6 +541,26 @@ class ApiService {
     localStorage.removeItem("ydf_user");
   }
 
+  // Database explorer
+  async getDatabaseExplorer(): Promise<ApiResponse> {
+    const response = await fetch(`${API_BASE_URL}/database/explorer`, {
+      method: "GET",
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getTableData(tableName: string, params?: { limit?: number; offset?: number }): Promise<ApiResponse> {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const response = await fetch(`${API_BASE_URL}/database/table/${tableName}${qs}`, {
+      method: "GET",
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse(response);
+  }
+
   // Test database connection
   async testConnection(): Promise<ApiResponse> {
     const response = await fetch(`${API_BASE_URL}/test/connection`, {
