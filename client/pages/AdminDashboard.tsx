@@ -1732,6 +1732,86 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {showRoleForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{editingRole ? "Edit Role" : "Create Role"}</h3>
+              <button onClick={() => setShowRoleForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <XCircle className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Name</label>
+              <input value={roleForm.name} onChange={(e)=>setRoleForm({ ...roleForm, name: e.target.value })} className="w-full border rounded px-3 py-2 mt-1" placeholder="e.g. manager" />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Description</label>
+              <textarea value={roleForm.description} onChange={(e)=>setRoleForm({ ...roleForm, description: e.target.value })} className="w-full border rounded px-3 py-2 mt-1" />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={()=>setShowRoleForm(false)} className="px-4 py-2 rounded border">Cancel</button>
+              <button
+                onClick={async ()=>{
+                  const api=(await import('../services/api')).default;
+                  if (!roleForm.name.trim()) { toast.error('Name is required'); return; }
+                  if (editingRole) await api.updateRole(editingRole.id, { name: roleForm.name.trim(), description: roleForm.description });
+                  else await api.createRole({ name: roleForm.name.trim(), description: roleForm.description });
+                  setShowRoleForm(false);
+                  fetchRoles();
+                }}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white"
+              >Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {manageRolesUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Manage Roles for {manageRolesUser.email}</h3>
+              <button onClick={()=>setManageRolesUser(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <XCircle className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {roles.map((r:any)=> (
+                <label key={r.id} className="flex items-center gap-2">
+                  <input type="checkbox" checked={manageRolesAssigned.includes(r.id)} onChange={(e)=>{
+                    setManageRolesAssigned(prev => e.target.checked ? Array.from(new Set([...prev, r.id])) : prev.filter(id=>id!==r.id));
+                  }} />
+                  <span className="text-sm">{r.name}</span>
+                  {r.isSystem && <span className="ml-auto text-xs text-gray-500">system</span>}
+                </label>
+              ))}
+              {!roles.length && <div className="text-sm text-gray-600">No roles found</div>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={()=>setManageRolesUser(null)} className="px-4 py-2 rounded border">Cancel</button>
+              <button
+                disabled={manageSaving}
+                onClick={async ()=>{
+                  setManageSaving(true);
+                  const api=(await import('../services/api')).default;
+                  const currentRes = await api.listUserRoles(manageRolesUser.id);
+                  const currentIds: number[] = (currentRes.data||[]).map((r:any)=>r.id);
+                  const toAdd = manageRolesAssigned.filter(id=>!currentIds.includes(id));
+                  const toRemove = currentIds.filter(id=>!manageRolesAssigned.includes(id));
+                  for (const id of toAdd) { await api.assignRole(manageRolesUser.id, id); }
+                  for (const id of toRemove) { await api.removeUserRole(manageRolesUser.id, id); }
+                  setManageSaving(false);
+                  setManageRolesUser(null);
+                  toast.success('Roles updated');
+                }}
+                className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
+              >{manageSaving ? 'Saving...' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
