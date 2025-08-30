@@ -66,7 +66,10 @@ const AdminDashboard = () => {
   const [roles, setRoles] = useState<any[]>([]);
   const [showRoleForm, setShowRoleForm] = useState(false);
   const [editingRole, setEditingRole] = useState<any | null>(null);
-  const [roleForm, setRoleForm] = useState<{ name: string; description?: string }>({ name: "", description: "" });
+  const [roleForm, setRoleForm] = useState<{
+    name: string;
+    description?: string;
+  }>({ name: "", description: "" });
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
@@ -1244,36 +1247,75 @@ const AdminDashboard = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-ydf-light-gray">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ID
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Name
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Description
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            System
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ydf-light-gray">
-                        {roles.map((r:any)=>(
+                        {roles.map((r: any) => (
                           <tr key={r.id} className="hover:bg-gray-50">
                             <td className="px-6 py-3 text-sm">{r.id}</td>
                             <td className="px-6 py-3 text-sm">{r.name}</td>
-                            <td className="px-6 py-3 text-sm">{r.description || '-'}</td>
-                            <td className="px-6 py-3 text-sm">{r.isSystem ? 'yes' : 'no'}</td>
+                            <td className="px-6 py-3 text-sm">
+                              {r.description || "-"}
+                            </td>
+                            <td className="px-6 py-3 text-sm">
+                              {r.isSystem ? "yes" : "no"}
+                            </td>
                             <td className="px-6 py-3 text-sm">
                               <button
-                                onClick={()=>{ setEditingRole(r); setRoleForm({ name: r.name, description: r.description || '' }); setShowRoleForm(true); }}
+                                onClick={() => {
+                                  setEditingRole(r);
+                                  setRoleForm({
+                                    name: r.name,
+                                    description: r.description || "",
+                                  });
+                                  setShowRoleForm(true);
+                                }}
                                 className="px-3 py-1 border rounded mr-2"
-                              >Edit</button>
+                              >
+                                Edit
+                              </button>
                               {!r.isSystem && (
                                 <button
-                                  onClick={async ()=>{ if(!confirm('Delete this role?')) return; const api=(await import('../services/api')).default; const res=await api.deleteRole(r.id); if(res.success){ toast.success('Role deleted'); fetchRoles(); } }}
+                                  onClick={async () => {
+                                    if (!confirm("Delete this role?")) return;
+                                    const api = (
+                                      await import("../services/api")
+                                    ).default;
+                                    const res = await api.deleteRole(r.id);
+                                    if (res.success) {
+                                      toast.success("Role deleted");
+                                      fetchRoles();
+                                    }
+                                  }}
                                   className="px-3 py-1 bg-red-600 text-white rounded"
-                                >Delete</button>
+                                >
+                                  Delete
+                                </button>
                               )}
                             </td>
                           </tr>
                         ))}
                         {!roles.length && (
-                          <tr><td colSpan={5} className="px-6 py-4 text-gray-600">No roles found</td></tr>
+                          <tr>
+                            <td colSpan={5} className="px-6 py-4 text-gray-600">
+                              No roles found
+                            </td>
+                          </tr>
                         )}
                       </tbody>
                     </table>
@@ -1407,7 +1449,11 @@ const AdminDashboard = () => {
                                         isActive: next,
                                       });
                                       if (res.success)
-                                        fetchUsers(1, userRoleFilter, userSearch);
+                                        fetchUsers(
+                                          1,
+                                          userRoleFilter,
+                                          userSearch,
+                                        );
                                     }}
                                     className={`px-3 py-1 rounded ${u.isActive ? "bg-red-600 text-white" : "bg-green-600 text-white"}`}
                                   >
@@ -1724,37 +1770,72 @@ const AdminDashboard = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{editingRole ? "Edit Role" : "Create Role"}</h3>
-              <button onClick={() => setShowRoleForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <h3 className="text-lg font-semibold">
+                {editingRole ? "Edit Role" : "Create Role"}
+              </h3>
+              <button
+                onClick={() => setShowRoleForm(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
                 <XCircle className="h-5 w-5 text-gray-600" />
               </button>
             </div>
             <div>
               <label className="text-sm text-gray-600">Name</label>
-              <input value={roleForm.name} onChange={(e)=>setRoleForm({ ...roleForm, name: e.target.value })} className="w-full border rounded px-3 py-2 mt-1" placeholder="e.g. manager" />
+              <input
+                value={roleForm.name}
+                onChange={(e) =>
+                  setRoleForm({ ...roleForm, name: e.target.value })
+                }
+                className="w-full border rounded px-3 py-2 mt-1"
+                placeholder="e.g. manager"
+              />
             </div>
             <div>
               <label className="text-sm text-gray-600">Description</label>
-              <textarea value={roleForm.description} onChange={(e)=>setRoleForm({ ...roleForm, description: e.target.value })} className="w-full border rounded px-3 py-2 mt-1" />
+              <textarea
+                value={roleForm.description}
+                onChange={(e) =>
+                  setRoleForm({ ...roleForm, description: e.target.value })
+                }
+                className="w-full border rounded px-3 py-2 mt-1"
+              />
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={()=>setShowRoleForm(false)} className="px-4 py-2 rounded border">Cancel</button>
               <button
-                onClick={async ()=>{
-                  const api=(await import('../services/api')).default;
-                  if (!roleForm.name.trim()) { toast.error('Name is required'); return; }
-                  if (editingRole) await api.updateRole(editingRole.id, { name: roleForm.name.trim(), description: roleForm.description });
-                  else await api.createRole({ name: roleForm.name.trim(), description: roleForm.description });
+                onClick={() => setShowRoleForm(false)}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const api = (await import("../services/api")).default;
+                  if (!roleForm.name.trim()) {
+                    toast.error("Name is required");
+                    return;
+                  }
+                  if (editingRole)
+                    await api.updateRole(editingRole.id, {
+                      name: roleForm.name.trim(),
+                      description: roleForm.description,
+                    });
+                  else
+                    await api.createRole({
+                      name: roleForm.name.trim(),
+                      description: roleForm.description,
+                    });
                   setShowRoleForm(false);
                   fetchRoles();
                 }}
                 className="px-4 py-2 rounded bg-ydf-deep-blue text-white"
-              >Save</button>
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </>
   );
 };

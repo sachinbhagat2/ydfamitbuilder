@@ -25,7 +25,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   useEffect(() => {
     // If user is authenticated but accessing wrong dashboard, redirect to correct one
     const roles = (user as any)?.roles as string[] | undefined;
-    const hasAccess = !!user && (allowedRoles.includes(user.userType) || (Array.isArray(roles) && roles.some((r) => allowedRoles.includes(r))));
+    const hasAccess =
+      !!user &&
+      (allowedRoles.includes(user.userType) ||
+        (Array.isArray(roles) && roles.some((r) => allowedRoles.includes(r))));
     if (isAuthenticated && user && !hasAccess) {
       setTimeout(() => {
         redirectToDashboard();
@@ -105,7 +108,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   // Show access denied for wrong role
   const roles = (user as any)?.roles as string[] | undefined;
-  const hasAccessForView = allowedRoles.includes(user.userType) || (Array.isArray(roles) && roles.some((r) => allowedRoles.includes(r)));
+  const hasAccessForView =
+    allowedRoles.includes(user.userType) ||
+    (Array.isArray(roles) && roles.some((r) => allowedRoles.includes(r)));
   if (!hasAccessForView) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

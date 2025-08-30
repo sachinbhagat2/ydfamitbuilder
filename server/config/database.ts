@@ -227,18 +227,58 @@ class InMemoryStore {
     },
   ];
   public roles: any[] = [
-    { id: 1, name: "admin", description: "System administrator", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: 2, name: "student", description: "Student", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: 3, name: "reviewer", description: "Application reviewer", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: 4, name: "donor", description: "Donor", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: 5, name: "surveyor", description: "Field surveyor", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() }
+    {
+      id: 1,
+      name: "admin",
+      description: "System administrator",
+      permissions: null,
+      isSystem: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      name: "student",
+      description: "Student",
+      permissions: null,
+      isSystem: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 3,
+      name: "reviewer",
+      description: "Application reviewer",
+      permissions: null,
+      isSystem: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 4,
+      name: "donor",
+      description: "Donor",
+      permissions: null,
+      isSystem: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 5,
+      name: "surveyor",
+      description: "Field surveyor",
+      permissions: null,
+      isSystem: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
   ];
   public userRoles: any[] = [
     { id: 1, userId: 2, roleId: 1 },
     { id: 2, userId: 1, roleId: 2 },
     { id: 3, userId: 3, roleId: 3 },
     { id: 4, userId: 4, roleId: 4 },
-    { id: 5, userId: 5, roleId: 5 }
+    { id: 5, userId: 5, roleId: 5 },
   ];
 
   public announcements: any[] = [
@@ -1847,134 +1887,243 @@ class DatabaseAdapter {
   // Roles CRUD
   async listRoles() {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      return [...memory.roles].sort((a,b)=>a.name.localeCompare(b.name));
+      return [...memory.roles].sort((a, b) => a.name.localeCompare(b.name));
     }
     await ensureRolesTable();
     if (MODE === "postgres" && pgPool) {
-      const result = await pgPool.query('SELECT * FROM roles ORDER BY name ASC');
+      const result = await pgPool.query(
+        "SELECT * FROM roles ORDER BY name ASC",
+      );
       return result.rows as any[];
     }
-    const [rows] = await pool.execute('SELECT * FROM roles ORDER BY name ASC');
+    const [rows] = await pool.execute("SELECT * FROM roles ORDER BY name ASC");
     return rows as any[];
   }
 
-  async createRole(input: { name: string; description?: string; permissions?: any; isSystem?: boolean }) {
+  async createRole(input: {
+    name: string;
+    description?: string;
+    permissions?: any;
+    isSystem?: boolean;
+  }) {
     const now = new Date();
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const id = memory.roles.length ? Math.max(...memory.roles.map(r=>r.id))+1 : 1;
-      const rec = { id, name: input.name, description: input.description ?? null, permissions: input.permissions ?? null, isSystem: !!input.isSystem, createdAt: now, updatedAt: now };
+      const id = memory.roles.length
+        ? Math.max(...memory.roles.map((r) => r.id)) + 1
+        : 1;
+      const rec = {
+        id,
+        name: input.name,
+        description: input.description ?? null,
+        permissions: input.permissions ?? null,
+        isSystem: !!input.isSystem,
+        createdAt: now,
+        updatedAt: now,
+      };
       memory.roles.push(rec);
       return rec;
     }
     await ensureRolesTable();
     if (MODE === "postgres" && pgPool) {
-      const result = await pgPool.query('INSERT INTO roles (name, description, permissions, "isSystem") VALUES ($1,$2,$3,$4) RETURNING *', [input.name, input.description ?? null, input.permissions ? JSON.stringify(input.permissions) : null, !!input.isSystem]);
+      const result = await pgPool.query(
+        'INSERT INTO roles (name, description, permissions, "isSystem") VALUES ($1,$2,$3,$4) RETURNING *',
+        [
+          input.name,
+          input.description ?? null,
+          input.permissions ? JSON.stringify(input.permissions) : null,
+          !!input.isSystem,
+        ],
+      );
       return (result.rows as any[])[0];
     }
-    const [res]: any = await pool.execute('INSERT INTO roles (name, description, permissions, isSystem) VALUES (?,?,?,?)', [input.name, input.description ?? null, input.permissions ? JSON.stringify(input.permissions) : null, input.isSystem ? 1 : 0]);
+    const [res]: any = await pool.execute(
+      "INSERT INTO roles (name, description, permissions, isSystem) VALUES (?,?,?,?)",
+      [
+        input.name,
+        input.description ?? null,
+        input.permissions ? JSON.stringify(input.permissions) : null,
+        input.isSystem ? 1 : 0,
+      ],
+    );
     const insertId = res.insertId;
-    const [rows] = await pool.execute('SELECT * FROM roles WHERE id = ? LIMIT 1', [insertId]);
+    const [rows] = await pool.execute(
+      "SELECT * FROM roles WHERE id = ? LIMIT 1",
+      [insertId],
+    );
     return (rows as any[])[0];
   }
 
-  async updateRole(id: number, data: { name?: string; description?: string; permissions?: any }) {
+  async updateRole(
+    id: number,
+    data: { name?: string; description?: string; permissions?: any },
+  ) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const idx = memory.roles.findIndex(r=>r.id===id);
-      if (idx===-1) return null;
-      memory.roles[idx] = { ...memory.roles[idx], ...data, updatedAt: new Date() };
+      const idx = memory.roles.findIndex((r) => r.id === id);
+      if (idx === -1) return null;
+      memory.roles[idx] = {
+        ...memory.roles[idx],
+        ...data,
+        updatedAt: new Date(),
+      };
       return memory.roles[idx];
     }
     await ensureRolesTable();
     if (MODE === "postgres" && pgPool) {
-      const sets: string[] = []; const vals: any[] = []; let i=1;
-      if (data.name!==undefined) { sets.push(`name = $${i++}`); vals.push(data.name); }
-      if (data.description!==undefined) { sets.push(`description = $${i++}`); vals.push(data.description); }
-      if (data.permissions!==undefined) { sets.push(`permissions = $${i++}`); vals.push(data.permissions==null? null: JSON.stringify(data.permissions)); }
-      const sql = `UPDATE roles SET ${sets.join(', ')}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let i = 1;
+      if (data.name !== undefined) {
+        sets.push(`name = $${i++}`);
+        vals.push(data.name);
+      }
+      if (data.description !== undefined) {
+        sets.push(`description = $${i++}`);
+        vals.push(data.description);
+      }
+      if (data.permissions !== undefined) {
+        sets.push(`permissions = $${i++}`);
+        vals.push(
+          data.permissions == null ? null : JSON.stringify(data.permissions),
+        );
+      }
+      const sql = `UPDATE roles SET ${sets.join(", ")}, "updatedAt" = NOW() WHERE id = $${i} RETURNING *`;
       vals.push(id);
       const result = await pgPool.query(sql, vals);
       return (result.rows as any[])[0] || null;
     }
-    const cols: string[] = []; const vals: any[] = [];
-    if (data.name!==undefined) { cols.push('name = ?'); vals.push(data.name); }
-    if (data.description!==undefined) { cols.push('description = ?'); vals.push(data.description); }
-    if (data.permissions!==undefined) { cols.push('permissions = ?'); vals.push(data.permissions==null? null: JSON.stringify(data.permissions)); }
+    const cols: string[] = [];
+    const vals: any[] = [];
+    if (data.name !== undefined) {
+      cols.push("name = ?");
+      vals.push(data.name);
+    }
+    if (data.description !== undefined) {
+      cols.push("description = ?");
+      vals.push(data.description);
+    }
+    if (data.permissions !== undefined) {
+      cols.push("permissions = ?");
+      vals.push(
+        data.permissions == null ? null : JSON.stringify(data.permissions),
+      );
+    }
     if (!cols.length) {
-      const [rows] = await pool.execute('SELECT * FROM roles WHERE id = ? LIMIT 1',[id]);
+      const [rows] = await pool.execute(
+        "SELECT * FROM roles WHERE id = ? LIMIT 1",
+        [id],
+      );
       return (rows as any[])[0] || null;
     }
-    await pool.execute(`UPDATE roles SET ${cols.join(', ')}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`, [...vals, id]);
-    const [rows] = await pool.execute('SELECT * FROM roles WHERE id = ? LIMIT 1',[id]);
+    await pool.execute(
+      `UPDATE roles SET ${cols.join(", ")}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+      [...vals, id],
+    );
+    const [rows] = await pool.execute(
+      "SELECT * FROM roles WHERE id = ? LIMIT 1",
+      [id],
+    );
     return (rows as any[])[0] || null;
   }
 
   async deleteRole(id: number) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const r = memory.roles.find(r=>r.id===id);
+      const r = memory.roles.find((r) => r.id === id);
       if (!r) return false;
       if (r.isSystem) return false;
-      memory.roles = memory.roles.filter(r=>r.id!==id);
-      memory.userRoles = memory.userRoles.filter(ur=>ur.roleId!==id);
+      memory.roles = memory.roles.filter((r) => r.id !== id);
+      memory.userRoles = memory.userRoles.filter((ur) => ur.roleId !== id);
       return true;
     }
     await ensureRolesTable();
     if (MODE === "postgres" && pgPool) {
-      const sys = await pgPool.query('SELECT "isSystem" FROM roles WHERE id = $1',[id]);
+      const sys = await pgPool.query(
+        'SELECT "isSystem" FROM roles WHERE id = $1',
+        [id],
+      );
       if ((sys.rows as any[])[0]?.isSystem) return false;
-      await pgPool.query('DELETE FROM user_roles WHERE "roleId" = $1',[id]);
-      await pgPool.query('DELETE FROM roles WHERE id = $1',[id]);
+      await pgPool.query('DELETE FROM user_roles WHERE "roleId" = $1', [id]);
+      await pgPool.query("DELETE FROM roles WHERE id = $1", [id]);
       return true;
     }
-    const [r]: any = await pool.execute('SELECT isSystem FROM roles WHERE id = ?',[id]);
+    const [r]: any = await pool.execute(
+      "SELECT isSystem FROM roles WHERE id = ?",
+      [id],
+    );
     if ((r as any[])[0]?.isSystem) return false;
-    await pool.execute('DELETE FROM user_roles WHERE roleId = ?',[id]);
-    await pool.execute('DELETE FROM roles WHERE id = ?',[id]);
+    await pool.execute("DELETE FROM user_roles WHERE roleId = ?", [id]);
+    await pool.execute("DELETE FROM roles WHERE id = ?", [id]);
     return true;
   }
 
   async listUserRoles(userId: number) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const ids = memory.userRoles.filter(ur=>ur.userId===userId).map(ur=>ur.roleId);
-      return memory.roles.filter(r=>ids.includes(r.id));
+      const ids = memory.userRoles
+        .filter((ur) => ur.userId === userId)
+        .map((ur) => ur.roleId);
+      return memory.roles.filter((r) => ids.includes(r.id));
     }
     await ensureRolesTable();
     await ensureUserRolesTable();
     if (MODE === "postgres" && pgPool) {
-      const result = await pgPool.query('SELECT r.* FROM user_roles ur JOIN roles r ON r.id = ur."roleId" WHERE ur."userId" = $1 ORDER BY r.name ASC',[userId]);
+      const result = await pgPool.query(
+        'SELECT r.* FROM user_roles ur JOIN roles r ON r.id = ur."roleId" WHERE ur."userId" = $1 ORDER BY r.name ASC',
+        [userId],
+      );
       return result.rows as any[];
     }
-    const [rows] = await pool.execute('SELECT r.* FROM user_roles ur JOIN roles r ON r.id = ur.roleId WHERE ur.userId = ? ORDER BY r.name ASC',[userId]);
+    const [rows] = await pool.execute(
+      "SELECT r.* FROM user_roles ur JOIN roles r ON r.id = ur.roleId WHERE ur.userId = ? ORDER BY r.name ASC",
+      [userId],
+    );
     return rows as any[];
   }
 
   async assignRoleToUser(userId: number, roleId: number) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      const exists = memory.userRoles.find(ur=>ur.userId===userId && ur.roleId===roleId);
+      const exists = memory.userRoles.find(
+        (ur) => ur.userId === userId && ur.roleId === roleId,
+      );
       if (exists) return true;
-      const id = memory.userRoles.length ? Math.max(...memory.userRoles.map(x=>x.id))+1 : 1;
+      const id = memory.userRoles.length
+        ? Math.max(...memory.userRoles.map((x) => x.id)) + 1
+        : 1;
       memory.userRoles.push({ id, userId, roleId });
       return true;
     }
     await ensureUserRolesTable();
     if (MODE === "postgres" && pgPool) {
-      await pgPool.query('INSERT INTO user_roles ("userId","roleId") VALUES ($1,$2) ON CONFLICT ("userId","roleId") DO NOTHING',[userId, roleId]);
+      await pgPool.query(
+        'INSERT INTO user_roles ("userId","roleId") VALUES ($1,$2) ON CONFLICT ("userId","roleId") DO NOTHING',
+        [userId, roleId],
+      );
       return true;
     }
-    await pool.execute('INSERT IGNORE INTO user_roles (userId, roleId) VALUES (?,?)',[userId, roleId]);
+    await pool.execute(
+      "INSERT IGNORE INTO user_roles (userId, roleId) VALUES (?,?)",
+      [userId, roleId],
+    );
     return true;
   }
 
   async removeRoleFromUser(userId: number, roleId: number) {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
-      memory.userRoles = memory.userRoles.filter(ur=>!(ur.userId===userId && ur.roleId===roleId));
+      memory.userRoles = memory.userRoles.filter(
+        (ur) => !(ur.userId === userId && ur.roleId === roleId),
+      );
       return true;
     }
     await ensureUserRolesTable();
     if (MODE === "postgres" && pgPool) {
-      await pgPool.query('DELETE FROM user_roles WHERE "userId" = $1 AND "roleId" = $2',[userId, roleId]);
+      await pgPool.query(
+        'DELETE FROM user_roles WHERE "userId" = $1 AND "roleId" = $2',
+        [userId, roleId],
+      );
       return true;
     }
-    await pool.execute('DELETE FROM user_roles WHERE userId = ? AND roleId = ?',[userId, roleId]);
+    await pool.execute(
+      "DELETE FROM user_roles WHERE userId = ? AND roleId = ?",
+      [userId, roleId],
+    );
     return true;
   }
 }

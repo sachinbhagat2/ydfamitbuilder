@@ -288,31 +288,61 @@ class ApiService {
 
   // Roles
   async listRoles() {
-    const res = await fetch(`${API_BASE_URL}/roles`, { headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/roles`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
-  async createRole(payload: { name: string; description?: string; permissions?: any }) {
-    const res = await fetch(`${API_BASE_URL}/roles`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+  async createRole(payload: {
+    name: string;
+    description?: string;
+    permissions?: any;
+  }) {
+    const res = await fetch(`${API_BASE_URL}/roles`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
     return this.handleResponse(res);
   }
-  async updateRole(id: number, payload: { name?: string; description?: string; permissions?: any }) {
-    const res = await fetch(`${API_BASE_URL}/roles/${id}`, { method: 'PUT', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
+  async updateRole(
+    id: number,
+    payload: { name?: string; description?: string; permissions?: any },
+  ) {
+    const res = await fetch(`${API_BASE_URL}/roles/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
     return this.handleResponse(res);
   }
   async deleteRole(id: number) {
-    const res = await fetch(`${API_BASE_URL}/roles/${id}`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/roles/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async listUserRoles(userId: number) {
-    const res = await fetch(`${API_BASE_URL}/roles/user/${userId}`, { headers: this.getAuthHeaders() });
+    const res = await fetch(`${API_BASE_URL}/roles/user/${userId}`, {
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(res);
   }
   async assignRole(userId: number, roleId: number) {
-    const res = await fetch(`${API_BASE_URL}/roles/assign`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ userId, roleId }) });
+    const res = await fetch(`${API_BASE_URL}/roles/assign`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ userId, roleId }),
+    });
     return this.handleResponse(res);
   }
   async removeUserRole(userId: number, roleId: number) {
-    const res = await fetch(`${API_BASE_URL}/roles/remove`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ userId, roleId }) });
+    const res = await fetch(`${API_BASE_URL}/roles/remove`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ userId, roleId }),
+    });
     return this.handleResponse(res);
   }
 

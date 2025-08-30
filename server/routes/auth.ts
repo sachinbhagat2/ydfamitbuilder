@@ -93,7 +93,9 @@ router.post("/create-default-users", async (req, res) => {
         // Ensure role mapping for new default user
         try {
           const roles = await (mockDatabase as any).listRoles();
-          const match = (roles || []).find((r: any) => String(r.name) === String(userData.userType));
+          const match = (roles || []).find(
+            (r: any) => String(r.name) === String(userData.userType),
+          );
           if (match) {
             await (mockDatabase as any).assignRoleToUser(newUser.id, match.id);
           }
@@ -115,9 +117,14 @@ router.post("/create-default-users", async (req, res) => {
         // Ensure role mapping exists
         try {
           const roles = await (mockDatabase as any).listRoles();
-          const match = (roles || []).find((r: any) => String(r.name) === String(userData.userType));
+          const match = (roles || []).find(
+            (r: any) => String(r.name) === String(userData.userType),
+          );
           if (match) {
-            await (mockDatabase as any).assignRoleToUser(existingUser.id, match.id);
+            await (mockDatabase as any).assignRoleToUser(
+              existingUser.id,
+              match.id,
+            );
           }
         } catch {}
         createdUsers.push({ ...userData, id: existingUser.id, exists: true });
@@ -223,7 +230,9 @@ router.post("/register", async (req, res) => {
     // Assign role based on selected userType
     try {
       const roles = await (mockDatabase as any).listRoles();
-      const match = (roles || []).find((r: any) => String(r.name) === String(userType));
+      const match = (roles || []).find(
+        (r: any) => String(r.name) === String(userType),
+      );
       if (match) {
         await (mockDatabase as any).assignRoleToUser(newUser.id, match.id);
       }
@@ -650,7 +659,9 @@ router.get(
 router.get("/verify", authenticateToken, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) {
-      return res.status(401).json({ success: false, error: "User not authenticated" });
+      return res
+        .status(401)
+        .json({ success: false, error: "User not authenticated" });
     }
     const dbUser = await mockDatabase.findUserById(req.user.id);
     if (!dbUser) {
