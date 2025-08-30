@@ -90,6 +90,14 @@ router.post("/create-default-users", async (req, res) => {
           isActive: true,
           emailVerified: true,
         });
+        // Ensure role mapping for new default user
+        try {
+          const roles = await (mockDatabase as any).listRoles();
+          const match = (roles || []).find((r: any) => String(r.name) === String(userData.userType));
+          if (match) {
+            await (mockDatabase as any).assignRoleToUser(newUser.id, match.id);
+          }
+        } catch {}
         createdUsers.push({
           ...userData,
           id: newUser.id,
