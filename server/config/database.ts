@@ -2175,6 +2175,7 @@ export async function testConnection(): Promise<DatabaseResult> {
   try {
     console.log(`📊 Testing ${MODE} database connection...`);
     if (MODE === "mock") {
+      recordDbSuccess();
       return { success: true, data: [{ version: "Mock Database v1.0" }] };
     }
 
@@ -2183,7 +2184,17 @@ export async function testConnection(): Promise<DatabaseResult> {
       console.log('🔍 Production database setup:');
       console.log('  DATABASE_URL exists:', !!process.env.DATABASE_URL);
       console.log('  REPLIT_DB_URL exists:', !!process.env.REPLIT_DB_URL);
+      console.log('  REPL_ID exists:', !!process.env.REPL_ID);
       console.log('  Mode:', MODE);
+      console.log('  USE_PG:', USE_PG);
+      console.log('  PG_URL length:', PG_URL ? PG_URL.length : 'none');
+    }
+
+    if (MODE === "postgres" && pgPool) {
+      const result = await pgPool.query("SELECT version() as version");
+      console.log("✅ PostgreSQL connection successful");
+      recordDbSuccess();
+      return { success: true, data: result.rows as any[] };
     }
 
     const connection = await mysqlCompat.getConnection();
@@ -2191,17 +2202,18 @@ export async function testConnection(): Promise<DatabaseResult> {
     connection.release();
 
     console.log("✅ Database connection successful");
+    recordDbSuccess();
     return { success: true, data: result[0] as any[] };
   } catch (error) {
     console.error("❌ Database connection failed:", error);
+    console.error("❌ Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      code: (error as any)?.code,
+      errno: (error as any)?.errno,
+      sqlState: (error as any)?.sqlState,
+    });
 
-    // In production, if database fails, switch to mock temporarily
-    if (process.env.NODE_ENV === 'production' && MODE !== 'mock') {
-      console.log("🔄 Switching to mock database for production fallback");
-      // Don't update global MODE, just for this instance
-    }
-
-    recordDbError(error); // Correctly use the imported function
+    recordDbError(error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
