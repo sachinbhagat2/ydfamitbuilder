@@ -62,6 +62,15 @@ const AdminDashboard = () => {
   const [userSearch, setUserSearch] = useState("");
   const [usersLoading, setUsersLoading] = useState(false);
 
+  // Roles state
+  const [roles, setRoles] = useState<any[]>([]);
+  const [showRoleForm, setShowRoleForm] = useState(false);
+  const [editingRole, setEditingRole] = useState<any | null>(null);
+  const [roleForm, setRoleForm] = useState<{ name: string; description?: string }>({ name: "", description: "" });
+  const [manageRolesUser, setManageRolesUser] = useState<any | null>(null);
+  const [manageRolesAssigned, setManageRolesAssigned] = useState<number[]>([]);
+  const [manageSaving, setManageSaving] = useState(false);
+
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
     if (!hasSeenOnboarding) {
