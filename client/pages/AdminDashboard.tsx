@@ -178,9 +178,19 @@ const AdminDashboard = () => {
       fetchReviewers();
     } else if (tab === "users") {
       fetchUsers(1, userRoleFilter, userSearch);
+    } else if (tab === "roles") {
+      fetchRoles();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  const fetchRoles = async () => {
+    try {
+      const api = (await import("../services/api")).default;
+      const res = await api.listRoles();
+      if (res.success) setRoles(res.data || []);
+    } catch (e) {}
+  };
 
   const fetchSchemes = async () => {
     try {
