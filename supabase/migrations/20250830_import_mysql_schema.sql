@@ -1,4 +1,3 @@
-
 -- Import MySQL schema converted to PostgreSQL format
 -- Based on the provided MySQL dump for sparsind_ydf_ngo database
 
@@ -135,6 +134,7 @@ CREATE INDEX IF NOT EXISTS idx_applications_reviewer ON applications("assignedRe
 CREATE INDEX IF NOT EXISTS idx_scholarships_status ON scholarships(status);
 CREATE INDEX IF NOT EXISTS idx_reviews_application ON application_reviews("applicationId");
 CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON application_reviews("reviewerId");
+CREATE INDEX IF NOT EXISTS idx_announcements_active ON announcements("isActive");
 
 -- Insert default users with bcrypt hashed passwords
 -- All passwords are: Student123!, Admin123!, Reviewer123!, Donor123!, Surveyor123!
@@ -204,28 +204,9 @@ INSERT INTO scholarships (title, description, amount, currency, "eligibilityCrit
 )
 ON CONFLICT DO NOTHING;
 
--- Create some sample announcements
-INSERT INTO announcements (title, content, type, "targetAudience", "isActive", priority, "validFrom", "validTo", "createdBy") VALUES
-(
-    'Welcome to Youth Dreamers Foundation',
-    'Welcome to our scholarship management platform. Students can apply for various scholarships, track their applications, and receive updates.',
-    'general',
-    '["student", "admin", "reviewer", "donor"]',
-    TRUE,
-    'normal',
-    NOW(),
-    NULL,
-    2
-),
-(
-    'Application Deadline Reminder',
-    'Reminder: Merit Excellence Scholarship applications close in 30 days. Submit your complete application before the deadline.',
-    'deadline',
-    '["student"]',
-    TRUE,
-    'high',
-    NOW(),
-    NOW() + INTERVAL '30 days',
-    2
-)
+-- Insert sample announcements (converting from your MySQL data structure)
+INSERT INTO announcements (title, content, type, "targetAudience", "isActive", priority, "createdBy") VALUES
+('Welcome to Youth Dreamers Foundation', 'Welcome to our scholarship portal. Apply for various scholarships and track your progress.', 'general', '["student"]'::jsonb, TRUE, 'normal', 1),
+('System Maintenance Notice', 'Regular maintenance scheduled this weekend. Portal may be temporarily unavailable.', 'maintenance', '["student","admin","reviewer","donor"]'::jsonb, TRUE, 'normal', 1),
+('New Scholarships Available', 'Several new scholarship opportunities have been added. Check the scholarships page for details.', 'announcement', '["student"]'::jsonb, TRUE, 'high', 1)
 ON CONFLICT DO NOTHING;

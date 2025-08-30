@@ -382,18 +382,19 @@ export const pgPool =
         (() => {
           try {
             const u = new URL(PG_URL);
+            const isLocalhost = u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname.includes('replit') || u.hostname.includes('helium');
             return {
               host: u.hostname,
               port: u.port ? parseInt(u.port, 10) : 5432,
               user: decodeURIComponent(u.username),
               password: decodeURIComponent(u.password),
               database: u.pathname.replace(/^\//, ""),
-              ssl: { require: true, rejectUnauthorized: false },
+              ssl: isLocalhost ? false : { require: true, rejectUnauthorized: false },
             } as any;
           } catch {
             return {
               connectionString: PG_URL,
-              ssl: { require: true, rejectUnauthorized: false },
+              ssl: false,
             } as any;
           }
         })(),
