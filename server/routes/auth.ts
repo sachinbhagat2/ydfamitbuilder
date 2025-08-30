@@ -633,9 +633,19 @@ router.get(
 // Verify token endpoint
 router.get("/verify", authenticateToken, async (req: AuthRequest, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, error: "User not authenticated" });
+    }
+    const dbUser = await mockDatabase.findUserById(req.user.id);
+    if (!dbUser) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    const roles = await (mockDatabase as any).listUserRoles(req.user.id);
+    const roleNames = Array.isArray(roles) ? roles.map((r: any) => r.name) : [];
+    const { password: _pw, ...userWithoutPassword } = dbUser as any;
     const response: ApiResponse = {
       success: true,
-      data: req.user,
+      data: { ...userWithoutPassword, roles: roleNames },
       message: "Token is valid",
     };
     res.json(response);
