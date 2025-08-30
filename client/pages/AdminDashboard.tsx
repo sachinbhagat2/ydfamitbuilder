@@ -86,6 +86,7 @@ const AdminDashboard = () => {
       "schemes",
       "applications",
       "users",
+      "roles",
       "analytics",
       "settings",
     ];
