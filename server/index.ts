@@ -199,9 +199,10 @@ async function startServer() {
     }
 
     // Start server
-    app.listen(PORT, '0.0.0.0', () => {
+    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
+    app.listen(PORT, host, () => {
       console.log(
-        `🚀 Youth Dreamers Foundation Server running on port ${PORT}`,
+        `🚀 Youth Dreamers Foundation Server running on ${host}:${PORT}`,
       );
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API demo: http://localhost:${PORT}/api/demo`);
