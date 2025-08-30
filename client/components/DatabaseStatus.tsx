@@ -12,7 +12,25 @@ type TestConnectionResult = {
       host?: string;
       error?: string;
     };
+    timestamp?: string;
   };
+};
+
+type DbStatusResponse = {
+  success: boolean;
+  status?: {
+    mode?: string;
+    engine?: string;
+    host?: string | null;
+    database?: string | null;
+    user?: string | null;
+    env?: { missing?: string[] };
+    lastError?: string | null;
+    lastErrorAt?: string | null;
+    lastSuccessAt?: string | null;
+    recentErrors?: { at: string; error: string }[];
+  };
+  reason?: string | null;
 };
 
 const DatabaseStatus = () => {
@@ -23,6 +41,16 @@ const DatabaseStatus = () => {
     dbHost?: string;
     error?: string;
     egressIp?: string;
+    reason?: string | null;
+    mode?: string;
+    engine?: string;
+    dbName?: string | null;
+    dbUser?: string | null;
+    lastErrorAt?: string | null;
+    lastSuccessAt?: string | null;
+    missingEnv?: string[];
+    recentErrors?: { at: string; error: string }[];
+    testedAt?: string;
   }>({});
 
   useEffect(() => {
