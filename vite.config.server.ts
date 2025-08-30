@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import path from "path";
 
@@ -7,7 +8,7 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, "server/node-build.ts"),
       name: "server",
-      fileName: "production",
+      fileName: "node-build",
       formats: ["es"],
     },
     outDir: "dist/server",
@@ -32,6 +33,13 @@ export default defineConfig({
         // External dependencies that should not be bundled
         "express",
         "cors",
+        "bcryptjs",
+        "jsonwebtoken",
+        "mysql2",
+        "pg",
+        "drizzle-orm",
+        "zod",
+        "dotenv",
       ],
       output: {
         format: "es",

@@ -1,29 +1,10 @@
-import path from "path";
-import express from "express";
+import { createServer } from "./index.js";
 
-// Simple production server for serving static files
-const app = express();
+const app = createServer();
 const port = process.env.PORT || 3000;
 
-// In production, serve the built SPA files
-const __dirname = import.meta.dirname;
-const distPath = path.join(__dirname, "../spa");
-
-// Serve static files
-app.use(express.static(distPath));
-
-// Handle React Router - serve index.html for all non-API routes
-app.get("*", (req, res) => {
-  // Don't serve index.html for API routes
-  if (req.path.startsWith("/api/") || req.path.startsWith("/health")) {
-    return res.status(404).json({ error: "API endpoint not found" });
-  }
-
-  res.sendFile(path.join(distPath, "index.html"));
-});
-
-app.listen(port, () => {
-  console.log(`🚀 Fusion Starter server running on port ${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`🚀 Production server running on 0.0.0.0:${port}`);
   console.log(`📱 Frontend: http://localhost:${port}`);
   console.log(`🔧 API: http://localhost:${port}/api`);
 });
