@@ -2158,6 +2158,7 @@ export const mockDatabase = new DatabaseAdapter();
 export async function testConnection() {
   try {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      recordDbSuccess();
       return {
         success: true,
         data: [
@@ -2172,6 +2173,7 @@ export async function testConnection() {
     }
     if (MODE === "postgres" && pgPool) {
       const result = await pgPool.query("SELECT version() as version");
+      recordDbSuccess();
       return {
         success: true,
         data: [
@@ -2187,6 +2189,7 @@ export async function testConnection() {
     const conn = await pool.getConnection();
     const [rows] = await conn.query("SELECT VERSION() as version");
     conn.release();
+    recordDbSuccess();
     return {
       success: true,
       data: [
@@ -2200,6 +2203,7 @@ export async function testConnection() {
     };
   } catch (error) {
     console.error("Database connection failed:", error);
+    recordDbError(error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
