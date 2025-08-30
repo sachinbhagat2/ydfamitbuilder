@@ -12,7 +12,25 @@ type TestConnectionResult = {
       host?: string;
       error?: string;
     };
+    timestamp?: string;
   };
+};
+
+type DbStatusResponse = {
+  success: boolean;
+  status?: {
+    mode?: string;
+    engine?: string;
+    host?: string | null;
+    database?: string | null;
+    user?: string | null;
+    env?: { missing?: string[] };
+    lastError?: string | null;
+    lastErrorAt?: string | null;
+    lastSuccessAt?: string | null;
+    recentErrors?: { at: string; error: string }[];
+  };
+  reason?: string | null;
 };
 
 const DatabaseStatus = () => {
@@ -23,6 +41,16 @@ const DatabaseStatus = () => {
     dbHost?: string;
     error?: string;
     egressIp?: string;
+    reason?: string | null;
+    mode?: string;
+    engine?: string;
+    dbName?: string | null;
+    dbUser?: string | null;
+    lastErrorAt?: string | null;
+    lastSuccessAt?: string | null;
+    missingEnv?: string[];
+    recentErrors?: { at: string; error: string }[];
+    testedAt?: string;
   }>({});
 
   useEffect(() => {
@@ -43,16 +71,31 @@ const DatabaseStatus = () => {
         if (!dbOk) {
           const host = result?.results?.database?.host;
           const errMsg = result?.error || result?.results?.database?.error;
+          const testedAt = (result as any)?.results?.timestamp || undefined;
           try {
-            const ipRes = await fetch("/api/test/egress-ip");
+            const [ipRes, statusRes] = await Promise.all([
+              fetch("/api/test/egress-ip"),
+              fetch("/api/test/db/status"),
+            ]);
             const ipJson = await ipRes.json();
+            const statusJson: DbStatusResponse = await statusRes.json();
             setDetails({
-              dbHost: host,
-              error: errMsg || undefined,
+              dbHost: host || statusJson?.status?.host || undefined,
+              error: errMsg || statusJson?.status?.lastError || undefined,
               egressIp: ipJson?.ip || undefined,
+              reason: statusJson?.reason || null,
+              mode: statusJson?.status?.mode,
+              engine: statusJson?.status?.engine,
+              dbName: statusJson?.status?.database ?? null,
+              dbUser: statusJson?.status?.user ?? null,
+              lastErrorAt: statusJson?.status?.lastErrorAt ?? null,
+              lastSuccessAt: statusJson?.status?.lastSuccessAt ?? null,
+              missingEnv: statusJson?.status?.env?.missing || [],
+              recentErrors: statusJson?.status?.recentErrors || [],
+              testedAt,
             });
           } catch {
-            setDetails({ dbHost: host, error: errMsg || undefined });
+            setDetails({ dbHost: host, error: errMsg || undefined, testedAt });
           }
         } else {
           setDetails({});
@@ -97,24 +140,102 @@ const DatabaseStatus = () => {
         <AlertCircle className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700">
           <div className="space-y-2">
-            <p>
-              Live database not connected. Please try again shortly or contact
-              support.
-            </p>
-            {details.dbHost && (
-              <p className="text-xs">
-                Database host:{" "}
-                <span className="font-medium">{details.dbHost}</span>
+            <p className="font-medium">Live database connection failed.</p>
+            <div className="text-xs space-y-1">
+              {details.reason && (
+                <p>
+                  Likely cause:{" "}
+                  <span className="font-medium">{details.reason}</span>
+                </p>
+              )}
+              {details.error && (
+                <p>
+                  Error:{" "}
+                  <span className="font-mono break-all">{details.error}</span>
+                </p>
+              )}
+              <p>
+                Target:{" "}
+                <span className="font-medium">{details.engine || "db"}</span>
+                {details.dbHost ? (
+                  <>
+                    {" "}
+                    at <span className="font-medium">{details.dbHost}</span>
+                  </>
+                ) : null}
+                {details.dbName ? (
+                  <>
+                    {" "}
+                    database{" "}
+                    <span className="font-medium">{details.dbName}</span>
+                  </>
+                ) : null}
+                {details.dbUser ? (
+                  <>
+                    {" "}
+                    as user{" "}
+                    <span className="font-medium">{details.dbUser}</span>
+                  </>
+                ) : null}
               </p>
-            )}
-            {details.egressIp && (
-              <p className="text-xs">
-                Server egress IP:{" "}
-                <span className="font-medium">{details.egressIp}</span> (add to
-                your DB allowlist)
-              </p>
-            )}
-            {details.error && <p className="text-xs">Issue: {details.error}</p>}
+              {details.testedAt && (
+                <p>
+                  Checked at:{" "}
+                  <span className="font-medium">
+                    {new Date(details.testedAt).toLocaleString()}
+                  </span>
+                </p>
+              )}
+              {details.egressIp && (
+                <p>
+                  Server egress IP:{" "}
+                  <span className="font-medium">{details.egressIp}</span> (add
+                  to your DB allowlist)
+                </p>
+              )}
+              {details?.missingEnv && details.missingEnv.length > 0 && (
+                <p>
+                  Missing env:{" "}
+                  <span className="font-medium">
+                    {details.missingEnv.join(", ")}
+                  </span>
+                </p>
+              )}
+              {details.recentErrors && details.recentErrors.length > 0 && (
+                <details>
+                  <summary className="cursor-pointer select-none">
+                    Recent errors
+                  </summary>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {details.recentErrors.slice(0, 5).map((e, idx) => (
+                      <li key={idx}>
+                        <span className="text-muted-foreground">
+                          {new Date(e.at).toLocaleString()}:
+                        </span>{" "}
+                        <span className="font-mono break-all">{e.error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              <div className="pt-1">
+                <p>How to fix:</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  <li>Verify DB host, port, user, and database name</li>
+                  <li>
+                    If using a firewall, allowlist the server egress IP above
+                  </li>
+                  <li>
+                    If SSL is required, set DB_SSL=true or provide a valid
+                    certificate
+                  </li>
+                  <li>
+                    Ensure credentials are correct and user has access to the
+                    database
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </AlertDescription>
       </Alert>

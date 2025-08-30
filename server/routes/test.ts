@@ -3,6 +3,7 @@ import {
   testConnection,
   initializeDatabase,
   createDefaultUsers,
+  getDbStatus,
 } from "../config/database";
 
 const router = Router();
@@ -241,6 +242,26 @@ router.get("/ping", (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
+});
+
+// DB health and recent error logs (sanitized)
+router.get("/db/status", (req, res) => {
+  const status = getDbStatus();
+  // Derive a short reason from last error to help users
+  const err = String(status.lastError || "").toLowerCase();
+  let reason: string | null = null;
+  if (err.includes("access denied") || err.includes("authentication")) {
+    reason = "Invalid database username or password";
+  } else if (err.includes("enotfound") || err.includes("getaddrinfo")) {
+    reason = "Database host not reachable (DNS/hostname)";
+  } else if (err.includes("econnrefused")) {
+    reason = "Connection refused (port/firewall)";
+  } else if (err.includes("timeout") || err.includes("etimedout")) {
+    reason = "Connection timed out (network/allowlist)";
+  } else if (err.includes("certificate") || err.includes("ssl")) {
+    reason = "SSL/certificate issue";
+  }
+  res.json({ success: true, status, reason });
 });
 
 // Environment check

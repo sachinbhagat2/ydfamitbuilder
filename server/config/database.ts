@@ -28,6 +28,30 @@ const MODE: "postgres" | "mysql" | "mock" = useMockExplicit
       : "mock";
 const USE_MOCK = MODE === "mock";
 
+// Lightweight in-memory DB health tracker (no secrets)
+type DbLogEntry = { at: string; error: string };
+const dbHealth = {
+  mode: MODE as "postgres" | "mysql" | "mock",
+  useMock: USE_MOCK,
+  lastError: null as string | null,
+  lastErrorAt: null as string | null,
+  lastSuccessAt: null as string | null,
+  recentErrors: [] as DbLogEntry[],
+};
+
+function recordDbSuccess() {
+  dbHealth.lastSuccessAt = new Date().toISOString();
+}
+
+function recordDbError(err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err);
+  const at = new Date().toISOString();
+  dbHealth.lastError = msg;
+  dbHealth.lastErrorAt = at;
+  dbHealth.recentErrors.unshift({ at, error: msg });
+  if (dbHealth.recentErrors.length > 10) dbHealth.recentErrors.pop();
+}
+
 // In-memory fallback store
 class InMemoryStore {
   public users: any[] = [
@@ -2134,6 +2158,7 @@ export const mockDatabase = new DatabaseAdapter();
 export async function testConnection() {
   try {
     if (USE_MOCK || (MODE !== "postgres" && !pool)) {
+      recordDbSuccess();
       return {
         success: true,
         data: [
@@ -2148,6 +2173,7 @@ export async function testConnection() {
     }
     if (MODE === "postgres" && pgPool) {
       const result = await pgPool.query("SELECT version() as version");
+      recordDbSuccess();
       return {
         success: true,
         data: [
@@ -2163,6 +2189,7 @@ export async function testConnection() {
     const conn = await pool.getConnection();
     const [rows] = await conn.query("SELECT VERSION() as version");
     conn.release();
+    recordDbSuccess();
     return {
       success: true,
       data: [
@@ -2176,11 +2203,63 @@ export async function testConnection() {
     };
   } catch (error) {
     console.error("Database connection failed:", error);
+    recordDbError(error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
+}
+
+export function getDbStatus() {
+  let parsedPg: { host?: string; database?: string; user?: string } = {};
+  if (MODE === "postgres" && PG_URL) {
+    try {
+      const u = new URL(PG_URL);
+      parsedPg = {
+        host: u.hostname,
+        database: u.pathname.replace(/^\//, ""),
+        user: decodeURIComponent(u.username || ""),
+      };
+    } catch {
+      parsedPg = {};
+    }
+  }
+  const missingEnv: string[] = [];
+  if (!PG_URL) {
+    if (!DB_HOST) missingEnv.push("DB_HOST");
+    if (!DB_USER) missingEnv.push("DB_USER");
+    if (!DB_NAME) missingEnv.push("DB_NAME");
+  }
+  return {
+    mode: dbHealth.mode,
+    useMock: dbHealth.useMock,
+    engine: dbHealth.mode,
+    hasCredentials: !!PG_URL || hasCreds,
+    host:
+      dbHealth.mode === "postgres" ? parsedPg.host || null : DB_HOST || null,
+    database:
+      dbHealth.mode === "postgres"
+        ? parsedPg.database || null
+        : DB_NAME || null,
+    user:
+      dbHealth.mode === "postgres" ? parsedPg.user || null : DB_USER || null,
+    ssl:
+      dbHealth.mode === "postgres"
+        ? true
+        : String(process.env.DB_SSL || "").toLowerCase() === "true",
+    env: {
+      hasDATABASE_URL: !!PG_URL,
+      hasDB_HOST: !!DB_HOST,
+      hasDB_USER: !!DB_USER,
+      hasDB_NAME: !!DB_NAME,
+      missing: missingEnv,
+    },
+    lastError: dbHealth.lastError,
+    lastErrorAt: dbHealth.lastErrorAt,
+    lastSuccessAt: dbHealth.lastSuccessAt,
+    recentErrors: dbHealth.recentErrors,
+  };
 }
 
 export async function initializeDatabase() {
