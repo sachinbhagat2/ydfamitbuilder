@@ -40,3 +40,20 @@ args = "npm run build:server"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm start"
+
+[[workflows.workflow]]
+name = "Production Build & Deploy"
+author = 44167159
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build:client"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build:server"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"

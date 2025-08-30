@@ -50,12 +50,12 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  const staticPath = path.join(__dirname, "../spa");
+  const staticPath = path.join(__dirname, "../dist/spa");
   console.log("📁 Serving static files from:", staticPath);
   
   // Ensure static path exists
   try {
-    const fs = await import('fs');
+    const fs = (await import('fs')).default;
     if (fs.existsSync(staticPath)) {
       console.log("✅ Static directory exists");
       app.use(express.static(staticPath, {
@@ -66,6 +66,7 @@ if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
       }));
     } else {
       console.warn("⚠️ Static directory not found:", staticPath);
+      console.log("📝 Available files:", fs.readdirSync(__dirname));
     }
   } catch (error) {
     console.error("❌ Error setting up static files:", error);
@@ -140,7 +141,7 @@ app.get("*", (req, res) => {
     // Serve built SPA in production (non-serverless)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    const staticPath = path.join(__dirname, "../spa");
+    const staticPath = path.join(__dirname, "../dist/spa");
     const indexPath = path.join(staticPath, "index.html");
     
     try {
@@ -160,11 +161,27 @@ app.get("*", (req, res) => {
         });
       } else {
         console.warn("⚠️ index.html not found at:", indexPath);
+        console.log("📝 Checking directory structure...");
+        
+        // List available directories to debug
+        try {
+          const rootDir = path.join(__dirname, "..");
+          console.log("Root directory contents:", fs.readdirSync(rootDir));
+          
+          const distDir = path.join(__dirname, "../dist");
+          if (fs.existsSync(distDir)) {
+            console.log("Dist directory contents:", fs.readdirSync(distDir));
+          }
+        } catch (e) {
+          console.log("Error listing directories:", e.message);
+        }
+        
         res.status(404).json({
           success: false,
           error: "Frontend not built",
-          message: "Application files not found. Rebuild required.",
+          message: "Application files not found. Run: npm run build",
           path: req.path,
+          expectedPath: indexPath,
         });
       }
     } catch (error) {
