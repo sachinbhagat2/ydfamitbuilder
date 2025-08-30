@@ -67,9 +67,6 @@ const AdminDashboard = () => {
   const [showRoleForm, setShowRoleForm] = useState(false);
   const [editingRole, setEditingRole] = useState<any | null>(null);
   const [roleForm, setRoleForm] = useState<{ name: string; description?: string }>({ name: "", description: "" });
-  const [manageRolesUser, setManageRolesUser] = useState<any | null>(null);
-  const [manageRolesAssigned, setManageRolesAssigned] = useState<number[]>([]);
-  const [manageSaving, setManageSaving] = useState(false);
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("ydf_onboarding_admin");
@@ -1416,16 +1413,6 @@ const AdminDashboard = () => {
                                   >
                                     {u.isActive ? "Deactivate" : "Activate"}
                                   </button>
-                                  <button
-                                    onClick={async ()=>{
-                                      const api=(await import('../services/api')).default;
-                                      await fetchRoles();
-                                      const res = await api.listUserRoles(u.id);
-                                      setManageRolesAssigned((res.data||[]).map((r:any)=>r.id));
-                                      setManageRolesUser(u);
-                                    }}
-                                    className="px-3 py-1 rounded border"
-                                  >Manage Roles</button>
                                 </div>
                               </td>
                             </tr>
@@ -1768,50 +1755,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {manageRolesUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Manage Roles for {manageRolesUser.email}</h3>
-              <button onClick={()=>setManageRolesUser(null)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <XCircle className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            <div className="max-h-64 overflow-y-auto space-y-2">
-              {roles.map((r:any)=> (
-                <label key={r.id} className="flex items-center gap-2">
-                  <input type="checkbox" checked={manageRolesAssigned.includes(r.id)} onChange={(e)=>{
-                    setManageRolesAssigned(prev => e.target.checked ? Array.from(new Set([...prev, r.id])) : prev.filter(id=>id!==r.id));
-                  }} />
-                  <span className="text-sm">{r.name}</span>
-                  {r.isSystem && <span className="ml-auto text-xs text-gray-500">system</span>}
-                </label>
-              ))}
-              {!roles.length && <div className="text-sm text-gray-600">No roles found</div>}
-            </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={()=>setManageRolesUser(null)} className="px-4 py-2 rounded border">Cancel</button>
-              <button
-                disabled={manageSaving}
-                onClick={async ()=>{
-                  setManageSaving(true);
-                  const api=(await import('../services/api')).default;
-                  const currentRes = await api.listUserRoles(manageRolesUser.id);
-                  const currentIds: number[] = (currentRes.data||[]).map((r:any)=>r.id);
-                  const toAdd = manageRolesAssigned.filter(id=>!currentIds.includes(id));
-                  const toRemove = currentIds.filter(id=>!manageRolesAssigned.includes(id));
-                  for (const id of toAdd) { await api.assignRole(manageRolesUser.id, id); }
-                  for (const id of toRemove) { await api.removeUserRole(manageRolesUser.id, id); }
-                  setManageSaving(false);
-                  setManageRolesUser(null);
-                  toast.success('Roles updated');
-                }}
-                className="px-4 py-2 rounded bg-ydf-deep-blue text-white disabled:opacity-50"
-              >{manageSaving ? 'Saving...' : 'Save'}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
