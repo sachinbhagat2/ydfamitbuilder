@@ -1227,6 +1227,63 @@ const AdminDashboard = () => {
               </div>
             )}
             {activeTab === "analytics" && renderAnalytics()}
+            {activeTab === "roles" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Roles</h2>
+                  <button
+                    onClick={() => {
+                      setEditingRole(null);
+                      setRoleForm({ name: "", description: "" });
+                      setShowRoleForm(true);
+                    }}
+                    className="bg-ydf-deep-blue text-white px-4 py-2 rounded-lg"
+                  >
+                    Create Role
+                  </button>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-ydf-light-gray">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ydf-light-gray">
+                        {roles.map((r:any)=>(
+                          <tr key={r.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm">{r.id}</td>
+                            <td className="px-6 py-3 text-sm">{r.name}</td>
+                            <td className="px-6 py-3 text-sm">{r.description || '-'}</td>
+                            <td className="px-6 py-3 text-sm">{r.isSystem ? 'yes' : 'no'}</td>
+                            <td className="px-6 py-3 text-sm">
+                              <button
+                                onClick={()=>{ setEditingRole(r); setRoleForm({ name: r.name, description: r.description || '' }); setShowRoleForm(true); }}
+                                className="px-3 py-1 border rounded mr-2"
+                              >Edit</button>
+                              {!r.isSystem && (
+                                <button
+                                  onClick={async ()=>{ if(!confirm('Delete this role?')) return; const api=(await import('../services/api')).default; const res=await api.deleteRole(r.id); if(res.success){ toast.success('Role deleted'); fetchRoles(); } }}
+                                  className="px-3 py-1 bg-red-600 text-white rounded"
+                                >Delete</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                        {!roles.length && (
+                          <tr><td colSpan={5} className="px-6 py-4 text-gray-600">No roles found</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
             {activeTab === "users" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
