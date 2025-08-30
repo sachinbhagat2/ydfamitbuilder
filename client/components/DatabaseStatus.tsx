@@ -140,24 +140,74 @@ const DatabaseStatus = () => {
         <AlertCircle className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700">
           <div className="space-y-2">
-            <p>
-              Live database not connected. Please try again shortly or contact
-              support.
-            </p>
-            {details.dbHost && (
-              <p className="text-xs">
-                Database host:{" "}
-                <span className="font-medium">{details.dbHost}</span>
+            <p className="font-medium">Live database connection failed.</p>
+            <div className="text-xs space-y-1">
+              {details.reason && (
+                <p>
+                  Likely cause: <span className="font-medium">{details.reason}</span>
+                </p>
+              )}
+              {details.error && (
+                <p>
+                  Error: <span className="font-mono break-all">{details.error}</span>
+                </p>
+              )}
+              <p>
+                Target: <span className="font-medium">{details.engine || "db"}</span>
+                {details.dbHost ? (
+                  <>
+                    {" "}at <span className="font-medium">{details.dbHost}</span>
+                  </>
+                ) : null}
+                {details.dbName ? (
+                  <>
+                    {" "}database <span className="font-medium">{details.dbName}</span>
+                  </>
+                ) : null}
+                {details.dbUser ? (
+                  <>
+                    {" "}as user <span className="font-medium">{details.dbUser}</span>
+                  </>
+                ) : null}
               </p>
-            )}
-            {details.egressIp && (
-              <p className="text-xs">
-                Server egress IP:{" "}
-                <span className="font-medium">{details.egressIp}</span> (add to
-                your DB allowlist)
-              </p>
-            )}
-            {details.error && <p className="text-xs">Issue: {details.error}</p>}
+              {details.testedAt && (
+                <p>
+                  Checked at: <span className="font-medium">{new Date(details.testedAt).toLocaleString()}</span>
+                </p>
+              )}
+              {details.egressIp && (
+                <p>
+                  Server egress IP: <span className="font-medium">{details.egressIp}</span> (add to your DB allowlist)
+                </p>
+              )}
+              {details?.missingEnv && details.missingEnv.length > 0 && (
+                <p>
+                  Missing env: <span className="font-medium">{details.missingEnv.join(", ")}</span>
+                </p>
+              )}
+              {details.recentErrors && details.recentErrors.length > 0 && (
+                <details>
+                  <summary className="cursor-pointer select-none">Recent errors</summary>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {details.recentErrors.slice(0, 5).map((e, idx) => (
+                      <li key={idx}>
+                        <span className="text-muted-foreground">{new Date(e.at).toLocaleString()}:</span>{" "}
+                        <span className="font-mono break-all">{e.error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              <div className="pt-1">
+                <p>How to fix:</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  <li>Verify DB host, port, user, and database name</li>
+                  <li>If using a firewall, allowlist the server egress IP above</li>
+                  <li>If SSL is required, set DB_SSL=true or provide a valid certificate</li>
+                  <li>Ensure credentials are correct and user has access to the database</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </AlertDescription>
       </Alert>
