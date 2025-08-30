@@ -1,3 +1,18 @@
+export interface Role {
+  id: number;
+  name: string;
+  description?: string | null;
+  permissions?: any;
+  isSystem?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface UserRole {
+  userId: number;
+  roleId: number;
+}
+
 // User types
 export interface User {
   id: number;
@@ -11,6 +26,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   profileData?: any;
+  roles?: string[];
 }
 
 export interface CreateUserInput {

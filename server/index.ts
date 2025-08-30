@@ -20,6 +20,7 @@ import surveysRoutes from "./routes/surveys";
 import applicationsRoutes from "./routes/applications";
 import announcementsRoutes from "./routes/announcements";
 import reviewerRoutes from "./routes/reviewer";
+import rolesRoutes from "./routes/roles";
 import createDefaultScholarships from "./config/seed-scholarships";
 
 const IS_SERVERLESS = Boolean(
@@ -76,6 +77,7 @@ app.use("/api/surveys", surveysRoutes);
 app.use("/api/applications", applicationsRoutes);
 app.use("/api/announcements", announcementsRoutes);
 app.use("/api/reviewer", reviewerRoutes);
+app.use("/api/roles", rolesRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

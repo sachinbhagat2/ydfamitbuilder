@@ -90,6 +90,16 @@ router.post("/create-default-users", async (req, res) => {
           isActive: true,
           emailVerified: true,
         });
+        // Ensure role mapping for new default user
+        try {
+          const roles = await (mockDatabase as any).listRoles();
+          const match = (roles || []).find(
+            (r: any) => String(r.name) === String(userData.userType),
+          );
+          if (match) {
+            await (mockDatabase as any).assignRoleToUser(newUser.id, match.id);
+          }
+        } catch {}
         createdUsers.push({
           ...userData,
           id: newUser.id,
@@ -104,6 +114,19 @@ router.post("/create-default-users", async (req, res) => {
         if (Object.keys(toUpdate).length) {
           await mockDatabase.updateUser(existingUser.id, toUpdate);
         }
+        // Ensure role mapping exists
+        try {
+          const roles = await (mockDatabase as any).listRoles();
+          const match = (roles || []).find(
+            (r: any) => String(r.name) === String(userData.userType),
+          );
+          if (match) {
+            await (mockDatabase as any).assignRoleToUser(
+              existingUser.id,
+              match.id,
+            );
+          }
+        } catch {}
         createdUsers.push({ ...userData, id: existingUser.id, exists: true });
       }
     }
@@ -203,6 +226,17 @@ router.post("/register", async (req, res) => {
       isActive: true,
       emailVerified: false,
     });
+
+    // Assign role based on selected userType
+    try {
+      const roles = await (mockDatabase as any).listRoles();
+      const match = (roles || []).find(
+        (r: any) => String(r.name) === String(userType),
+      );
+      if (match) {
+        await (mockDatabase as any).assignRoleToUser(newUser.id, match.id);
+      }
+    } catch {}
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = newUser;
@@ -624,9 +658,21 @@ router.get(
 // Verify token endpoint
 router.get("/verify", authenticateToken, async (req: AuthRequest, res) => {
   try {
+    if (!req.user?.id) {
+      return res
+        .status(401)
+        .json({ success: false, error: "User not authenticated" });
+    }
+    const dbUser = await mockDatabase.findUserById(req.user.id);
+    if (!dbUser) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    const roles = await (mockDatabase as any).listUserRoles(req.user.id);
+    const roleNames = Array.isArray(roles) ? roles.map((r: any) => r.name) : [];
+    const { password: _pw, ...userWithoutPassword } = dbUser as any;
     const response: ApiResponse = {
       success: true,
-      data: req.user,
+      data: { ...userWithoutPassword, roles: roleNames },
       message: "Token is valid",
     };
     res.json(response);
