@@ -592,8 +592,12 @@ const Scholarships = () => {
       {/* Hero/Header (match homepage tone) */}
       <section className="bg-gradient-to-r from-ydf-deep-blue to-ydf-teal-green text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-2">Explore Scholarships</h1>
-          <p className="text-blue-100">Browse active opportunities and apply to programs that fit you.</p>
+          <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+            Explore Scholarships
+          </h1>
+          <p className="text-blue-100">
+            Browse active opportunities and apply to programs that fit you.
+          </p>
         </div>
       </section>
 
@@ -905,10 +909,14 @@ const Scholarships = () => {
                     ) : (
                       <button
                         onClick={() => {
-                          if (!isAuthenticated || user?.userType !== "student") {
+                          if (
+                            !isAuthenticated ||
+                            user?.userType !== "student"
+                          ) {
                             toast({
                               title: "Sign in required",
-                              description: "Please sign in or sign up as a student to apply.",
+                              description:
+                                "Please sign in or sign up as a student to apply.",
                             });
                             return navigate("/auth");
                           }

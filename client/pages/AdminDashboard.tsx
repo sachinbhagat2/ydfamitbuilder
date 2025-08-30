@@ -353,7 +353,10 @@ const AdminDashboard = () => {
       const errs: Record<string, string> = {};
       if (!dataForValidation.title || dataForValidation.title.length < 3)
         errs.title = "Title is required (min 3 characters)";
-      if (!dataForValidation.description || dataForValidation.description.length < 10)
+      if (
+        !dataForValidation.description ||
+        dataForValidation.description.length < 10
+      )
         errs.description = "Description is required (min 10 characters)";
       const amt = Number(dataForValidation.amount.replace(/[^0-9.]/g, ""));
       if (!amt || isNaN(amt) || amt <= 0) errs.amount = "Enter a valid amount";
@@ -369,9 +372,11 @@ const AdminDashboard = () => {
       const selD = dataForValidation.selectionDeadline;
       if (selD) {
         const selDate = new Date(selD);
-        if (isNaN(selDate.getTime())) errs.selectionDeadline = "Invalid selection deadline";
+        if (isNaN(selDate.getTime()))
+          errs.selectionDeadline = "Invalid selection deadline";
         else if (appDate && selDate.getTime() <= appDate.getTime())
-          errs.selectionDeadline = "Selection deadline must be after application deadline";
+          errs.selectionDeadline =
+            "Selection deadline must be after application deadline";
       }
       if (dataForValidation.maxApplications) {
         const maxA = Number(dataForValidation.maxApplications);
@@ -1712,7 +1717,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.title && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.title}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.title}
+                  </p>
                 )}
               </div>
               <div className="sm:col-span-2">
@@ -1727,7 +1734,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.description && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.description}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.description}
+                  </p>
                 )}
               </div>
               <div>
@@ -1745,7 +1754,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.amount && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.amount}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.amount}
+                  </p>
                 )}
               </div>
               <div>
@@ -1765,7 +1776,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.maxApplications && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.maxApplications}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.maxApplications}
+                  </p>
                 )}
               </div>
               <div>
@@ -1782,7 +1795,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.applicationDeadline && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.applicationDeadline}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.applicationDeadline}
+                  </p>
                 )}
               </div>
               <div>
@@ -1799,7 +1814,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.selectionDeadline && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.selectionDeadline}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.selectionDeadline}
+                  </p>
                 )}
               </div>
               <div>
@@ -1834,7 +1851,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.eligibilityCriteria && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.eligibilityCriteria}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.eligibilityCriteria}
+                  </p>
                 )}
               </div>
               <div className="sm:col-span-2">
@@ -1854,7 +1873,9 @@ const AdminDashboard = () => {
                   }}
                 />
                 {formErrors.requiredDocuments && (
-                  <p className="text-sm text-red-600 mt-1">{formErrors.requiredDocuments}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.requiredDocuments}
+                  </p>
                 )}
               </div>
             </div>

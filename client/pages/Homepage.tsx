@@ -41,7 +41,12 @@ const Homepage = () => {
     (async () => {
       try {
         const api = (await import("../services/api")).default;
-        const res = await api.listScholarships({ status: "active", limit: 4, sortBy: "deadline", sortOrder: "asc" });
+        const res = await api.listScholarships({
+          status: "active",
+          limit: 4,
+          sortBy: "deadline",
+          sortOrder: "asc",
+        });
         if (res.success) setFeatured(res.data || []);
       } catch {}
     })();
@@ -388,17 +393,34 @@ const Homepage = () => {
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">Explore Scholarships</h2>
-              <Link to="/scholarships" className="text-ydf-deep-blue hover:underline font-semibold">View all</Link>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                Explore Scholarships
+              </h2>
+              <Link
+                to="/scholarships"
+                className="text-ydf-deep-blue hover:underline font-semibold"
+              >
+                View all
+              </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {featured.map((s: any) => (
-                <Link key={s.id} to={`/scholarships/${s.id}`} className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6 hover:shadow-xl transition-shadow">
+                <Link
+                  key={s.id}
+                  to={`/scholarships/${s.id}`}
+                  className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray p-6 hover:shadow-xl transition-shadow"
+                >
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mr-2">{s.title}</h3>
-                    <div className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{s.status}</div>
+                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mr-2">
+                      {s.title}
+                    </h3>
+                    <div className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                      {s.status}
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-3 mb-4">{s.description}</p>
+                  <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                    {s.description}
+                  </p>
                   <div className="flex items-center justify-between text-sm text-gray-700">
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-ydf-deep-blue" />
@@ -406,7 +428,11 @@ const Homepage = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-ydf-teal-green" />
-                      <span>{s.applicationDeadline ? new Date(s.applicationDeadline).toLocaleDateString() : "-"}</span>
+                      <span>
+                        {s.applicationDeadline
+                          ? new Date(s.applicationDeadline).toLocaleDateString()
+                          : "-"}
+                      </span>
                     </div>
                   </div>
                 </Link>
