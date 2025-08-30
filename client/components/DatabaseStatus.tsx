@@ -56,14 +56,25 @@ const DatabaseStatus = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch("/api/test/connection");
+        // Add cache busting timestamp to force fresh data
+        const timestamp = Date.now();
+        const response = await fetch(`/api/test/connection?t=${timestamp}`, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
         let result: TestConnectionResult = { success: false };
         try {
           result = await response.json();
         } catch {}
+        
         const dbOk =
           result?.results?.database?.status === "connected" ||
           result?.success === true;
+        
         // Consider any HTTP response as API reachable (even 4xx/5xx)
         setIsConnected(true);
         setDbConnected(!!dbOk);
@@ -72,16 +83,31 @@ const DatabaseStatus = () => {
           const host = result?.results?.database?.host;
           const errMsg = result?.error || result?.results?.database?.error;
           const testedAt = (result as any)?.results?.timestamp || undefined;
+          
           try {
             const [ipRes, statusRes] = await Promise.all([
-              fetch("/api/test/egress-ip"),
-              fetch("/api/test/db/status"),
+              fetch(`/api/test/egress-ip?t=${timestamp}`, { cache: 'no-cache' }),
+              fetch(`/api/test/db/status?t=${timestamp}`, { cache: 'no-cache' }),
             ]);
             const ipJson = await ipRes.json();
             const statusJson: DbStatusResponse = await statusRes.json();
+            
+            // Only show error if it's recent (within last 5 minutes) and there's no recent success
+            const errorTime = statusJson?.status?.lastErrorAt ? new Date(statusJson.status.lastErrorAt).getTime() : 0;
+            const successTime = statusJson?.status?.lastSuccessAt ? new Date(statusJson.status.lastSuccessAt).getTime() : 0;
+            const now = Date.now();
+            const fiveMinutesAgo = now - (5 * 60 * 1000);
+            
+            // If we have a recent success (within last minute) and error is older, consider it connected
+            if (successTime > now - (60 * 1000) && errorTime < successTime) {
+              setDbConnected(true);
+              setDetails({});
+              return;
+            }
+            
             setDetails({
               dbHost: host || statusJson?.status?.host || undefined,
-              error: errMsg || statusJson?.status?.lastError || undefined,
+              error: errMsg || (errorTime > fiveMinutesAgo ? statusJson?.status?.lastError : undefined) || undefined,
               egressIp: ipJson?.ip || undefined,
               reason: statusJson?.reason || null,
               mode: statusJson?.status?.mode,
@@ -98,18 +124,24 @@ const DatabaseStatus = () => {
             setDetails({ dbHost: host, error: errMsg || undefined, testedAt });
           }
         } else {
+          // Clear all details on success
           setDetails({});
         }
       } catch (error) {
         // Network failure => API unreachable
         setIsConnected(false);
         setDbConnected(null);
+        setDetails({});
       } finally {
         setIsLoading(false);
       }
     };
 
     checkConnection();
+    
+    // Auto-refresh every 30 seconds to get latest status
+    const interval = setInterval(checkConnection, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) {
@@ -123,12 +155,27 @@ const DatabaseStatus = () => {
     );
   }
 
+  const handleRefresh = () => {
+    setIsLoading(true);
+    window.location.reload();
+  };
+
   if (isConnected && dbConnected) {
     return (
       <Alert className="border-green-200 bg-green-50">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-700">
-          ✅ Database connected successfully! Authentication is ready.
+          <div className="flex items-center justify-between">
+            <span>✅ Database connected successfully! Authentication is ready.</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              className="text-green-600 hover:text-green-700 h-6 px-2"
+            >
+              Refresh
+            </Button>
+          </div>
         </AlertDescription>
       </Alert>
     );
@@ -234,6 +281,16 @@ const DatabaseStatus = () => {
                     database
                   </li>
                 </ul>
+                <div className="flex items-center space-x-2 mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                  >
+                    Refresh Status
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
