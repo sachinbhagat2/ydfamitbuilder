@@ -1706,8 +1706,14 @@ const AdminDashboard = () => {
                 <input
                   className="w-full border rounded px-3 py-2"
                   value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, title: e.target.value });
+                    setFormErrors((p) => ({ ...p, title: "" }));
+                  }}
                 />
+                {formErrors.title && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.title}</p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">Description</label>
@@ -1715,30 +1721,52 @@ const AdminDashboard = () => {
                   className="w-full border rounded px-3 py-2"
                   rows={3}
                   value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, description: e.target.value });
+                    setFormErrors((p) => ({ ...p, description: "" }));
+                  }}
                 />
+                {formErrors.description && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.description}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">Amount (INR)</label>
                 <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
                   className="w-full border rounded px-3 py-2"
                   value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, amount: e.target.value });
+                    setFormErrors((p) => ({ ...p, amount: "" }));
+                  }}
                 />
+                {formErrors.amount && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.amount}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
                   Max Applications
                 </label>
                 <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  step="1"
                   className="w-full border rounded px-3 py-2"
                   value={form.maxApplications}
-                  onChange={(e) =>
-                    setForm({ ...form, maxApplications: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, maxApplications: e.target.value });
+                    setFormErrors((p) => ({ ...p, maxApplications: "" }));
+                  }}
                 />
+                {formErrors.maxApplications && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.maxApplications}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1748,10 +1776,14 @@ const AdminDashboard = () => {
                   type="datetime-local"
                   className="w-full border rounded px-3 py-2"
                   value={form.applicationDeadline}
-                  onChange={(e) =>
-                    setForm({ ...form, applicationDeadline: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, applicationDeadline: e.target.value });
+                    setFormErrors((p) => ({ ...p, applicationDeadline: "" }));
+                  }}
                 />
+                {formErrors.applicationDeadline && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.applicationDeadline}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1761,17 +1793,24 @@ const AdminDashboard = () => {
                   type="datetime-local"
                   className="w-full border rounded px-3 py-2"
                   value={form.selectionDeadline}
-                  onChange={(e) =>
-                    setForm({ ...form, selectionDeadline: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, selectionDeadline: e.target.value });
+                    setFormErrors((p) => ({ ...p, selectionDeadline: "" }));
+                  }}
                 />
+                {formErrors.selectionDeadline && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.selectionDeadline}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">Status</label>
                 <select
                   className="w-full border rounded px-3 py-2"
                   value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, status: e.target.value });
+                    setFormErrors((p) => ({ ...p, status: "" }));
+                  }}
                 >
                   <option value="active">active</option>
                   <option value="inactive">inactive</option>
@@ -1789,10 +1828,14 @@ const AdminDashboard = () => {
                       ? form.eligibilityCriteria.join(", ")
                       : form.eligibilityCriteria
                   }
-                  onChange={(e) =>
-                    setForm({ ...form, eligibilityCriteria: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, eligibilityCriteria: e.target.value });
+                    setFormErrors((p) => ({ ...p, eligibilityCriteria: "" }));
+                  }}
                 />
+                {formErrors.eligibilityCriteria && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.eligibilityCriteria}</p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">
@@ -1805,10 +1848,14 @@ const AdminDashboard = () => {
                       ? form.requiredDocuments.join(", ")
                       : form.requiredDocuments
                   }
-                  onChange={(e) =>
-                    setForm({ ...form, requiredDocuments: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, requiredDocuments: e.target.value });
+                    setFormErrors((p) => ({ ...p, requiredDocuments: "" }));
+                  }}
                 />
+                {formErrors.requiredDocuments && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.requiredDocuments}</p>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2">
