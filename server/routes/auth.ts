@@ -112,6 +112,14 @@ router.post("/create-default-users", async (req, res) => {
         if (Object.keys(toUpdate).length) {
           await mockDatabase.updateUser(existingUser.id, toUpdate);
         }
+        // Ensure role mapping exists
+        try {
+          const roles = await (mockDatabase as any).listRoles();
+          const match = (roles || []).find((r: any) => String(r.name) === String(userData.userType));
+          if (match) {
+            await (mockDatabase as any).assignRoleToUser(existingUser.id, match.id);
+          }
+        } catch {}
         createdUsers.push({ ...userData, id: existingUser.id, exists: true });
       }
     }
