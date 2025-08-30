@@ -996,6 +996,7 @@ const AdminDashboard = () => {
                 { id: "schemes", label: "Manage Schemes", icon: FileText },
                 { id: "applications", label: "View Applications", icon: Users },
                 { id: "users", label: "Users", icon: Users },
+                { id: "roles", label: "Roles", icon: Settings },
                 { id: "analytics", label: "Analytics", icon: TrendingUp },
               ].map((tab) => (
                 <button
