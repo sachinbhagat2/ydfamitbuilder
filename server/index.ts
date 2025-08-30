@@ -20,6 +20,7 @@ import surveysRoutes from "./routes/surveys";
 import applicationsRoutes from "./routes/applications";
 import announcementsRoutes from "./routes/announcements";
 import reviewerRoutes from "./routes/reviewer";
+import rolesRoutes from "./routes/roles";
 import createDefaultScholarships from "./config/seed-scholarships";
 
 const IS_SERVERLESS = Boolean(
