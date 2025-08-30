@@ -2040,6 +2040,8 @@ export async function initializeDatabase() {
       return { success: true };
     }
     if (MODE === "postgres" && pgPool) {
+      await ensureRolesTable();
+      await ensureUserRolesTable();
       await ensureUsersTable();
       await ensureScholarshipsTable();
       await ensureApplicationsTable();
