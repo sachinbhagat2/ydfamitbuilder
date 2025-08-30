@@ -71,16 +71,31 @@ const DatabaseStatus = () => {
         if (!dbOk) {
           const host = result?.results?.database?.host;
           const errMsg = result?.error || result?.results?.database?.error;
+          const testedAt = (result as any)?.results?.timestamp || undefined;
           try {
-            const ipRes = await fetch("/api/test/egress-ip");
+            const [ipRes, statusRes] = await Promise.all([
+              fetch("/api/test/egress-ip"),
+              fetch("/api/test/db/status"),
+            ]);
             const ipJson = await ipRes.json();
+            const statusJson: DbStatusResponse = await statusRes.json();
             setDetails({
-              dbHost: host,
-              error: errMsg || undefined,
+              dbHost: host || statusJson?.status?.host || undefined,
+              error: errMsg || statusJson?.status?.lastError || undefined,
               egressIp: ipJson?.ip || undefined,
+              reason: statusJson?.reason || null,
+              mode: statusJson?.status?.mode,
+              engine: statusJson?.status?.engine,
+              dbName: statusJson?.status?.database ?? null,
+              dbUser: statusJson?.status?.user ?? null,
+              lastErrorAt: statusJson?.status?.lastErrorAt ?? null,
+              lastSuccessAt: statusJson?.status?.lastSuccessAt ?? null,
+              missingEnv: statusJson?.status?.env?.missing || [],
+              recentErrors: statusJson?.status?.recentErrors || [],
+              testedAt,
             });
           } catch {
-            setDetails({ dbHost: host, error: errMsg || undefined });
+            setDetails({ dbHost: host, error: errMsg || undefined, testedAt });
           }
         } else {
           setDetails({});
