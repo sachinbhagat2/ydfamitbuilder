@@ -226,6 +226,21 @@ class InMemoryStore {
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
     },
   ];
+  public roles: any[] = [
+    { id: 1, name: "admin", description: "System administrator", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+    { id: 2, name: "student", description: "Student", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+    { id: 3, name: "reviewer", description: "Application reviewer", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+    { id: 4, name: "donor", description: "Donor", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+    { id: 5, name: "surveyor", description: "Field surveyor", permissions: null, isSystem: true, createdAt: new Date(), updatedAt: new Date() }
+  ];
+  public userRoles: any[] = [
+    { id: 1, userId: 2, roleId: 1 },
+    { id: 2, userId: 1, roleId: 2 },
+    { id: 3, userId: 3, roleId: 3 },
+    { id: 4, userId: 4, roleId: 4 },
+    { id: 5, userId: 5, roleId: 5 }
+  ];
+
   public announcements: any[] = [
     {
       id: 1,
