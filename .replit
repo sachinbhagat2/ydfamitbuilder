@@ -5,13 +5,12 @@ run = "npm start"
 channel = "stable-25_05"
 
 [deployment]
-run = ["sh", "-c", "npm start"]
-build = ["sh", "-c", "npm run build"]
+run = ["sh", "-c", "node dist/server/node-build.mjs"]
+build = ["sh", "-c", "npm run build:client"]
 
 [[ports]]
 localPort = 3000
 externalPort = 3000
-exposeLocalhost = true
 
 [[ports]]
 localPort = 5173
