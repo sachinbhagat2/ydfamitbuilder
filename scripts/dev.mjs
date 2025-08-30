@@ -1,52 +1,48 @@
-import { spawn } from "child_process";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { spawn } from "node:child_process";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const projectRoot = join(__dirname, "..");
+const procs = [];
 
-console.log("🚀 Starting development servers...");
+function run(name, cmd, args, opts = {}) {
+  const p = spawn(cmd, args, { stdio: "inherit", shell: false, ...opts });
+  procs.push(p);
+  p.on("exit", (code, signal) => {
+    if (code !== 0) {
+      console.error(
+        `[${name}] exited with code ${code}${signal ? ` (signal ${signal})` : ""}`,
+      );
+      shutdown(code ?? 1);
+    }
+  });
+  return p;
+}
 
-// Start backend server with tsx for TypeScript support
-const backendProcess = spawn("npx", ["tsx", "watch", "server/index.ts"], {
-  cwd: projectRoot,
-  stdio: "inherit",
-  env: { ...process.env, NODE_ENV: "development" },
-});
+function shutdown(code = 0) {
+  for (const p of procs) {
+    if (!p.killed) {
+      try {
+        p.kill("SIGTERM");
+      } catch {}
+    }
+  }
+  // Give children a moment to exit cleanly
+  setTimeout(() => process.exit(code), 500);
+}
 
-backendProcess.on("error", (error) => {
-  console.error("❌ Backend server error:", error);
-});
-
-backendProcess.on("exit", (code) => {
-  console.log(`Backend process exited with code ${code}`);
-});
-
-// Start frontend dev server
-const frontendProcess = spawn("npm", ["run", "dev:client"], {
-  cwd: projectRoot,
-  stdio: "inherit",
-});
-
-frontendProcess.on("error", (error) => {
-  console.error("❌ Frontend server error:", error);
-});
-
-frontendProcess.on("exit", (code) => {
-  console.log(`Frontend process exited with code ${code}`);
-});
-
-// Handle process termination
 process.on("SIGINT", () => {
-  console.log("\n🛑 Shutting down development servers...");
-  backendProcess.kill();
-  frontendProcess.kill();
-  process.exit();
+  console.log("Received SIGINT, shutting down...");
+  shutdown(0);
+});
+process.on("SIGTERM", () => {
+  console.log("Received SIGTERM, shutting down...");
+  shutdown(0);
 });
 
-process.on("SIGTERM", () => {
-  backendProcess.kill();
-  frontendProcess.kill();
-  process.exit();
-});
+// Start API server (watch mode)
+run("server", process.platform === "win32" ? "npx.cmd" : "npx", [
+  "tsx",
+  "watch",
+  "server/index.ts",
+]);
+
+// Start Vite dev server
+run("vite", process.platform === "win32" ? "npx.cmd" : "npx", ["vite"]);
