@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
 import { toast } from "../hooks/use-toast";
 import {
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 
 const Scholarships = () => {
+  const { isAuthenticated, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
@@ -34,6 +36,7 @@ const Scholarships = () => {
   const [selectedScholarship, setSelectedScholarship] = useState<any>(null);
   const [remoteScholarships, setRemoteScholarships] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState("deadline");
+  const navigate = useNavigate();
   const [appliedIds, setAppliedIds] = useState<number[]>([]);
 
   useEffect(() => {
@@ -52,6 +55,7 @@ const Scholarships = () => {
   useEffect(() => {
     (async () => {
       try {
+        if (!isAuthenticated || user?.userType !== "student") return;
         const api = (await import("../services/api")).default;
         const res = await api.listMyApplications({ limit: 1000 });
         if (res.success) {
@@ -61,7 +65,7 @@ const Scholarships = () => {
         }
       } catch {}
     })();
-  }, []);
+  }, [isAuthenticated, user?.userType]);
 
   const fallbackScholarships = [
     {
@@ -584,30 +588,20 @@ const Scholarships = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-ydf-light-gray">
-        <div className="px-6 py-4">
-          <div className="flex items-center space-x-3">
-            <Link
-              to="/student-dashboard"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Available Scholarships
-              </h1>
-              <p className="text-sm text-gray-600">
-                Discover funding opportunities for your education
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-white">
+      {/* Hero/Header (match homepage tone) */}
+      <section className="bg-gradient-to-r from-ydf-deep-blue to-ydf-teal-green text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+            Explore Scholarships
+          </h1>
+          <p className="text-blue-100">
+            Browse active opportunities and apply to programs that fit you.
+          </p>
         </div>
-      </div>
+      </section>
 
-      <div className="p-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Search and Filters */}
         <div className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
@@ -756,7 +750,7 @@ const Scholarships = () => {
         </div>
 
         {/* Scholarships Grid */}
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {useMemo(() => {
             const arr = [...filteredScholarships];
             if (sortBy === "deadline") {
@@ -789,7 +783,7 @@ const Scholarships = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white rounded-lg shadow-sm border border-ydf-light-gray overflow-hidden hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl shadow-lg border border-ydf-light-gray overflow-hidden hover:shadow-xl transition-shadow"
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -914,7 +908,20 @@ const Scholarships = () => {
                       </span>
                     ) : (
                       <button
-                        onClick={() => setSelectedScholarship(scholarship)}
+                        onClick={() => {
+                          if (
+                            !isAuthenticated ||
+                            user?.userType !== "student"
+                          ) {
+                            toast({
+                              title: "Sign in required",
+                              description:
+                                "Please sign in or sign up as a student to apply.",
+                            });
+                            return navigate("/auth");
+                          }
+                          setSelectedScholarship(scholarship);
+                        }}
                         className="bg-ydf-deep-blue text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90 transition-colors"
                       >
                         <span>Apply Now</span>

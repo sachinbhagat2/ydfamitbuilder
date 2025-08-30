@@ -164,6 +164,7 @@ const AdminDashboard = () => {
     maxApplications: "",
     status: "active",
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchSchemes();
@@ -316,39 +317,106 @@ const AdminDashboard = () => {
   };
 
   const submitForm = async () => {
-    const api = (await import("../services/api")).default;
-    const payload = {
-      ...form,
-      amount: String(form.amount),
-      eligibilityCriteria:
+    try {
+      setFormErrors({});
+      const api = (await import("../services/api")).default;
+
+      const eligibility =
         typeof form.eligibilityCriteria === "string"
           ? form.eligibilityCriteria
               .split(",")
               .map((x: string) => x.trim())
               .filter(Boolean)
-          : form.eligibilityCriteria,
-      requiredDocuments:
+          : form.eligibilityCriteria;
+      const documents =
         typeof form.requiredDocuments === "string"
           ? form.requiredDocuments
               .split(",")
               .map((x: string) => x.trim())
               .filter(Boolean)
-          : form.requiredDocuments,
-      applicationDeadline: form.applicationDeadline
-        ? new Date(form.applicationDeadline).toISOString()
-        : undefined,
-      selectionDeadline: form.selectionDeadline
-        ? new Date(form.selectionDeadline).toISOString()
-        : undefined,
-      maxApplications: form.maxApplications
-        ? Number(form.maxApplications)
-        : undefined,
-      status: form.status || "active",
-    };
-    if (editing) await api.updateScholarship(editing.id, payload);
-    else await api.createScholarship(payload);
-    setShowForm(false);
-    await fetchSchemes();
+          : form.requiredDocuments;
+
+      const dataForValidation = {
+        title: String(form.title || "").trim(),
+        description: String(form.description || "").trim(),
+        amount: String(form.amount || "").trim(),
+        currency: String(form.currency || "INR"),
+        eligibilityCriteria: eligibility,
+        requiredDocuments: documents,
+        applicationDeadline: String(form.applicationDeadline || "").trim(),
+        selectionDeadline: String(form.selectionDeadline || "").trim(),
+        maxApplications: String(form.maxApplications || "").trim(),
+        status: form.status || "active",
+      } as any;
+
+      // Inline validation (kept lightweight to avoid extra deps here)
+      const errs: Record<string, string> = {};
+      if (!dataForValidation.title || dataForValidation.title.length < 3)
+        errs.title = "Title is required (min 3 characters)";
+      if (
+        !dataForValidation.description ||
+        dataForValidation.description.length < 10
+      )
+        errs.description = "Description is required (min 10 characters)";
+      const amt = Number(dataForValidation.amount.replace(/[^0-9.]/g, ""));
+      if (!amt || isNaN(amt) || amt <= 0) errs.amount = "Enter a valid amount";
+      if (!Array.isArray(eligibility) || eligibility.length === 0)
+        errs.eligibilityCriteria = "Add at least one eligibility criteria";
+      if (!Array.isArray(documents) || documents.length === 0)
+        errs.requiredDocuments = "Add at least one required document";
+      const appD = dataForValidation.applicationDeadline;
+      if (!appD) errs.applicationDeadline = "Application deadline is required";
+      const appDate = appD ? new Date(appD) : null;
+      if (appDate && appDate.getTime() <= Date.now())
+        errs.applicationDeadline = "Application deadline must be in the future";
+      const selD = dataForValidation.selectionDeadline;
+      if (selD) {
+        const selDate = new Date(selD);
+        if (isNaN(selDate.getTime()))
+          errs.selectionDeadline = "Invalid selection deadline";
+        else if (appDate && selDate.getTime() <= appDate.getTime())
+          errs.selectionDeadline =
+            "Selection deadline must be after application deadline";
+      }
+      if (dataForValidation.maxApplications) {
+        const maxA = Number(dataForValidation.maxApplications);
+        if (!Number.isInteger(maxA) || maxA <= 0)
+          errs.maxApplications = "Max applications must be a positive integer";
+      }
+
+      if (Object.keys(errs).length) {
+        setFormErrors(errs);
+        const firstErr = errs[Object.keys(errs)[0]];
+        // eslint-disable-next-line no-alert
+        if (firstErr) toast.error(firstErr);
+        return;
+      }
+
+      const payload = {
+        title: dataForValidation.title,
+        description: dataForValidation.description,
+        amount: String(amt),
+        currency: dataForValidation.currency || "INR",
+        eligibilityCriteria: eligibility,
+        requiredDocuments: documents,
+        applicationDeadline: new Date(form.applicationDeadline).toISOString(),
+        selectionDeadline: form.selectionDeadline
+          ? new Date(form.selectionDeadline).toISOString()
+          : undefined,
+        maxApplications: form.maxApplications
+          ? Number(form.maxApplications)
+          : undefined,
+        status: "active", // ensure active on create/update as requested
+      };
+
+      if (editing) await api.updateScholarship(editing.id, payload);
+      else await api.createScholarship(payload);
+      toast.success(editing ? "Scholarship updated" : "Scholarship created");
+      setShowForm(false);
+      await fetchSchemes();
+    } catch (e: any) {
+      toast.error(String(e?.message || e || "Failed to save scholarship"));
+    }
   };
 
   const deleteScheme = async (id: number) => {
@@ -1643,8 +1711,16 @@ const AdminDashboard = () => {
                 <input
                   className="w-full border rounded px-3 py-2"
                   value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, title: e.target.value });
+                    setFormErrors((p) => ({ ...p, title: "" }));
+                  }}
                 />
+                {formErrors.title && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.title}
+                  </p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">Description</label>
@@ -1652,30 +1728,58 @@ const AdminDashboard = () => {
                   className="w-full border rounded px-3 py-2"
                   rows={3}
                   value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, description: e.target.value });
+                    setFormErrors((p) => ({ ...p, description: "" }));
+                  }}
                 />
+                {formErrors.description && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.description}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">Amount (INR)</label>
                 <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
                   className="w-full border rounded px-3 py-2"
                   value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, amount: e.target.value });
+                    setFormErrors((p) => ({ ...p, amount: "" }));
+                  }}
                 />
+                {formErrors.amount && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.amount}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
                   Max Applications
                 </label>
                 <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  step="1"
                   className="w-full border rounded px-3 py-2"
                   value={form.maxApplications}
-                  onChange={(e) =>
-                    setForm({ ...form, maxApplications: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, maxApplications: e.target.value });
+                    setFormErrors((p) => ({ ...p, maxApplications: "" }));
+                  }}
                 />
+                {formErrors.maxApplications && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.maxApplications}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1685,10 +1789,16 @@ const AdminDashboard = () => {
                   type="datetime-local"
                   className="w-full border rounded px-3 py-2"
                   value={form.applicationDeadline}
-                  onChange={(e) =>
-                    setForm({ ...form, applicationDeadline: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, applicationDeadline: e.target.value });
+                    setFormErrors((p) => ({ ...p, applicationDeadline: "" }));
+                  }}
                 />
+                {formErrors.applicationDeadline && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.applicationDeadline}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -1698,17 +1808,26 @@ const AdminDashboard = () => {
                   type="datetime-local"
                   className="w-full border rounded px-3 py-2"
                   value={form.selectionDeadline}
-                  onChange={(e) =>
-                    setForm({ ...form, selectionDeadline: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, selectionDeadline: e.target.value });
+                    setFormErrors((p) => ({ ...p, selectionDeadline: "" }));
+                  }}
                 />
+                {formErrors.selectionDeadline && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.selectionDeadline}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">Status</label>
                 <select
                   className="w-full border rounded px-3 py-2"
                   value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, status: e.target.value });
+                    setFormErrors((p) => ({ ...p, status: "" }));
+                  }}
                 >
                   <option value="active">active</option>
                   <option value="inactive">inactive</option>
@@ -1726,10 +1845,16 @@ const AdminDashboard = () => {
                       ? form.eligibilityCriteria.join(", ")
                       : form.eligibilityCriteria
                   }
-                  onChange={(e) =>
-                    setForm({ ...form, eligibilityCriteria: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, eligibilityCriteria: e.target.value });
+                    setFormErrors((p) => ({ ...p, eligibilityCriteria: "" }));
+                  }}
                 />
+                {formErrors.eligibilityCriteria && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.eligibilityCriteria}
+                  </p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-gray-600">
@@ -1742,10 +1867,16 @@ const AdminDashboard = () => {
                       ? form.requiredDocuments.join(", ")
                       : form.requiredDocuments
                   }
-                  onChange={(e) =>
-                    setForm({ ...form, requiredDocuments: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, requiredDocuments: e.target.value });
+                    setFormErrors((p) => ({ ...p, requiredDocuments: "" }));
+                  }}
                 />
+                {formErrors.requiredDocuments && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.requiredDocuments}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2">
