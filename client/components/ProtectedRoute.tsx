@@ -24,7 +24,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   useEffect(() => {
     // If user is authenticated but accessing wrong dashboard, redirect to correct one
-    if (isAuthenticated && user && !allowedRoles.includes(user.userType)) {
+    const roles = (user as any)?.roles as string[] | undefined;
+    const hasAccess = !!user && (allowedRoles.includes(user.userType) || (Array.isArray(roles) && roles.some((r) => allowedRoles.includes(r))));
+    if (isAuthenticated && user && !hasAccess) {
       setTimeout(() => {
         redirectToDashboard();
       }, 1000);
