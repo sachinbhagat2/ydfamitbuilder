@@ -28,6 +28,30 @@ const MODE: "postgres" | "mysql" | "mock" = useMockExplicit
       : "mock";
 const USE_MOCK = MODE === "mock";
 
+// Lightweight in-memory DB health tracker (no secrets)
+type DbLogEntry = { at: string; error: string };
+const dbHealth = {
+  mode: MODE as "postgres" | "mysql" | "mock",
+  useMock: USE_MOCK,
+  lastError: null as string | null,
+  lastErrorAt: null as string | null,
+  lastSuccessAt: null as string | null,
+  recentErrors: [] as DbLogEntry[],
+};
+
+function recordDbSuccess() {
+  dbHealth.lastSuccessAt = new Date().toISOString();
+}
+
+function recordDbError(err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err);
+  const at = new Date().toISOString();
+  dbHealth.lastError = msg;
+  dbHealth.lastErrorAt = at;
+  dbHealth.recentErrors.unshift({ at, error: msg });
+  if (dbHealth.recentErrors.length > 10) dbHealth.recentErrors.pop();
+}
+
 // In-memory fallback store
 class InMemoryStore {
   public users: any[] = [
