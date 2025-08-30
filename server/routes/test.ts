@@ -3,6 +3,7 @@ import {
   testConnection,
   initializeDatabase,
   createDefaultUsers,
+  getDbStatus,
 } from "../config/database";
 
 const router = Router();
