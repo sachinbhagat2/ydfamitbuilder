@@ -19,6 +19,8 @@ const PG_URL = (
   ""
 ).trim();
 const USE_PG = !!PG_URL;
+
+// Force PostgreSQL mode in production when DATABASE_URL is available
 const MODE: "postgres" | "mysql" | "mock" = useMockExplicit
   ? "mock"
   : USE_PG
@@ -382,19 +384,32 @@ export const pgPool =
         (() => {
           try {
             const u = new URL(PG_URL);
-            const isLocalhost = u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname.includes('replit') || u.hostname.includes('helium');
+            // Check if we're on Replit (including deployed apps)
+            const isReplit = u.hostname.includes('replit') || 
+                             u.hostname.includes('helium') || 
+                             u.hostname.includes('neon') ||
+                             process.env.REPL_ID ||
+                             process.env.REPLIT_DB_URL;
+            
             return {
               host: u.hostname,
               port: u.port ? parseInt(u.port, 10) : 5432,
               user: decodeURIComponent(u.username),
               password: decodeURIComponent(u.password),
               database: u.pathname.replace(/^\//, ""),
-              ssl: isLocalhost ? false : { require: true, rejectUnauthorized: false },
+              ssl: isReplit ? { require: true, rejectUnauthorized: false } : false,
+              max: 10,
+              idleTimeoutMillis: 30000,
+              connectionTimeoutMillis: 5000,
             } as any;
-          } catch {
+          } catch (error) {
+            console.warn("Failed to parse DATABASE_URL, using direct connection string:", error);
             return {
               connectionString: PG_URL,
-              ssl: false,
+              ssl: { require: true, rejectUnauthorized: false },
+              max: 10,
+              idleTimeoutMillis: 30000,
+              connectionTimeoutMillis: 5000,
             } as any;
           }
         })(),

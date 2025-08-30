@@ -198,8 +198,8 @@ async function startServer() {
       );
     }
 
-    // Start server
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
+    // Start server - use 0.0.0.0 for all environments to ensure accessibility
+    const host = '0.0.0.0';
     app.listen(PORT, host, () => {
       console.log(
         `🚀 Youth Dreamers Foundation Server running on ${host}:${PORT}`,
