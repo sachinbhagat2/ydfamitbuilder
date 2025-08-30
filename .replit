@@ -6,7 +6,7 @@ channel = "stable-25_05"
 
 [deployment]
 run = ["sh", "-c", "node dist/server/node-build.mjs"]
-build = ["sh", "-c", "npm run build:client && npm run build"]
+build = ["sh", "-c", "npm run build"]
 
 [[ports]]
 localPort = 3000
