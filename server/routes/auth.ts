@@ -76,9 +76,14 @@ router.post("/create-default-users", async (req, res) => {
     const createdUsers = [];
 
     for (const userData of defaultUsers) {
+      console.log(`Processing default user: ${userData.email}`);
       const existingUser = await mockDatabase.findUserByEmail(userData.email);
+      
       if (!existingUser) {
+        console.log(`Creating new user: ${userData.email}`);
         const hashedPassword = await hashPassword(userData.password);
+        console.log(`Password hashed for ${userData.email}, hash length: ${hashedPassword.length}`);
+        
         const newUser = await mockDatabase.createUser({
           email: userData.email,
           password: hashedPassword,
@@ -90,6 +95,9 @@ router.post("/create-default-users", async (req, res) => {
           isActive: true,
           emailVerified: true,
         });
+        
+        console.log(`User created successfully: ${userData.email} with ID: ${newUser.id}`);
+        
         // Ensure role mapping for new default user
         try {
           const roles = await (mockDatabase as any).listRoles();
@@ -106,14 +114,26 @@ router.post("/create-default-users", async (req, res) => {
           password: userData.password,
         });
       } else {
+        console.log(`User exists: ${userData.email}, checking for updates`);
+        
+        // Check if password needs to be updated (for existing users with potentially wrong hash)
+        const passwordNeedsUpdate = !(await comparePassword(userData.password, existingUser.password));
+        
         const toUpdate: any = {};
         if (existingUser.userType !== userData.userType)
           toUpdate.userType = userData.userType;
         if (existingUser.isActive !== true) toUpdate.isActive = true;
         if (existingUser.emailVerified !== true) toUpdate.emailVerified = true;
+        if (passwordNeedsUpdate) {
+          console.log(`Updating password for existing user: ${userData.email}`);
+          toUpdate.password = await hashPassword(userData.password);
+        }
+        
         if (Object.keys(toUpdate).length) {
           await mockDatabase.updateUser(existingUser.id, toUpdate);
+          console.log(`Updated user: ${userData.email}`);
         }
+        
         // Ensure role mapping exists
         try {
           const roles = await (mockDatabase as any).listRoles();
@@ -130,6 +150,8 @@ router.post("/create-default-users", async (req, res) => {
         createdUsers.push({ ...userData, id: existingUser.id, exists: true });
       }
     }
+
+    console.log(`Default users process completed. Created/updated ${createdUsers.length} users`);
 
     res.json({
       success: true,
@@ -272,8 +294,11 @@ router.post("/login", async (req, res) => {
       .trim()
       .toLowerCase();
 
+    console.log("Login attempt for email:", email);
+
     // Validate required fields
     if (!email || !password) {
+      console.log("Missing email or password");
       return res.status(400).json({
         success: false,
         error: "Email and password are required",
@@ -282,7 +307,10 @@ router.post("/login", async (req, res) => {
 
     // Find user by email in mock database
     const user = await mockDatabase.findUserByEmail(email);
+    console.log("User found:", user ? "yes" : "no");
+    
     if (!user) {
+      console.log("User not found for email:", email);
       return res.status(401).json({
         success: false,
         error: "Invalid email or password",
@@ -293,20 +321,31 @@ router.post("/login", async (req, res) => {
 
     // Check if user is active
     if (!foundUser.isActive) {
+      console.log("User account is inactive:", email);
       return res.status(401).json({
         success: false,
         error: "Account is deactivated",
       });
     }
 
+    // Debug password comparison
+    console.log("Comparing password for user:", email);
+    console.log("Stored password hash exists:", !!foundUser.password);
+    console.log("Input password length:", password.length);
+
     // Compare password
     const isValidPassword = await comparePassword(password, foundUser.password);
+    console.log("Password comparison result:", isValidPassword);
+    
     if (!isValidPassword) {
+      console.log("Password comparison failed for user:", email);
       return res.status(401).json({
         success: false,
         error: "Invalid email or password",
       });
     }
+
+    console.log("Login successful for user:", email);
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = foundUser;
@@ -654,6 +693,117 @@ router.get(
     }
   },
 );
+
+// Reset default users (force recreate with fresh hashes)
+router.post("/reset-default-users", async (req, res) => {
+  try {
+    const defaultUsers = [
+      {
+        email: "student@ydf.org",
+        password: "Student123!",
+        firstName: "Demo",
+        lastName: "Student",
+        phone: "+91 9876543210",
+        userType: "student" as const,
+        profileData: {
+          course: "B.Tech Computer Science",
+          college: "Demo College",
+        },
+      },
+      {
+        email: "admin@ydf.org",
+        password: "Admin123!",
+        firstName: "Demo",
+        lastName: "Admin",
+        phone: "+91 9876543211",
+        userType: "admin" as const,
+        profileData: { department: "Administration" },
+      },
+      {
+        email: "reviewer@ydf.org",
+        password: "Reviewer123!",
+        firstName: "Demo",
+        lastName: "Reviewer",
+        phone: "+91 9876543212",
+        userType: "reviewer" as const,
+        profileData: { specialization: "Academic Review" },
+      },
+      {
+        email: "donor@ydf.org",
+        password: "Donor123!",
+        firstName: "Demo",
+        lastName: "Donor",
+        phone: "+91 9876543213",
+        userType: "donor" as const,
+        profileData: { organization: "Demo Foundation" },
+      },
+      {
+        email: "surveyor@ydf.org",
+        password: "Surveyor123!",
+        firstName: "Demo",
+        lastName: "Surveyor",
+        phone: "+91 9876543214",
+        userType: "surveyor" as const,
+        profileData: { department: "Field Verification" },
+      },
+    ];
+
+    const resetUsers = [];
+
+    for (const userData of defaultUsers) {
+      console.log(`Force resetting user: ${userData.email}`);
+      
+      // Hash the password fresh
+      const hashedPassword = await hashPassword(userData.password);
+      console.log(`Fresh password hash created for ${userData.email}`);
+      
+      // Always update the user with fresh hash
+      const existingUser = await mockDatabase.findUserByEmail(userData.email);
+      if (existingUser) {
+        await mockDatabase.updateUser(existingUser.id, {
+          password: hashedPassword,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+          userType: userData.userType,
+          profileData: userData.profileData,
+          isActive: true,
+          emailVerified: true,
+          updatedAt: new Date(),
+        });
+        console.log(`User reset: ${userData.email}`);
+        resetUsers.push({ ...userData, id: existingUser.id, action: 'reset' });
+      } else {
+        // Create new user if doesn't exist
+        const newUser = await mockDatabase.createUser({
+          email: userData.email,
+          password: hashedPassword,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+          userType: userData.userType,
+          profileData: userData.profileData,
+          isActive: true,
+          emailVerified: true,
+        });
+        console.log(`User created: ${userData.email}`);
+        resetUsers.push({ ...userData, id: newUser.id, action: 'created' });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Default users reset successfully with fresh password hashes",
+      users: resetUsers,
+    });
+  } catch (error) {
+    console.error("Reset default users error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to reset default users",
+    });
+  }
+});
 
 // Verify token endpoint
 router.get("/verify", authenticateToken, async (req: AuthRequest, res) => {
