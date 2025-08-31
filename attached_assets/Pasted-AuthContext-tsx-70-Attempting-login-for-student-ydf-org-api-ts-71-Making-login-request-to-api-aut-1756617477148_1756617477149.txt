@@ -1,0 +1,91 @@
+AuthContext.tsx:70 Attempting login for: student@ydf.org
+api.ts:71 Making login request to: /api/auth/login
+api.ts:72 Login payload: {email: 'student@ydf.org', password: '***'}email: "student@ydf.org"password: "***"[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+api.ts:74  POST https://41b303ad-7565-457c-9348-cc0799b25895-00-1hsdbjegybkkc.pike.replit.dev/api/auth/login 401 (Unauthorized)
+login @ api.ts:74
+login @ AuthContext.tsx:72
+handleSubmit @ Auth.tsx:136
+callCallback2 @ chunk-JCLMRTSR.js?v=40f423d4:3674
+invokeGuardedCallbackDev @ chunk-JCLMRTSR.js?v=40f423d4:3699
+invokeGuardedCallback @ chunk-JCLMRTSR.js?v=40f423d4:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-JCLMRTSR.js?v=40f423d4:3736
+executeDispatch @ chunk-JCLMRTSR.js?v=40f423d4:7014
+processDispatchQueueItemsInOrder @ chunk-JCLMRTSR.js?v=40f423d4:7034
+processDispatchQueue @ chunk-JCLMRTSR.js?v=40f423d4:7043
+dispatchEventsForPlugins @ chunk-JCLMRTSR.js?v=40f423d4:7051
+(anonymous) @ chunk-JCLMRTSR.js?v=40f423d4:7174
+batchedUpdates$1 @ chunk-JCLMRTSR.js?v=40f423d4:18913
+batchedUpdates @ chunk-JCLMRTSR.js?v=40f423d4:3579
+dispatchEventForPluginEventSystem @ chunk-JCLMRTSR.js?v=40f423d4:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-JCLMRTSR.js?v=40f423d4:5478
+dispatchEvent @ chunk-JCLMRTSR.js?v=40f423d4:5472
+dispatchDiscreteEvent @ chunk-JCLMRTSR.js?v=40f423d4:5449
+api.ts:80 Login response status: 401
+api.ts:84 Login error response: {success: false, error: 'Invalid email or password'}error: "Invalid email or password"success: false[[Prototype]]: Object
+overrideMethod @ hook.js:608
+login @ api.ts:84
+await in login
+login @ AuthContext.tsx:72
+handleSubmit @ Auth.tsx:136
+callCallback2 @ chunk-JCLMRTSR.js?v=40f423d4:3674
+invokeGuardedCallbackDev @ chunk-JCLMRTSR.js?v=40f423d4:3699
+invokeGuardedCallback @ chunk-JCLMRTSR.js?v=40f423d4:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-JCLMRTSR.js?v=40f423d4:3736
+executeDispatch @ chunk-JCLMRTSR.js?v=40f423d4:7014
+processDispatchQueueItemsInOrder @ chunk-JCLMRTSR.js?v=40f423d4:7034
+processDispatchQueue @ chunk-JCLMRTSR.js?v=40f423d4:7043
+dispatchEventsForPlugins @ chunk-JCLMRTSR.js?v=40f423d4:7051
+(anonymous) @ chunk-JCLMRTSR.js?v=40f423d4:7174
+batchedUpdates$1 @ chunk-JCLMRTSR.js?v=40f423d4:18913
+batchedUpdates @ chunk-JCLMRTSR.js?v=40f423d4:3579
+dispatchEventForPluginEventSystem @ chunk-JCLMRTSR.js?v=40f423d4:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-JCLMRTSR.js?v=40f423d4:5478
+dispatchEvent @ chunk-JCLMRTSR.js?v=40f423d4:5472
+dispatchDiscreteEvent @ chunk-JCLMRTSR.js?v=40f423d4:5449
+api.ts:99 Login API error: Error: Invalid email or password
+    at ApiService.login (api.ts:85:15)
+    at async login (AuthContext.tsx:72:22)
+    at async handleSubmit (Auth.tsx:136:25)
+overrideMethod @ hook.js:608
+login @ api.ts:99
+await in login
+login @ AuthContext.tsx:72
+handleSubmit @ Auth.tsx:136
+callCallback2 @ chunk-JCLMRTSR.js?v=40f423d4:3674
+invokeGuardedCallbackDev @ chunk-JCLMRTSR.js?v=40f423d4:3699
+invokeGuardedCallback @ chunk-JCLMRTSR.js?v=40f423d4:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-JCLMRTSR.js?v=40f423d4:3736
+executeDispatch @ chunk-JCLMRTSR.js?v=40f423d4:7014
+processDispatchQueueItemsInOrder @ chunk-JCLMRTSR.js?v=40f423d4:7034
+processDispatchQueue @ chunk-JCLMRTSR.js?v=40f423d4:7043
+dispatchEventsForPlugins @ chunk-JCLMRTSR.js?v=40f423d4:7051
+(anonymous) @ chunk-JCLMRTSR.js?v=40f423d4:7174
+batchedUpdates$1 @ chunk-JCLMRTSR.js?v=40f423d4:18913
+batchedUpdates @ chunk-JCLMRTSR.js?v=40f423d4:3579
+dispatchEventForPluginEventSystem @ chunk-JCLMRTSR.js?v=40f423d4:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-JCLMRTSR.js?v=40f423d4:5478
+dispatchEvent @ chunk-JCLMRTSR.js?v=40f423d4:5472
+dispatchDiscreteEvent @ chunk-JCLMRTSR.js?v=40f423d4:5449
+AuthContext.tsx:114 Login error: Error: Invalid email or password
+    at ApiService.login (api.ts:85:15)
+    at async login (AuthContext.tsx:72:22)
+    at async handleSubmit (Auth.tsx:136:25)
+overrideMethod @ hook.js:608
+login @ AuthContext.tsx:114
+await in login
+handleSubmit @ Auth.tsx:136
+callCallback2 @ chunk-JCLMRTSR.js?v=40f423d4:3674
+invokeGuardedCallbackDev @ chunk-JCLMRTSR.js?v=40f423d4:3699
+invokeGuardedCallback @ chunk-JCLMRTSR.js?v=40f423d4:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-JCLMRTSR.js?v=40f423d4:3736
+executeDispatch @ chunk-JCLMRTSR.js?v=40f423d4:7014
+processDispatchQueueItemsInOrder @ chunk-JCLMRTSR.js?v=40f423d4:7034
+processDispatchQueue @ chunk-JCLMRTSR.js?v=40f423d4:7043
+dispatchEventsForPlugins @ chunk-JCLMRTSR.js?v=40f423d4:7051
+(anonymous) @ chunk-JCLMRTSR.js?v=40f423d4:7174
+batchedUpdates$1 @ chunk-JCLMRTSR.js?v=40f423d4:18913
+batchedUpdates @ chunk-JCLMRTSR.js?v=40f423d4:3579
+dispatchEventForPluginEventSystem @ chunk-JCLMRTSR.js?v=40f423d4:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-JCLMRTSR.js?v=40f423d4:5478
+dispatchEvent @ chunk-JCLMRTSR.js?v=40f423d4:5472
+dispatchDiscreteEvent @ chunk-JCLMRTSR.js?v=40f423d4:5449
