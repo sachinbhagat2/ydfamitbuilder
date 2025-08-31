@@ -14,9 +14,11 @@ export default defineConfig(({ mode }) => ({
     ],
     proxy: {
       "/api": {
-        target: "http://0.0.0.0:3000",
+        target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
+        timeout: 10000,
+        proxyTimeout: 10000,
       },
     },
   },
