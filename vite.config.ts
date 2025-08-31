@@ -14,14 +14,28 @@ export default defineConfig(({ mode }) => ({
     ],
     proxy: {
       "/api": {
-        target: "http://0.0.0.0:3000",
+        target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
-        timeout: 10000,
-        proxyTimeout: 10000,
+        timeout: 15000,
+        proxyTimeout: 15000,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
-            console.log('Proxy error:', err);
+            if (err.code === 'ECONNREFUSED') {
+              // Server might still be starting up
+              if (!res.headersSent) {
+                res.writeHead(503, {
+                  'Content-Type': 'application/json'
+                });
+                res.end(JSON.stringify({
+                  success: false,
+                  error: 'Backend server is starting up, please wait...',
+                  code: 'SERVER_STARTING'
+                }));
+              }
+            } else {
+              console.log('Proxy error:', err.message);
+            }
           });
           proxy.on('proxyReq', (proxyReq, req, res) => {
             console.log('Sending Request to:', proxyReq.path);
