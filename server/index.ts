@@ -134,7 +134,7 @@ app.use("/api/*", (req, res) => {
 });
 
 // Serve React app for all non-API routes when not running in serverless
-app.get("*", (req, res) => {
+app.get("*", async (req, res) => {
   console.log("📍 Fallback route hit:", req.path);
   
   if (process.env.NODE_ENV === "production" && !IS_SERVERLESS) {
