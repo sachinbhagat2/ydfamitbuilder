@@ -145,7 +145,7 @@ app.get("*", (req, res) => {
     const indexPath = path.join(staticPath, "index.html");
     
     try {
-      const fs = require('fs');
+      const fs = (await import('fs')).default;
       if (fs.existsSync(indexPath)) {
         console.log("✅ Serving index.html from:", indexPath);
         res.sendFile(indexPath, (err) => {
