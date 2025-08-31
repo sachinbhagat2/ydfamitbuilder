@@ -85,17 +85,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Navigate based on user role
         const userType = result.data.user.userType;
         if (userType === "admin") {
-          navigate("/admin");
+          navigate("/admin-dashboard");
         } else if (userType === "student") {
-          navigate("/dashboard");
+          navigate("/student-dashboard");
         } else if (userType === "reviewer") {
-          navigate("/reviewer");
+          navigate("/reviewer-dashboard");
         } else if (userType === "donor") {
-          navigate("/donor");
+          navigate("/donor-dashboard");
         } else if (userType === "surveyor") {
-          navigate("/surveyor");
+          navigate("/surveyor-dashboard");
         } else {
-          navigate("/dashboard");
+          navigate("/student-dashboard");
         }
 
         return true;
