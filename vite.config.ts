@@ -19,8 +19,10 @@ export default defineConfig(({ mode }) => ({
         secure: false,
         timeout: 15000,
         proxyTimeout: 15000,
+        rewrite: (path) => path,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
+            console.log('Proxy error:', err.message);
             if (err.code === 'ECONNREFUSED') {
               // Server might still be starting up
               if (!res.headersSent) {
@@ -33,12 +35,13 @@ export default defineConfig(({ mode }) => ({
                   code: 'SERVER_STARTING'
                 }));
               }
-            } else {
-              console.log('Proxy error:', err.message);
             }
           });
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log('Sending Request to:', proxyReq.path);
+            console.log('🔄 Proxying:', req.method, req.url, '→', proxyReq.path);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('✅ Proxy response:', req.method, req.url, '→', proxyRes.statusCode);
           });
         },
       },
