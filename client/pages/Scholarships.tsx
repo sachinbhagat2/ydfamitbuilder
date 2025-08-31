@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
 import { toast } from "../hooks/use-toast";
+import RoleBasedNavigation from "../components/RoleBasedNavigation";
 import {
   ArrowLeft,
   Search,
@@ -23,6 +24,7 @@ import {
   ChevronRight,
   X,
   Plus,
+  Home,
 } from "lucide-react";
 
 const Scholarships = () => {
@@ -588,20 +590,44 @@ const Scholarships = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero/Header (match homepage tone) */}
-      <section className="bg-gradient-to-r from-ydf-deep-blue to-ydf-teal-green text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-            Explore Scholarships
-          </h1>
-          <p className="text-blue-100">
-            Browse active opportunities and apply to programs that fit you.
-          </p>
-        </div>
-      </section>
+    <div className="min-h-screen bg-gray-50">
+      <RoleBasedNavigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Header with Back Button */}
+      <div className="bg-white shadow-sm border-b border-ydf-light-gray">
+        <div className="px-6 py-4">
+          <div className="flex items-center space-x-3">
+            <Link
+              to={
+                isAuthenticated && user?.userType === "student"
+                  ? "/student-dashboard"
+                  : isAuthenticated && user?.userType === "admin"
+                    ? "/admin-dashboard"
+                    : isAuthenticated && user?.userType === "reviewer"
+                      ? "/reviewer-dashboard"
+                      : isAuthenticated && user?.userType === "donor"
+                        ? "/donor-dashboard"
+                        : isAuthenticated && user?.userType === "surveyor"
+                          ? "/surveyor-dashboard"
+                          : "/"
+              }
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                Explore Scholarships
+              </h1>
+              <p className="text-sm text-gray-600">
+                Browse active opportunities and apply to programs that fit you
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-6 space-y-6">
         {/* Search and Filters */}
         <div className="bg-white rounded-lg p-4 shadow-sm border border-ydf-light-gray">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
@@ -750,7 +776,7 @@ const Scholarships = () => {
         </div>
 
         {/* Scholarships Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {useMemo(() => {
             const arr = [...filteredScholarships];
             if (sortBy === "deadline") {
