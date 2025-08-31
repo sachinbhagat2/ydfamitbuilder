@@ -14,11 +14,19 @@ export default defineConfig(({ mode }) => ({
     ],
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://0.0.0.0:3000",
         changeOrigin: true,
         secure: false,
         timeout: 10000,
         proxyTimeout: 10000,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Sending Request to:', proxyReq.path);
+          });
+        },
       },
     },
   },

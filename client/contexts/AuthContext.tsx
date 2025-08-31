@@ -22,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // State to hold login errors
   const navigate = useNavigate();
 
   // Initialize auth state on app load
@@ -64,46 +65,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await apiService.login({ email, password });
+      setError(null);
 
-      if (response.success && response.data) {
-        setUser(response.data.user);
+      console.log("Attempting login for:", email);
+
+      const result = await apiService.login({ email, password });
+
+      console.log("Login result:", result);
+
+      if (result.success && result.data) {
+        setUser(result.data.user);
         setIsAuthenticated(true);
-
-        // Verify token to ensure fresh role data
-        try {
-          const verified = await apiService.verifyToken();
-          if (verified.success && verified.data) {
-            const merged: any = { ...response.data.user, ...verified.data };
-            setUser(merged);
-            toast({
-              title: "Login Successful",
-              description: `Welcome back, ${merged.firstName || response.data.user.firstName}!`,
-            });
-            redirectToDashboard(merged);
-            return true;
-          }
-        } catch {}
 
         toast({
           title: "Login Successful",
-          description: `Welcome back, ${response.data.user.firstName}!`,
+          description: `Welcome back, ${result.data.user.firstName}!`,
         });
-        redirectToDashboard(response.data.user);
+
+        // Navigate based on user role
+        const userType = result.data.user.userType;
+        if (userType === "admin") {
+          navigate("/admin");
+        } else if (userType === "student") {
+          navigate("/dashboard");
+        } else if (userType === "reviewer") {
+          navigate("/reviewer");
+        } else if (userType === "donor") {
+          navigate("/donor");
+        } else if (userType === "surveyor") {
+          navigate("/surveyor");
+        } else {
+          navigate("/dashboard");
+        }
+
         return true;
       } else {
+        const errorMessage = result.error || "Login failed";
+        console.error("Login failed:", errorMessage);
+        setError(errorMessage);
         toast({
           title: "Login Failed",
-          description: response.error || "Invalid credentials",
+          description: errorMessage,
           variant: "destructive",
         });
         return false;
       }
     } catch (error) {
       console.error("Login error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setError(errorMessage);
       toast({
         title: "Login Error",
-        description: error instanceof Error ? error.message : "Login failed",
+        description: errorMessage,
         variant: "destructive",
       });
       return false;

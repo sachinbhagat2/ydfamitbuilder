@@ -60,32 +60,45 @@ class ApiService {
   }
 
   async login(loginData: LoginInput): Promise<ApiResponse<AuthResponse>> {
-    const payload = {
-      ...loginData,
-      email: String(loginData.email || "")
-        .trim()
-        .toLowerCase(),
-    };
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
-    });
+    try {
+      const payload = {
+        ...loginData,
+        email: String(loginData.email || "")
+          .trim()
+          .toLowerCase(),
+      };
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Login failed");
+      console.log("Making login request to:", `${API_BASE_URL}/auth/login`);
+      console.log("Login payload:", { email: payload.email, password: "***" });
+
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+
+      console.log("Login response status:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Login error response:", errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}: Login failed`);
+      }
+
+      const result: ApiResponse<AuthResponse> = await response.json();
+      console.log("Login success result:", { success: result.success, hasData: !!result.data });
+
+      // Store token and user data on successful login
+      if (result.success && result.data) {
+        localStorage.setItem("ydf_token", result.data.token);
+        localStorage.setItem("ydf_user", JSON.stringify(result.data.user));
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Login API error:", error);
+      throw error;
     }
-
-    const result: ApiResponse<AuthResponse> = await response.json();
-
-    // Store token and user data on successful login
-    if (result.success && result.data) {
-      localStorage.setItem("ydf_token", result.data.token);
-      localStorage.setItem("ydf_user", JSON.stringify(result.data.user));
-    }
-
-    return result;
   }
 
   async logout(): Promise<ApiResponse> {
